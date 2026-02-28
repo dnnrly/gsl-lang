@@ -1,0 +1,10 @@
+# Demonstrates parent override inside a block
+# The "Child2" node explicitly declares a different parent (sibling)
+# than the implicit parent from the block, which generates a warning.
+
+node Parent1 {
+  node Child1
+  node Child2 [parent=Parent2]
+}
+
+node Parent2

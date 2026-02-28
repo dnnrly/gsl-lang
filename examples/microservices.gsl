@@ -1,0 +1,24 @@
+# Microservices architecture
+# Demonstrates sets for service grouping and attributes for metadata
+
+set services [env="production"]
+set critical [backup=true]
+set internal [accessible="internal"]
+
+node APIGateway [text="API Gateway", port=8080] @services
+node UserService [text="User Service", port=8001, replicas=3] @services @critical
+node OrderService [text="Order Service", port=8002, replicas=3] @services @critical
+node PaymentService [text="Payment Service", port=8003, replicas=2] @services
+node NotificationService [text="Notification Service", port=8004] @services @internal
+node Database [text="PostgreSQL", version="14.5"] @critical
+node Cache [text="Redis Cache", ttl=3600] @internal
+
+APIGateway -> UserService [method="HTTP"]
+APIGateway -> OrderService [method="HTTP"]
+APIGateway -> PaymentService [method="HTTP"]
+UserService -> Database [timeout=5000]
+OrderService -> Database [timeout=5000]
+OrderService -> PaymentService [method="gRPC"]
+PaymentService -> NotificationService
+UserService -> Cache [ttl=3600]
+OrderService -> Cache
