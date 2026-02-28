@@ -295,3 +295,74 @@ func Example_parentOverride() {
 	//   Child1 -> Parent1
 	//   Child2 -> Parent2
 }
+
+// Example_topologicalSort demonstrates topological sorting on a task dependency graph.
+func Example_topologicalSort() {
+	content, _ := os.ReadFile("task_scheduling.gsl")
+	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+
+	// Build adjacency list for in-degree calculation
+	inDegree := make(map[string]int)
+	outEdges := make(map[string][]string)
+
+	// Initialize all nodes
+	for nodeID := range graph.Nodes {
+		inDegree[nodeID] = 0
+		outEdges[nodeID] = []string{}
+	}
+
+	// Count in-degrees and build adjacency list
+	for _, edge := range graph.Edges {
+		inDegree[edge.To]++
+		outEdges[edge.From] = append(outEdges[edge.From], edge.To)
+	}
+
+	// Kahn's algorithm for topological sort
+	queue := []string{}
+	for nodeID, degree := range inDegree {
+		if degree == 0 {
+			queue = append(queue, nodeID)
+		}
+	}
+
+	sort.Strings(queue) // Deterministic ordering
+
+	sortedOrder := []string{}
+	for len(queue) > 0 {
+		// Pop from front
+		current := queue[0]
+		queue = queue[1:]
+		sortedOrder = append(sortedOrder, current)
+
+		// Process neighbors
+		neighbors := outEdges[current]
+		sort.Strings(neighbors)
+		for _, neighbor := range neighbors {
+			inDegree[neighbor]--
+			if inDegree[neighbor] == 0 {
+				queue = append(queue, neighbor)
+			}
+		}
+	}
+
+	// Print execution order
+	fmt.Println("Task execution order:")
+	for i, nodeID := range sortedOrder {
+		node := graph.Nodes[nodeID]
+		text := ""
+		if t, ok := node.Attributes["text"]; ok {
+			text = fmt.Sprintf(" (%v)", t)
+		}
+		fmt.Printf("  %d. %s%s\n", i+1, nodeID, text)
+	}
+
+	// Output:
+	// Task execution order:
+	//   1. Setup (Setup Environment)
+	//   2. Build (Build Binary)
+	//   3. UnitTests (Run Unit Tests)
+	//   4. Package (Create Package)
+	//   5. Integration (Integration Tests)
+	//   6. Deploy (Deploy to Prod)
+	//   7. Smoke (Smoke Tests)
+}

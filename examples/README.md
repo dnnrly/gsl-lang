@@ -68,6 +68,10 @@ An ETL (Extract-Transform-Load) data pipeline.
 - **Example_serializeGraph** - Round-tripping: parse → serialize → parse
 - **Example_graphStatistics** - Computing graph statistics
 
+### Algorithm Examples
+
+- **Example_topologicalSort** - Demonstrates topological sort on a task dependency graph using Kahn's algorithm (`task_scheduling.gsl`)
+
 ### Warning Examples
 
 - **Example_implicitSets** - Demonstrates implicit set creation warnings (`implicit_sets.gsl`)
@@ -111,6 +115,7 @@ go test ./...
 | `hierarchical_system.gsl` | 9 | 4 | 3 | Parent-child relationships |
 | `microservices.gsl` | 7 | 9 | 3 | Set membership, edge attributes |
 | `data_pipeline.gsl` | 8 | 7 | 3 | Node grouping by stage |
+| `task_scheduling.gsl` | 7 | 7 | 0 | Task dependencies, topological sort |
 | `implicit_sets.gsl` | 4 | 1 | 2 | Implicit set creation warnings |
 | `name_collision.gsl` | 3 | 2 | 1 | Name collision warnings |
 | `parent_override.gsl` | 4 | 0 | 0 | Parent override warnings |
