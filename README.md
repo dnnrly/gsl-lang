@@ -141,6 +141,7 @@ Implicit sets are materialised.
 
 The formal language specification is defined in:
 
-→ /SPEC.md
+* [the specification](SPEC.md)
+* [the grammar](GRAMMAR.md)
 
 Parser implementation details will be added as development progresses.
