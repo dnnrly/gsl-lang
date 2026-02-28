@@ -15,6 +15,28 @@ It is a textual graph representation designed for tooling, transformation, and p
 
 ---
 
+## Table of Contents
+
+- [What GSL Describes](#what-gsl-describes)
+- [Quick Example](#quick-example)
+- [Core Features](#core-features)
+  - [Nodes](#nodes)
+  - [Edges](#edges)
+  - [Sets and Membership](#sets-and-membership)
+  - [Parent Relationships](#parent-relationships)
+- [Design Goals](#design-goals)
+- [Canonical Behaviour](#canonical-behaviour)
+- [Using the Library](#using-the-library)
+  - [Installation](#installation)
+  - [Basic Usage](#basic-usage)
+  - [Common Patterns](#common-patterns)
+  - [API Reference](#api-reference)
+  - [Examples and Tests](#examples-and-tests)
+  - [Important Notes](#important-notes)
+- [Reference](#reference)
+
+---
+
 ## What GSL Describes
 
 A GSL document defines:
