@@ -32,10 +32,15 @@ lint: ## run linting
 
 .PHONY: test
 test: ## run tests with coverage checks
-	go test -run COMPILE_ONLY
+	go test -run COMPILE_ONLY > /dev/null
 	go test -race -cover -count=1 -coverprofile=$(TMP_DIR)/coverage.txt ./...
 	@echo "Coverage report generated at $(TMP_DIR)/coverage.txt"
 	@go tool cover -func=$(TMP_DIR)/coverage.txt | grep total | awk '{print "Total coverage: " $$3}'
+
+.PHONY: markdown-gsl
+markdown-gsl: ## validate GSL in markdown code blocks
+	go test -run COMPILE_ONLY > /dev/null
+	go test -count=1 -run TestMarkdownCodeBlocks
 
 .PHONY: fuzz
 fuzz: ## run fuzz tests
