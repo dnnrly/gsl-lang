@@ -1,0 +1,12 @@
+# Demonstrates node and set name collision
+# "auth" is used both as a node name and as a set name.
+# This is allowed but generates a warning.
+
+set auth [color="blue"]
+
+node auth [text="Authentication Service"]
+node login [text="Login Page"]
+node register [text="Register Page"]
+
+auth -> login @auth
+auth -> register @auth

@@ -1,0 +1,24 @@
+# Hierarchical system with nested components
+# Demonstrates parent-child relationships
+
+set frontend [color="blue"]
+set backend [color="green"]
+set database [color="red"]
+
+node WebUI [text="Web Application"] @frontend
+
+node LoginPage [route="/login"] @frontend
+node Dashboard [route="/dashboard"] @frontend
+
+node API [text="API Server"] @backend
+node AuthService [timeout=30] @backend
+node DataService [timeout=60] @backend
+
+node DB [text="Primary Database"] @database
+node UsersTable [indexed=true] @database
+node SessionsTable [indexed=true] @database
+
+LoginPage -> AuthService [protocol="REST"]
+Dashboard -> DataService
+AuthService -> UsersTable
+DataService -> SessionsTable
