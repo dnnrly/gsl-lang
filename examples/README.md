@@ -54,6 +54,40 @@ An ETL (Extract-Transform-Load) data pipeline.
 
 **Use case:** Data engineering, ETL workflows, analytics pipelines.
 
+### 5. Task Scheduling (`task_scheduling.gsl`)
+
+A build system with task dependencies showing the execution flow of a CI/CD pipeline.
+
+**Demonstrates:**
+- Task dependency graphs
+- Multiple dependency paths
+- Nodes with no dependencies (entry points)
+- Suitable for topological sorting
+
+**Use case:** Build systems, CI/CD pipelines, task scheduling, dependency resolution.
+
+### 6. Circular Dependencies (`circular_dependencies.gsl`)
+
+A graph with circular dependencies between services.
+
+**Demonstrates:**
+- Cyclic relationships in graphs
+- Multiple components in a cycle
+- Dependencies both within and outside the cycle
+
+**Use case:** Detecting problematic circular dependencies, validating acyclic graphs.
+
+### 7. Social Network (`social_network.gsl`)
+
+A social network showing connections between people.
+
+**Demonstrates:**
+- Multiple paths between nodes
+- Graph with branching and merging paths
+- Unidirectional connections
+
+**Use case:** Path finding, shortest path algorithms, reachability analysis, social network analysis.
+
 ## Example Tests
 
 `example_test.go` contains runnable documentation examples that demonstrate common patterns:
@@ -71,6 +105,8 @@ An ETL (Extract-Transform-Load) data pipeline.
 ### Algorithm Examples
 
 - **Example_topologicalSort** - Demonstrates topological sort on a task dependency graph using Kahn's algorithm (`task_scheduling.gsl`)
+- **Example_cycleDetection** - Demonstrates cycle detection using DFS with color marking (`circular_dependencies.gsl`)
+- **Example_pathFinding** - Demonstrates finding all paths between two nodes using DFS (`social_network.gsl`)
 
 ### Warning Examples
 
@@ -109,16 +145,18 @@ go test ./...
 
 ## Graph Sizes and Examples
 
-| File | Nodes | Edges | Sets | Demonstrates |
-|------|-------|-------|------|--------------|
-| `simple_workflow.gsl` | 6 | 5 | 0 | Basic parsing and node access |
-| `hierarchical_system.gsl` | 9 | 4 | 3 | Parent-child relationships |
-| `microservices.gsl` | 7 | 9 | 3 | Set membership, edge attributes |
-| `data_pipeline.gsl` | 8 | 7 | 3 | Node grouping by stage |
-| `task_scheduling.gsl` | 7 | 7 | 0 | Task dependencies, topological sort |
-| `implicit_sets.gsl` | 4 | 1 | 2 | Implicit set creation warnings |
-| `name_collision.gsl` | 3 | 2 | 1 | Name collision warnings |
-| `parent_override.gsl` | 4 | 0 | 0 | Parent override warnings |
+| File | Nodes | Edges | Sets | Algorithm Use |
+|------|-------|-------|------|---------------|
+| `simple_workflow.gsl` | 6 | 5 | 0 | Basic graph structure |
+| `hierarchical_system.gsl` | 9 | 4 | 3 | Set membership queries |
+| `microservices.gsl` | 7 | 9 | 3 | Set membership queries |
+| `data_pipeline.gsl` | 8 | 7 | 3 | Edge traversal |
+| `task_scheduling.gsl` | 7 | 7 | 0 | Topological sort |
+| `circular_dependencies.gsl` | 4 | 4 | 0 | Cycle detection |
+| `social_network.gsl` | 6 | 7 | 0 | Path finding |
+| `implicit_sets.gsl` | 4 | 1 | 2 | Warning handling |
+| `name_collision.gsl` | 3 | 2 | 1 | Warning handling |
+| `parent_override.gsl` | 4 | 0 | 0 | Warning handling |
 
 ## More Information
 

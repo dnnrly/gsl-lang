@@ -1,0 +1,18 @@
+# Social network graph for path finding examples
+# Shows connections between people.
+
+node Alice [text="Alice"]
+node Bob [text="Bob"]
+node Charlie [text="Charlie"]
+node Diana [text="Diana"]
+node Eve [text="Eve"]
+node Frank [text="Frank"]
+
+# Connections
+Alice -> Bob
+Alice -> Charlie
+Bob -> Diana
+Charlie -> Diana
+Diana -> Eve
+Eve -> Frank
+Bob -> Frank

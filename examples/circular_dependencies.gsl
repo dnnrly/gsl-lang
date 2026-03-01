@@ -1,0 +1,17 @@
+# Example with circular dependencies
+# Shows what happens when components have cyclic dependencies.
+
+node ConfigService [text="Config Service"]
+node LogService [text="Log Service"]
+node AuthService [text="Auth Service"]
+node APIGateway [text="API Gateway"]
+
+# Circular dependency: Config -> Log -> Auth -> Config
+ConfigService -> LogService
+LogService -> AuthService
+AuthService -> ConfigService
+
+# Linear dependencies
+APIGateway -> ConfigService
+APIGateway -> LogService
+APIGateway -> AuthService
