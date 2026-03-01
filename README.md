@@ -163,6 +163,18 @@ Implicit sets are materialised.
 
 The GSL library provides a Go API for parsing and manipulating GSL documents programmatically.
 
+### For LLMs and AI Agents
+
+If you are an LLM or AI agent that needs to work with GSL, see **[LLM_GUIDE.md](LLM_GUIDE.md)**.
+
+The LLM Guide is a self-contained reference that covers:
+- Complete GSL syntax with examples
+- Go API reference with code patterns
+- Algorithm implementations (topological sort, cycle detection, path finding)
+- Best practices and common gotchas
+
+You can copy the entire guide and use it as context for your tasks.
+
 ### Installation
 
 ```bash
