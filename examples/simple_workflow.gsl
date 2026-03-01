@@ -1,0 +1,15 @@
+# Simple workflow graph
+# Demonstrates basic nodes and edges
+
+node Start: "Begin Process"
+node ProcessA: "Validate Input"
+node ProcessB: "Transform Data"
+node Decision: "Check Result"
+node Success: "Output Generated"
+node Failure: "Error Handling"
+
+Start -> ProcessA
+ProcessA -> ProcessB
+ProcessB -> Decision
+Decision -> Success
+Decision -> Failure

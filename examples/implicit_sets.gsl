@@ -1,0 +1,10 @@
+# Demonstrates implicit set creation
+# The sets "active" and "deprecated" are never declared with "set",
+# but they're used via @ membership, so they're implicitly created.
+
+node ServiceA @active
+node ServiceB @active
+node LegacyService @deprecated
+node OldAPI @deprecated
+
+ServiceA -> ServiceB @active

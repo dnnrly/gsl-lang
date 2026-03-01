@@ -1,0 +1,21 @@
+# Task scheduling/build system example
+# Shows dependencies between tasks.
+# Can be used for topological sorting to determine execution order.
+
+# Tasks in a build pipeline
+node Setup [text="Setup Environment"]
+node UnitTests [text="Run Unit Tests"]
+node Integration [text="Integration Tests"]
+node Build [text="Build Binary"]
+node Package [text="Create Package"]
+node Deploy [text="Deploy to Prod"]
+node Smoke [text="Smoke Tests"]
+
+# Dependencies
+Setup -> UnitTests
+Setup -> Build
+UnitTests -> Integration
+Build -> Package
+Package -> Deploy
+Deploy -> Smoke
+Integration -> Smoke

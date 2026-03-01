@@ -1,0 +1,23 @@
+# ETL data pipeline
+# Demonstrates sequential processing stages with grouped edges
+
+set intake [stage="extract"]
+set processing [stage="transform"]
+set output [stage="load"]
+
+node RawDataSource [text="CSV Files", format="csv"] @intake
+node DataLake [text="Data Lake", storage="s3"] @intake
+node Cleaner [text="Data Cleaner", language="python"] @processing
+node Validator [text="Schema Validator", language="python"] @processing
+node Aggregator [text="Aggregator", window="1h"] @processing
+node WarehouseDB [text="Data Warehouse", type="snowflake"] @output
+node AnalyticsDash [text="Analytics Dashboard", tool="tableau"] @output
+node Alerting [text="Alert System", threshold=0.8] @output
+
+RawDataSource -> DataLake
+DataLake -> Cleaner
+Cleaner -> Validator
+Validator -> Aggregator
+Aggregator -> WarehouseDB [compression="gzip"]
+WarehouseDB -> AnalyticsDash
+WarehouseDB -> Alerting
