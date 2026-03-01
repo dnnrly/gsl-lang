@@ -37,8 +37,8 @@ test: ## run tests with coverage checks
 	@echo "Coverage report generated at $(TMP_DIR)/coverage.txt"
 	@go tool cover -func=$(TMP_DIR)/coverage.txt | grep total | awk '{print "Total coverage: " $$3}'
 
-.PHONY: markdown-gsl
-markdown-gsl: ## validate GSL in markdown code blocks
+.PHONY: check-markdown-gsl
+check-markdown-gsl: ## validate GSL in markdown code blocks
 	go test -run COMPILE_ONLY > /dev/null
 	go test -count=1 -run TestMarkdownCodeBlocks
 
