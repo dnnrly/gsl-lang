@@ -37,18 +37,23 @@ func TestMarkdownCodeBlocks(t *testing.T) {
 		blocks := extractCodeBlocks(string(content))
 
 		for i, block := range blocks {
+			blockNum := i + 1
+			testName := fmt.Sprintf("%s:block-%d-line-%d-%s", mdFile, blockNum, block.lineNumber, block.language)
+
 			if block.language == "gsl" {
 				validBlocks++
-				if err := testValidGSL(block.code); err != nil {
-					t.Errorf("%s block %d (line %d): %v\nCode:\n%s",
-						mdFile, i+1, block.lineNumber, err, block.code)
-				}
+				t.Run(testName, func(t *testing.T) {
+					if err := testValidGSL(block.code); err != nil {
+						t.Errorf("parse failed: %v\nCode:\n%s", err, block.code)
+					}
+				})
 			} else if block.language == "invalid-gsl" {
 				invalidBlocks++
-				if err := testInvalidGSL(block.code); err != nil {
-					t.Errorf("%s block %d (line %d): expected parse to fail, but got: %v\nCode:\n%s",
-						mdFile, i+1, block.lineNumber, err, block.code)
-				}
+				t.Run(testName, func(t *testing.T) {
+					if err := testInvalidGSL(block.code); err != nil {
+						t.Errorf("expected parse to fail, but got: %v\nCode:\n%s", err, block.code)
+					}
+				})
 			}
 		}
 	}
