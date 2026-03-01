@@ -142,8 +142,8 @@ node Database [text="PostgreSQL"] @backend @critical
 node Cache [text="Redis"] @backend
 
 # API structure
-node AuthModule @API [timeout=30]
-node DataModule @API [timeout=60]
+node AuthModule [parent=API, timeout=30] @API
+node DataModule [parent=API, timeout=60] @API
 
 # Connections
 WebUI -> API [protocol="REST", timeout=5000]

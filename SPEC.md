@@ -438,6 +438,40 @@ The following conditions MUST produce a syntax error:
 * NodeRef values in set attributes.
 * Use of reserved keywords as identifiers.
 
+## 10.1 Example Invalid Syntax
+
+The following are examples of syntax errors that MUST be rejected:
+
+```invalid-gsl
+node A [color="red", color="blue"]
+```
+
+Duplicate attribute key `color`.
+
+```invalid-gsl
+A,B -> C,D
+```
+
+Both sides of edge declaration are grouped (invalid).
+
+```invalid-gsl
+A->B [target=C]
+```
+
+NodeRef value (`C`) in edge attribute (invalid).
+
+```invalid-gsl
+set colors [primary=Red]
+```
+
+NodeRef value (`Red`) in set attribute (invalid).
+
+```invalid-gsl
+node node
+```
+
+Reserved keyword `node` used as identifier (invalid).
+
 ---
 
 # 11. Linter Warnings (Non-Normative)
