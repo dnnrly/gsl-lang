@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	gsl "github.com/dnnrly/gsl-lang"
 )
@@ -279,9 +280,15 @@ func Example_parentOverride() {
 		fmt.Printf("  - %v\n", w)
 	}
 
-	// Show parent relationships
+	// Show parent relationships (sorted for deterministic output)
 	fmt.Println("Parent relationships:")
-	for nodeID, node := range graph.Nodes {
+	nodeIDs := make([]string, 0)
+	for nodeID := range graph.Nodes {
+		nodeIDs = append(nodeIDs, nodeID)
+	}
+	sort.Strings(nodeIDs)
+	for _, nodeID := range nodeIDs {
+		node := graph.Nodes[nodeID]
 		if parent, ok := node.Attributes["parent"]; ok {
 			fmt.Printf("  %s -> %v\n", nodeID, parent)
 		}
@@ -365,4 +372,145 @@ func Example_topologicalSort() {
 	//   5. Integration (Integration Tests)
 	//   6. Deploy (Deploy to Prod)
 	//   7. Smoke (Smoke Tests)
+}
+
+// Example_cycleDetection demonstrates detecting cycles in a dependency graph using DFS.
+func Example_cycleDetection() {
+	content, _ := os.ReadFile("circular_dependencies.gsl")
+	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+
+	// Build adjacency list
+	adjList := make(map[string][]string)
+	for nodeID := range graph.Nodes {
+		adjList[nodeID] = []string{}
+	}
+	for _, edge := range graph.Edges {
+		adjList[edge.From] = append(adjList[edge.From], edge.To)
+	}
+
+	// DFS-based cycle detection
+	WHITE, GRAY, BLACK := 0, 1, 2
+	color := make(map[string]int)
+	for nodeID := range graph.Nodes {
+		color[nodeID] = WHITE
+	}
+
+	hasCycle := false
+	var cycleNodes []string
+
+	var dfs func(string, []string) bool
+	dfs = func(node string, path []string) bool {
+		color[node] = GRAY
+		path = append(path, node)
+
+		neighbors := adjList[node]
+		sort.Strings(neighbors)
+
+		for _, neighbor := range neighbors {
+			if color[neighbor] == GRAY {
+				// Found a back edge - cycle detected
+				cycleNodes = path
+				cycleNodes = append(cycleNodes, neighbor)
+				return true
+			}
+			if color[neighbor] == WHITE {
+				if dfs(neighbor, path) {
+					return true
+				}
+			}
+		}
+
+		color[node] = BLACK
+		return false
+	}
+
+	// Check each unvisited node
+	nodeIDs := make([]string, 0, len(graph.Nodes))
+	for nodeID := range graph.Nodes {
+		nodeIDs = append(nodeIDs, nodeID)
+	}
+	sort.Strings(nodeIDs)
+
+	for _, nodeID := range nodeIDs {
+		if color[nodeID] == WHITE {
+			if dfs(nodeID, []string{}) {
+				hasCycle = true
+				break
+			}
+		}
+	}
+
+	// Report results
+	if hasCycle {
+		fmt.Println("Cycle detected in graph!")
+		fmt.Printf("Cycle: %s -> %s\n", strings.Join(cycleNodes, " -> "), cycleNodes[0])
+	} else {
+		fmt.Println("No cycles found")
+	}
+
+	// Output:
+	// Cycle detected in graph!
+	// Cycle: APIGateway -> AuthService -> ConfigService -> LogService -> AuthService -> APIGateway
+}
+
+// Example_pathFinding demonstrates finding all paths between two nodes using DFS.
+func Example_pathFinding() {
+	content, _ := os.ReadFile("social_network.gsl")
+	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+
+	// Build adjacency list
+	adjList := make(map[string][]string)
+	for nodeID := range graph.Nodes {
+		adjList[nodeID] = []string{}
+	}
+	for _, edge := range graph.Edges {
+		adjList[edge.From] = append(adjList[edge.From], edge.To)
+	}
+
+	// DFS to find all paths
+	var allPaths [][]string
+
+	var dfs func(string, string, []string, map[string]bool)
+	dfs = func(current, target string, path []string, visited map[string]bool) {
+		if current == target {
+			// Make a copy of path and add to results
+			pathCopy := make([]string, len(path))
+			copy(pathCopy, path)
+			allPaths = append(allPaths, pathCopy)
+			return
+		}
+
+		neighbors := adjList[current]
+		sort.Strings(neighbors)
+
+		for _, neighbor := range neighbors {
+			if !visited[neighbor] {
+				visited[neighbor] = true
+				dfs(neighbor, target, append(path, neighbor), visited)
+				visited[neighbor] = false
+			}
+		}
+	}
+
+	// Find paths from Alice to Frank
+	start, end := "Alice", "Frank"
+	visited := make(map[string]bool)
+	visited[start] = true
+	dfs(start, end, []string{start}, visited)
+
+	// Print results
+	fmt.Printf("All paths from %s to %s:\n", start, end)
+	if len(allPaths) == 0 {
+		fmt.Println("  (no paths found)")
+	} else {
+		for i, path := range allPaths {
+			fmt.Printf("  %d. %s\n", i+1, strings.Join(path, " -> "))
+		}
+	}
+
+	// Output:
+	// All paths from Alice to Frank:
+	//   1. Alice -> Bob -> Diana -> Eve -> Frank
+	//   2. Alice -> Bob -> Frank
+	//   3. Alice -> Charlie -> Diana -> Eve -> Frank
 }
