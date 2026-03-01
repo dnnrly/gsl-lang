@@ -1,3 +1,8 @@
+---
+name: gsl-lang-guide
+description: "Complete reference for the GSL (Graph Specification Language). Covers syntax, Go API, algorithms, and best practices. Use when working with GSL files, parsing graphs, or implementing graph-based tools."
+---
+
 # GSL (Graph Specification Language) - Complete Guide for LLMs
 
 This document contains everything needed to understand, write, and use GSL files and the Go library.
