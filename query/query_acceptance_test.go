@@ -64,7 +64,7 @@ func (at *AcceptanceTest) Run(t *testing.T) {
 	}
 
 	// Parse expected output graph
-	expectedGraph, warns, err := gsl.Parse(strings.NewReader(at.ExpectedGraph))
+	expectedGraph, _, err := gsl.Parse(strings.NewReader(at.ExpectedGraph))
 	if err != nil {
 		t.Fatalf("failed to parse expected graph: %v", err)
 	}

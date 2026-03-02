@@ -69,7 +69,7 @@ func (p *QueryParser) addError(format string, args ...interface{}) {
 
 func (p *QueryParser) parseQuery() *Query {
 	// Skip leading whitespace/comments
-	for p.peek().Type == gsl.TOKEN_EOF {
+	if p.peek().Type == gsl.TOKEN_EOF {
 		if len(p.errors) == 0 {
 			p.addError("empty query")
 		}
@@ -369,7 +369,6 @@ func (p *QueryParser) parseStartStep() *StartStep {
 			nodeIDs = append(nodeIDs, idTok.Literal)
 		default:
 			p.addError("expected node ID after comma at %d:%d", idTok.Line, idTok.Column)
-			break
 		}
 	}
 
