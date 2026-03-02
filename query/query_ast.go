@@ -1,5 +1,7 @@
 package query
 
+import "strconv"
+
 // QueryError types as defined in GQL v1.0 spec
 type QueryErrorType int
 
@@ -32,7 +34,7 @@ type QueryError struct {
 
 func (e *QueryError) Error() string {
 	if e.Line > 0 && e.Column > 0 {
-		return e.Type.String() + " at " + string(rune(e.Line)) + ":" + string(rune(e.Column)) + ": " + e.Message
+		return e.Type.String() + " at " + strconv.Itoa(e.Line) + ":" + strconv.Itoa(e.Column) + ": " + e.Message
 	}
 	return e.Type.String() + ": " + e.Message
 }

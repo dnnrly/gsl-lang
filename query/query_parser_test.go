@@ -384,6 +384,21 @@ func TestParseQueryCombinators(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:    "parenthesized single pipeline",
+			query:   "(start A)",
+			wantErr: false,
+			check: func(t *testing.T, q *Query) {
+				pipe := q.Root.(*Pipeline)
+				if len(pipe.Steps) != 1 {
+					t.Fatalf("expected 1 step, got %d", len(pipe.Steps))
+				}
+				start := pipe.Steps[0].(*StartStep)
+				if len(start.NodeIDs) != 1 || start.NodeIDs[0] != "A" {
+					t.Errorf("expected NodeIDs=[A], got %v", start.NodeIDs)
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -414,6 +429,7 @@ func TestParseQueryRoundTrip(t *testing.T) {
 		"start A | flow out | where priority >= 5",
 		"(start A | flow out) union (start B | flow out)",
 		"start A | flow out recursive | where critical = true",
+		"(start A)",
 	}
 
 	for _, query := range tests {
@@ -516,6 +532,21 @@ func TestParseQueryEdgeCases(t *testing.T) {
 		{
 			name:    "filter without attribute",
 			query:   "start A | where = 5",
+			wantErr: true,
+		},
+		{
+			name:    "trailing tokens after pipeline",
+			query:   "start A foo",
+			wantErr: true,
+		},
+		{
+			name:    "trailing tokens after parenthesized pipeline",
+			query:   "(start A) bar",
+			wantErr: true,
+		},
+		{
+			name:    "trailing tokens after combinator",
+			query:   "start A union start B extra",
 			wantErr: true,
 		},
 	}

@@ -26,6 +26,11 @@ It is a textual graph representation designed for tooling, transformation, and p
   - [Parent Relationships](#parent-relationships)
 - [Design Goals](#design-goals)
 - [Canonical Behaviour](#canonical-behaviour)
+- [GSL Query Language](#gsl-query-language)
+  - [Quick Start](#query-quick-start)
+  - [Query Syntax](#query-syntax)
+  - [Query Examples](#query-examples)
+  - [Query API](#query-api)
 - [Using the Library](#using-the-library)
   - [Installation](#installation)
   - [Basic Usage](#basic-usage)
@@ -156,6 +161,144 @@ parse(serialize(parse(input))) == parse(input)
 Grouped edges expand.
 Blocks become explicit `parent` attributes.
 Implicit sets are materialised.
+
+---
+
+## GSL Query Language
+
+GSL also includes a **query language** for selecting and filtering nodes from a graph using a pipeline-based syntax.
+
+### Query Quick Start
+
+```go
+import (
+	gsl "github.com/dnnrly/gsl-lang"
+	"github.com/dnnrly/gsl-lang/query"
+)
+
+// Parse a query
+q, errs := query.ParseQuery(`start "AuthService" | flow out recursive | where critical = true`)
+if len(errs) > 0 {
+    log.Fatal(errs)
+}
+
+// Serialize back to string
+queryStr := query.SerializeQuery(q)
+fmt.Println(queryStr)
+```
+
+### Query Syntax
+
+The query language uses a **pipeline** model where operations are chained with `|`:
+
+**Pipeline Steps:**
+- `start <node_ids>` — select starting nodes
+- `flow <direction> [recursive|*] [where edge.attr op value]` — traverse edges
+  - Direction: `in`, `out`, `both`
+  - Optional `recursive` or `*` for recursive traversal
+  - Optional edge filter
+- `where <attr> <op> <value>` — filter nodes by attribute
+- `minus <pipeline>` — remove nodes from selection
+
+**Combinators:**
+- `union` — merge two pipelines' results
+- `intersect` — intersection of two pipelines' results
+- `minus` — difference of two pipelines' results
+
+**Operators (per GQL v1.0 spec):**
+- `=` — equality
+- `!=` — inequality
+- `<` — less than
+- `<=` — less than or equal
+- `>` — greater than
+- `>=` — greater than or equal
+
+**Values:**
+- Strings (quoted): `"value"`
+- Numbers: `42`, `3.14`
+- Booleans: `true`, `false`
+
+### Query Examples
+
+```gsl-query
+# Select nodes and follow outbound edges
+start A, B | flow out
+
+# Recursive traversal with edge filter
+start "Service" | flow out where edge.color = "Blue" recursive
+
+# Filter by node attributes
+start A | where status = "active"
+
+# Multiple filters in a pipeline
+start A | flow out | where critical = true | where type != "archived"
+
+# Combine pipelines with union
+(start A | flow out) union (start B | flow in)
+
+# Complex combinators
+(start X | flow out recursive) union (start Y) minus (start Z | flow both)
+```
+
+### Query API
+
+Import the query package:
+```go
+import "github.com/dnnrly/gsl-lang/query"
+```
+
+#### `query.ParseQuery(input string) (*Query, []error)`
+
+Parses a query string and returns:
+- `*Query`: The parsed query AST
+- `[]error`: Parse errors, if any
+
+#### `query.SerializeQuery(q *Query) string`
+
+Serializes a query AST back to a query string.
+
+#### Query AST Structure
+
+```go
+type Query struct {
+    Root Step  // Entry point of the query
+}
+
+type Pipeline struct {
+    Steps []Step  // Sequence of pipeline steps
+}
+
+type StartStep struct {
+    NodeIDs []string  // Starting node IDs
+}
+
+type FlowStep struct {
+    Direction   string       // "in", "out", "both"
+    Recursive   bool         // true if * or "recursive"
+    EdgeFilter  *FilterSpec  // Optional edge filter
+}
+
+type FilterStep struct {
+    Filter *FilterSpec  // Node attribute filter
+}
+
+type MinusStep struct {
+    Pipeline *Pipeline  // Sub-pipeline to subtract
+}
+
+type CombinatorExpr struct {
+    Type  string      // "union", "intersect", "minus"
+    Left  *Pipeline   // Left operand
+    Right *Pipeline   // Right operand
+}
+
+type FilterSpec struct {
+    IsEdge bool        // true for edge filters, false for node filters
+    Attr   string      // Attribute name
+    Op     string      // Operator: "=", "!=", "contains", "matches"
+    Value  interface{} // Comparison value
+}
+```
 
 ---
 

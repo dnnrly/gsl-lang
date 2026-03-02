@@ -82,13 +82,24 @@ func (p *QueryParser) parseQuery() *Query {
 
 func (p *QueryParser) parseTopLevel() Step {
 	// Top level can be:
-	// - A parenthesized combinator: (...) union (...)
+	// - A parenthesized group: (...) or (...) union (...)
 	// - A pipeline: start ... | flow ... | where ...
 	// - A combinator: pipeline union pipeline
 
 	// Check for parenthesized group
 	if p.peek().Type == gsl.TOKEN_LPAREN {
-		return p.parseCombinator()
+		step := p.parseCombinator()
+		if step == nil {
+			return &Pipeline{}
+		}
+		
+		// Check for trailing tokens after parenthesized expression
+		tok := p.peek()
+		if tok.Type != gsl.TOKEN_EOF {
+			p.addError("unexpected token %q at %d:%d, expected end of query", tok.Literal, tok.Line, tok.Column)
+		}
+		
+		return step
 	}
 
 	// Otherwise parse as pipeline, but check for combinators after
@@ -100,7 +111,13 @@ func (p *QueryParser) parseTopLevel() Step {
 	// Check for combinator operators at top level
 	tok := p.peek()
 	if tok.Type == gsl.TOKEN_UNION || tok.Type == gsl.TOKEN_INTERSECT {
-		return p.parseCombinatorWithLeft(left)
+		result := p.parseCombinatorWithLeft(left)
+		// Check for trailing tokens after combinator expression
+		tok := p.peek()
+		if tok.Type != gsl.TOKEN_EOF {
+			p.addError("unexpected token %q at %d:%d, expected end of query", tok.Literal, tok.Line, tok.Column)
+		}
+		return result
 	}
 
 	// Check if minus is a combinator or was missed as a step
@@ -108,13 +125,24 @@ func (p *QueryParser) parseTopLevel() Step {
 		// It's only a combinator if it's at the top level after a complete pipeline
 		// If the last step in left could accept minus, we shouldn't treat it as combinator
 		// For now, always treat top-level minus as combinator
-		return p.parseCombinatorWithLeft(left)
+		result := p.parseCombinatorWithLeft(left)
+		// Check for trailing tokens after combinator expression
+		tok := p.peek()
+		if tok.Type != gsl.TOKEN_EOF {
+			p.addError("unexpected token %q at %d:%d, expected end of query", tok.Literal, tok.Line, tok.Column)
+		}
+		return result
+	}
+
+	// Check for trailing tokens - any token other than EOF is an error
+	if tok.Type != gsl.TOKEN_EOF {
+		p.addError("unexpected token %q at %d:%d, expected end of query or combinator operator", tok.Literal, tok.Line, tok.Column)
 	}
 
 	return left
 }
 
-func (p *QueryParser) parseCombinator() *CombinatorExpr {
+func (p *QueryParser) parseCombinator() Step {
 	// Either we're at '(' or we already have a left side
 	var left *Pipeline
 
@@ -130,7 +158,15 @@ func (p *QueryParser) parseCombinator() *CombinatorExpr {
 		return nil
 	}
 
-	return p.parseCombinatorWithLeft(left)
+	// Check if there's a combinator operator following
+	result := p.parseCombinatorWithLeft(left)
+	if result != nil {
+		return result
+	}
+	
+	// No combinator operator found, just return the pipeline as-is
+	// This handles cases like "(start A)" which is just a parenthesized pipeline
+	return left
 }
 
 func (p *QueryParser) parseCombinatorWithLeft(left *Pipeline) *CombinatorExpr {
