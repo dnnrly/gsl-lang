@@ -1,7 +1,7 @@
 Excellent — this is where we remove all “implementation-defined” wiggle room and lock this into something production-safe and testable.
 # GSL Query Language (GQL)
 
-## Version 1.0 — Production Specification
+## Version 0.1 — Production Specification
 
 **Status:** Stable
 **Scope:** Querying a single in-memory GSL graph
@@ -11,7 +11,7 @@ Excellent — this is where we remove all “implementation-defined” wiggle ro
 
 # 1. Conformance
 
-An implementation conforms to GQL v1.0 if and only if:
+An implementation conforms to GQL v0.1 if and only if:
 
 * All semantics in this document are followed exactly.
 * No behaviour is left implementation-defined.
@@ -178,7 +178,7 @@ S ∪ AllTransitivelyReachableNodes
 
 ## 5.5 Depth Limiting
 
-Not supported in v1.0.
+Not supported in v0.1.
 
 ---
 
@@ -332,9 +332,9 @@ An implementation SHOULD:
 
 ---
 
-# 13. Explicit Non-Goals (v1.0)
+# 13. Explicit Non-Goals (v0.1)
 
-The following are NOT part of v1.0:
+The following are NOT part of v0.1:
 
 * Aggregations
 * Scalar functions
@@ -392,7 +392,7 @@ C->D
 
 ---
 
-# Final Properties of v1.0
+# Final Properties of v0.1
 
 This version:
 

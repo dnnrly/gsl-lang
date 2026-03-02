@@ -205,7 +205,7 @@ The query language uses a **pipeline** model where operations are chained with `
 - `intersect` — intersection of two pipelines' results
 - `minus` — difference of two pipelines' results
 
-**Operators (per GQL v1.0 spec):**
+**Operators (per GQL v0.1 spec):**
 - `=` — equality
 - `!=` — inequality
 - `<` — less than

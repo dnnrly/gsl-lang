@@ -70,7 +70,7 @@ Example:
 
 ### Operators
 
-Per GQL v1.0 specification, supported operators are:
+Per GQL v0.1 specification, supported operators are:
 
 - `=` — Equality
 - `!=` — Inequality
@@ -163,9 +163,9 @@ if err != nil {
 }
 ```
 
-## GQL v1.0 Compliance
+## GQL v0.1 Compliance
 
-This implementation conforms to the **GSL Query Language (GQL) v1.0 Production Specification**, including:
+This implementation conforms to the **GSL Query Language (GQL) v0.1 Production Specification**, including:
 
 - **Deterministic evaluation** — Identical queries on identical graphs produce identical results
 - **Set semantics** — All intermediate results are node sets; duplicates automatically removed
