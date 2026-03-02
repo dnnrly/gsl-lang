@@ -46,4 +46,17 @@ check-markdown-gsl: ## validate GSL in markdown code blocks
 fuzz: ## run fuzz tests
 	go test -tags fuzz -fuzztime=2m
 
+.PHONY: check-release-version
+check-release-version: ## validate SPEC.md version matches latest git tag
+	@SPEC_VERSION=$$(grep "^Version " SPEC.md | head -1 | sed 's/^Version \([^ ]*\).*/\1/'); \
+	LATEST_TAG=$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//'); \
+	if [ -z "$$LATEST_TAG" ]; then \
+		echo "ℹ  No git tags found yet"; \
+	elif [ "$$SPEC_VERSION" != "$$LATEST_TAG" ]; then \
+		echo "Error: SPEC.md version ($$SPEC_VERSION) does not match latest tag ($$LATEST_TAG)"; \
+		exit 1; \
+	else \
+		echo "✓ SPEC.md version ($$SPEC_VERSION) is consistent"; \
+	fi
+
 
