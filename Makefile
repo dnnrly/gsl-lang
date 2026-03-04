@@ -32,6 +32,7 @@ lint: ## run linting
 
 .PHONY: test
 test: ## run tests with coverage checks
+	mkdir -p $(TMP_DIR)
 	go test -run COMPILE_ONLY
 	go test -race -cover -count=1 -coverprofile=$(TMP_DIR)/coverage.txt ./...
 	@echo "Coverage report generated at $(TMP_DIR)/coverage.txt"
