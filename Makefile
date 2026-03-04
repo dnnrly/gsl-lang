@@ -42,4 +42,8 @@ test: ## run tests with coverage checks
 fuzz: ## run fuzz tests
 	go test -tags fuzz -fuzztime=2m
 
+.PHONY: test-integration
+test-integration: ## run integration tests for CLI tools
+	go test -tags integration -v ./cmd/gsl-diagram/...
+
 
