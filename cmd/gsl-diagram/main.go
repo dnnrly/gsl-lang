@@ -21,11 +21,17 @@ func main() {
 				return err
 			}
 
+			inputName := inputFile
+			if inputName == "" {
+				inputName = "<stdin>"
+			}
+
 			cfg := &Config{
 				InputFile:   inputFile,
 				OutputFile:  outputFile,
 				DiagramType: diagramType,
 				Converter:   factory,
+				InputName:   inputName,
 			}
 
 			return Execute(cfg)
@@ -36,6 +42,16 @@ func main() {
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output diagram file (write to stdout if not provided)")
 	rootCmd.Flags().StringVarP(&format, "format", "f", "mermaid", "Output format: mermaid, plantuml (default: mermaid)")
 	rootCmd.Flags().StringVarP(&diagramType, "type", "t", "component", "Diagram type (default: component)")
+
+	helpCmd := &cobra.Command{
+		Use:   "help",
+		Short: "Show help for gsl-diagram",
+		Run: func(cmd *cobra.Command, args []string) {
+			rootCmd.Help()
+		},
+	}
+
+	rootCmd.AddCommand(helpCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

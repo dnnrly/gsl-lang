@@ -16,6 +16,7 @@ func (c *mermaidComponentConverter) Convert(graph *gsl.Graph) string {
 	sb.WriteString("graph TB\n")
 
 	parentGroups := make(map[string][]*gsl.Node)
+	usedParents := make(map[string]bool)
 	orphanNodes := []*gsl.Node{}
 
 	for _, node := range graph.Nodes {
@@ -23,6 +24,7 @@ func (c *mermaidComponentConverter) Convert(graph *gsl.Graph) string {
 		if hasParent {
 			parentID := fmt.Sprintf("%v", parent)
 			parentGroups[parentID] = append(parentGroups[parentID], node)
+			usedParents[parentID] = true
 		} else {
 			orphanNodes = append(orphanNodes, node)
 		}
@@ -42,8 +44,11 @@ func (c *mermaidComponentConverter) Convert(graph *gsl.Graph) string {
 	}
 
 	for _, node := range orphanNodes {
-		label := converter.GetNodeLabel(node)
-		sb.WriteString(fmt.Sprintf("  %s[\"%s\"]\n", node.ID, label))
+		// Skip nodes that are used as parents
+		if !usedParents[node.ID] {
+			label := converter.GetNodeLabel(node)
+			sb.WriteString(fmt.Sprintf("  %s[\"%s\"]\n", node.ID, label))
+		}
 	}
 
 	sb.WriteString("\n")
