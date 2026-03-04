@@ -14,11 +14,10 @@ func (c *plantUMLComponentConverter) Convert(graph *gsl.Graph) string {
 	var sb strings.Builder
 
 	sb.WriteString("@startuml\n")
-	sb.WriteString("!define COMPONENT []\n")
-	sb.WriteString("scale max 1024 width\n")
 	sb.WriteString("\n")
 
 	parentGroups := make(map[string][]*gsl.Node)
+	usedParents := make(map[string]bool)
 	orphanNodes := []*gsl.Node{}
 
 	for _, node := range graph.Nodes {
@@ -26,6 +25,7 @@ func (c *plantUMLComponentConverter) Convert(graph *gsl.Graph) string {
 		if hasParent {
 			parentID := fmt.Sprintf("%v", parent)
 			parentGroups[parentID] = append(parentGroups[parentID], node)
+			usedParents[parentID] = true
 		} else {
 			orphanNodes = append(orphanNodes, node)
 		}
@@ -36,14 +36,17 @@ func (c *plantUMLComponentConverter) Convert(graph *gsl.Graph) string {
 		if parentNode != nil {
 			sb.WriteString(fmt.Sprintf("package \"%s\" as %s {\n", converter.GetNodeLabel(parentNode), parentID))
 			for _, child := range children {
-				sb.WriteString(fmt.Sprintf("  [%s]\n", converter.GetNodeLabel(child)))
+				sb.WriteString(fmt.Sprintf("  component %s\n", child.ID))
 			}
 			sb.WriteString("}\n")
 		}
 	}
 
 	for _, node := range orphanNodes {
-		sb.WriteString(fmt.Sprintf("[%s]\n", converter.GetNodeLabel(node)))
+		// Skip nodes that are used as parents
+		if !usedParents[node.ID] {
+			sb.WriteString(fmt.Sprintf("component %s\n", node.ID))
+		}
 	}
 
 	sb.WriteString("\n")

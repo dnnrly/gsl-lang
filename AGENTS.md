@@ -9,11 +9,14 @@ This document provides instructions for AI agents working on the GSL-Lang projec
 ## Quick Commands
 
 ```bash
-make test                # Run all tests with coverage
-make lint                # Run linting
-make fuzz                # Run fuzz tests
-make clean               # Clean build artifacts
-go test -v -run TestName # Run specific test
+make test                       # Run all tests with coverage
+make test-integration           # Run integration tests (skip if tools missing)
+make test-integration-strict    # Run integration tests (fail if tools missing)
+make lint                       # Run linting
+make fuzz                       # Run fuzz tests
+make build                      # Build gsl-diagram CLI tool
+make clean                      # Clean build artifacts
+go test -v -run TestName        # Run specific test
 ```
 
 ## Project Structure
@@ -27,6 +30,10 @@ go test -v -run TestName # Run specific test
 **Tests:**
 - `*_test.go` files - Unit and integration tests
 - `markdown_test.go` - Validates all code blocks in `.md` files
+- `cmd/gsl-diagram/cli_integration_test.go` - CLI tool integration tests (requires `mmdc` and `plantuml`)
+
+**CLI Tools:**
+- `cmd/gsl-diagram/` - Converts GSL graphs to diagram formats (Mermaid, PlantUML)
 
 **Documentation:**
 - `SPEC.md` - Normative spec (source of truth for language rules)
@@ -38,6 +45,8 @@ go test -v -run TestName # Run specific test
 
 ```bash
 make test
+make test-integration           # if mmdc and plantuml available
+make test-integration-strict    # to enforce tool availability
 go test -v -run TestMarkdownCodeBlocks
 make lint
 ```
@@ -45,6 +54,7 @@ make lint
 - All `gsl` code blocks in markdown must parse
 - All `invalid-gsl` blocks must fail to parse
 - Round-trip tests required for parser/serializer changes
+- Integration tests validate all example GSL files with both Mermaid and PlantUML converters
 - Update SPEC.md if changing language semantics
 - Update GRAMMAR.md if changing syntax
 - Commit message should reference relevant files
@@ -58,6 +68,7 @@ make lint
 | Serialization | serialize.go, serialize_test.go, gsl_test.go |
 | Graph structure | model.go, build.go, build_test.go |
 | Language rules | SPEC.md, GRAMMAR.md, markdown_test.go |
+| CLI diagram tool | cmd/gsl-diagram/*, cli_integration_test.go |
 | Documentation examples | README.md, SPEC.md, LLM_GUIDE.md |
 
 ## Key Design Patterns
@@ -72,9 +83,11 @@ make lint
 
 Before submitting changes:
 - [ ] All tests pass: `make test`
+- [ ] Integration tests pass: `make test-integration` (or `make test-integration-strict`)
 - [ ] Lint passes: `make lint`
 - [ ] Markdown validates: `go test -v -run TestMarkdownCodeBlocks`
 - [ ] Round-trip tests added (if touching parser/serializer)
+- [ ] Integration tests added (if modifying CLI tools or converters)
 - [ ] SPEC.md updated (if changing language semantics)
 - [ ] GRAMMAR.md updated (if changing syntax)
 - [ ] New code examples in markdown are valid `gsl` blocks

@@ -16,6 +16,7 @@ type Config struct {
 	OutputFile  string
 	DiagramType string
 	Converter   converter.Factory
+	InputName   string // Display name for input (file path or "<stdin>")
 }
 
 // Execute runs the conversion pipeline
@@ -39,12 +40,13 @@ func Execute(cfg *Config) error {
 	// Parse GSL
 	graph, warnings, err := gsl.Parse(bytes.NewReader(input))
 	if err != nil {
-		return fmt.Errorf("failed to parse GSL: %w", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to parse %s: %v\n", cfg.InputName, err)
+		return err
 	}
 
 	// Log warnings if any
 	for _, w := range warnings {
-		fmt.Fprintf(os.Stderr, "Warning: %v\n", w)
+		fmt.Fprintf(os.Stderr, "Warning [%s]: %v\n", cfg.InputName, w)
 	}
 
 	// Convert to diagram
@@ -54,7 +56,8 @@ func Execute(cfg *Config) error {
 	// Write output
 	if cfg.OutputFile != "" {
 		if err := os.WriteFile(cfg.OutputFile, []byte(output), 0644); err != nil {
-			return fmt.Errorf("failed to write output file: %w", err)
+			fmt.Fprintf(os.Stderr, "Error: failed to write output file: %v\n", err)
+			return err
 		}
 	} else {
 		fmt.Print(output)

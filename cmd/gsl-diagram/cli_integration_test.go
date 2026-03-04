@@ -145,10 +145,10 @@ API -> Cache [label="cache"]
 	if !contains(output, "@enduml") {
 		t.Errorf("missing @enduml directive")
 	}
-	if !contains(output, "[REST API]") {
+	if !contains(output, "component API") {
 		t.Errorf("missing API component")
 	}
-	if !contains(output, "[Database]") {
+	if !contains(output, "component DB") {
 		t.Errorf("missing DB component")
 	}
 	if !contains(output, "-->") {
@@ -188,10 +188,10 @@ System -> DB
 	if !contains(output, "package") {
 		t.Errorf("missing package directive for parent")
 	}
-	if !contains(output, "[Auth]") {
+	if !contains(output, "component Auth") {
 		t.Errorf("missing Auth child component")
 	}
-	if !contains(output, "[DB]") {
+	if !contains(output, "component DB") {
 		t.Errorf("missing DB child component")
 	}
 }
@@ -363,6 +363,111 @@ func TestCLIIntegrationPlantUML(t *testing.T) {
 		t.Fatalf("plantuml did not produce output file at %s: %v", pngPath, err)
 	}
 	defer os.Remove(pngPath)
+}
+
+func TestExampleFilesWithMermaid(t *testing.T) {
+	examplesDir := "../../examples"
+
+	entries, err := os.ReadDir(examplesDir)
+	if err != nil {
+		t.Fatalf("failed to read examples directory: %v", err)
+	}
+
+	factory, err := formats.GetFactory("mermaid")
+	if err != nil {
+		t.Fatalf("failed to get mermaid factory: %v", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !bytes.HasSuffix([]byte(entry.Name()), []byte(".gsl")) {
+			continue
+		}
+
+		t.Run("mermaid_"+entry.Name(), func(t *testing.T) {
+			filePath := examplesDir + "/" + entry.Name()
+			input, err := os.ReadFile(filePath)
+			if err != nil {
+				t.Fatalf("failed to read example file %s: %v", filePath, err)
+			}
+
+			graph, warnings, err := gsl.Parse(bytes.NewReader(input))
+			if err != nil {
+				t.Fatalf("failed to parse GSL from %s: %v", filePath, err)
+			}
+
+			// Log warnings if any
+			for _, w := range warnings {
+				t.Logf("Warning from %s: %v", filePath, w)
+			}
+
+			// Convert to both diagram types
+			for _, diagramType := range []string{"component", "graph"} {
+				conv := factory(diagramType)
+				output := conv.Convert(graph)
+
+				if len(output) == 0 {
+					t.Errorf("%s: empty output for diagram type %s", entry.Name(), diagramType)
+				}
+
+				if !contains(output, "graph") {
+					t.Errorf("%s: missing graph directive for type %s", entry.Name(), diagramType)
+				}
+			}
+		})
+	}
+}
+
+func TestExampleFilesWithPlantUML(t *testing.T) {
+	examplesDir := "../../examples"
+
+	entries, err := os.ReadDir(examplesDir)
+	if err != nil {
+		t.Fatalf("failed to read examples directory: %v", err)
+	}
+
+	factory, err := formats.GetFactory("plantuml")
+	if err != nil {
+		t.Fatalf("failed to get plantuml factory: %v", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !bytes.HasSuffix([]byte(entry.Name()), []byte(".gsl")) {
+			continue
+		}
+
+		t.Run("plantuml_"+entry.Name(), func(t *testing.T) {
+			filePath := examplesDir + "/" + entry.Name()
+			input, err := os.ReadFile(filePath)
+			if err != nil {
+				t.Fatalf("failed to read example file %s: %v", filePath, err)
+			}
+
+			graph, warnings, err := gsl.Parse(bytes.NewReader(input))
+			if err != nil {
+				t.Fatalf("failed to parse GSL from %s: %v", filePath, err)
+			}
+
+			// Log warnings if any
+			for _, w := range warnings {
+				t.Logf("Warning from %s: %v", filePath, w)
+			}
+
+			conv := factory("component")
+			output := conv.Convert(graph)
+
+			if len(output) == 0 {
+				t.Errorf("%s: empty output", entry.Name())
+			}
+
+			if !contains(output, "@startuml") {
+				t.Errorf("%s: missing @startuml directive", entry.Name())
+			}
+
+			if !contains(output, "@enduml") {
+				t.Errorf("%s: missing @enduml directive", entry.Name())
+			}
+		})
+	}
 }
 
 func contains(s, substr string) bool {
