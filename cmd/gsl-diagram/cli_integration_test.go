@@ -5,11 +5,28 @@ package main
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"testing"
 
 	gsl "github.com/dnnrly/gsl-lang"
 	"github.com/dnnrly/gsl-lang/cmd/gsl-diagram/formats"
 )
+
+// checkMermaidCLI checks if mermaid-cli is available
+func checkMermaidCLI(t *testing.T) {
+	cmd := exec.Command("mmdc", "--version")
+	if err := cmd.Run(); err != nil {
+		t.Skipf("mermaid-cli (mmdc) not available: %v", err)
+	}
+}
+
+// checkPlantUMLCLI checks if plantuml is available
+func checkPlantUMLCLI(t *testing.T) {
+	cmd := exec.Command("plantuml", "-version")
+	if err := cmd.Run(); err != nil {
+		t.Skipf("plantuml not available: %v", err)
+	}
+}
 
 func TestMermaidComponentDiagramOutput(t *testing.T) {
 	gslInput := `
@@ -209,6 +226,8 @@ System -> DB
 }
 
 func TestCLIIntegrationMermaid(t *testing.T) {
+	checkMermaidCLI(t)
+
 	// Create temp files
 	inputFile, err := os.CreateTemp("", "test*.gsl")
 	if err != nil {
@@ -216,14 +235,17 @@ func TestCLIIntegrationMermaid(t *testing.T) {
 	}
 	defer os.Remove(inputFile.Name())
 
-	outputFile, err := os.CreateTemp("", "test*.mmd")
+	mmdFile, err := os.CreateTemp("", "test*.mmd")
 	if err != nil {
-		t.Fatalf("failed to create temp output file: %v", err)
+		t.Fatalf("failed to create temp mmd file: %v", err)
 	}
-	defer os.Remove(outputFile.Name())
+	defer os.Remove(mmdFile.Name())
+
+	pngFile := mmdFile.Name() + ".png"
+	defer os.Remove(pngFile)
 
 	// Write test GSL
-	if _, err := inputFile.WriteString("node A\nnode B\nA -> B\n"); err != nil {
+	if _, err := inputFile.WriteString("node API: \"REST API\"\nnode DB: \"Database\"\nAPI -> DB\n"); err != nil {
 		t.Fatalf("failed to write test input: %v", err)
 	}
 	inputFile.Close()
@@ -236,7 +258,7 @@ func TestCLIIntegrationMermaid(t *testing.T) {
 
 	cfg := &Config{
 		InputFile:   inputFile.Name(),
-		OutputFile:  outputFile.Name(),
+		OutputFile:  mmdFile.Name(),
 		DiagramType: "component",
 		Converter:   factory,
 	}
@@ -246,21 +268,30 @@ func TestCLIIntegrationMermaid(t *testing.T) {
 	}
 
 	// Verify output file exists and has content
-	content, err := os.ReadFile(outputFile.Name())
+	content, err := os.ReadFile(mmdFile.Name())
 	if err != nil {
 		t.Fatalf("failed to read output file: %v", err)
 	}
 
 	if len(content) == 0 {
-		t.Errorf("output file is empty")
+		t.Fatalf("output file is empty")
 	}
 
-	if !contains(string(content), "graph TB") {
-		t.Errorf("output missing graph directive")
+	// Validate with mermaid-cli
+	cmd := exec.Command("mmdc", "-i", mmdFile.Name(), "-o", pngFile, "-q")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("mermaid-cli validation failed: %v\nOutput: %s", err, string(output))
+	}
+
+	// Verify PNG was created
+	if _, err := os.Stat(pngFile); err != nil {
+		t.Fatalf("mermaid-cli did not produce output file: %v", err)
 	}
 }
 
 func TestCLIIntegrationPlantUML(t *testing.T) {
+	checkPlantUMLCLI(t)
+
 	// Create temp files
 	inputFile, err := os.CreateTemp("", "test*.gsl")
 	if err != nil {
@@ -268,14 +299,17 @@ func TestCLIIntegrationPlantUML(t *testing.T) {
 	}
 	defer os.Remove(inputFile.Name())
 
-	outputFile, err := os.CreateTemp("", "test*.puml")
+	pumlFile, err := os.CreateTemp("", "test*.puml")
 	if err != nil {
-		t.Fatalf("failed to create temp output file: %v", err)
+		t.Fatalf("failed to create temp puml file: %v", err)
 	}
-	defer os.Remove(outputFile.Name())
+	defer os.Remove(pumlFile.Name())
+
+	pngFile := pumlFile.Name() + ".png"
+	defer os.Remove(pngFile)
 
 	// Write test GSL
-	if _, err := inputFile.WriteString("node A\nnode B\nA -> B\n"); err != nil {
+	if _, err := inputFile.WriteString("node API: \"REST API\"\nnode DB: \"Database\"\nAPI -> DB\n"); err != nil {
 		t.Fatalf("failed to write test input: %v", err)
 	}
 	inputFile.Close()
@@ -288,7 +322,7 @@ func TestCLIIntegrationPlantUML(t *testing.T) {
 
 	cfg := &Config{
 		InputFile:   inputFile.Name(),
-		OutputFile:  outputFile.Name(),
+		OutputFile:  pumlFile.Name(),
 		DiagramType: "component",
 		Converter:   factory,
 	}
@@ -298,21 +332,29 @@ func TestCLIIntegrationPlantUML(t *testing.T) {
 	}
 
 	// Verify output file exists and has content
-	content, err := os.ReadFile(outputFile.Name())
+	content, err := os.ReadFile(pumlFile.Name())
 	if err != nil {
 		t.Fatalf("failed to read output file: %v", err)
 	}
 
 	if len(content) == 0 {
-		t.Errorf("output file is empty")
+		t.Fatalf("output file is empty")
 	}
 
-	if !contains(string(content), "@startuml") {
-		t.Errorf("output missing @startuml directive")
+	// Validate with plantuml (output directory must exist)
+	tmpDir := os.TempDir()
+	cmd := exec.Command("plantuml", "-tpng", "-o", tmpDir, pumlFile.Name())
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("plantuml validation failed: %v\nOutput: %s", err, string(output))
 	}
-	if !contains(string(content), "@enduml") {
-		t.Errorf("output missing @enduml directive")
+
+	// Verify PNG was created in temp directory
+	baseName := pumlFile.Name()[:len(pumlFile.Name())-5] // remove .puml
+	pngPath := baseName + ".png"
+	if _, err := os.Stat(pngPath); err != nil {
+		t.Fatalf("plantuml did not produce output file at %s: %v", pngPath, err)
 	}
+	defer os.Remove(pngPath)
 }
 
 func contains(s, substr string) bool {
