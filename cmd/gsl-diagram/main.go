@@ -47,7 +47,7 @@ func main() {
 		Use:   "help",
 		Short: "Show help for gsl-diagram",
 		Run: func(cmd *cobra.Command, args []string) {
-			rootCmd.Help()
+			_ = rootCmd.Help()
 		},
 	}
 
