@@ -1,25 +1,3 @@
-Below is a **clean EBNF grammar for GSL-QL (Spec v0.3)** based on the model you approved.
-
-This grammar is designed to be:
-
-* **LL-friendly** (no left recursion)
-* **Deterministic**
-* **Easy to implement in Go**
-* Compatible with typical parser generators (ANTLR, participle, pigeon, etc.)
-
-I’ve separated it into:
-
-1. **Lexical grammar**
-2. **Core query grammar**
-3. **Predicate grammar**
-4. **Attribute grammar**
-5. **Notes for implementers**
-
-Assumption:
-`graph`, `match`, `traverse`, etc. are **reserved keywords**.
-
----
-
 # GSL-QL EBNF Grammar (Spec v0.3)
 
 ## 1. Query Structure
@@ -486,18 +464,3 @@ Predicate
  ├─ NodePredicate
  └─ EdgePredicate
 ```
-
----
-
-# If you'd like, the **next extremely valuable step** would be:
-
-I can generate a **full Go implementation blueprint**, including:
-
-* AST structs
-* parser design
-* evaluation engine
-* traversal algorithm
-* collapse algorithm
-* deterministic pipeline executor
-
-That step typically **surfaces the last hidden spec bugs** before implementation.
