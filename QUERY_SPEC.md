@@ -115,7 +115,7 @@ Query files SHOULD use:
 subgraph
 from
 as
-follow
+traverse
 make
 remove
 collapse
@@ -123,12 +123,11 @@ into
 where
 AND
 in
+out
+both
 exists
 not
 orphans
-incoming
-outgoing
-both
 all
 ```
 
@@ -366,12 +365,12 @@ Both predicates MUST target the same element type.
 
 ---
 
-# 8. Traversal (`follow`)
+# 8. Traversal (`traverse`)
 
 Traversal expands a subgraph structurally.
 
 ```
-subgraph <predicate> follow <direction> <depth>
+subgraph <predicate> traverse <direction> <depth>
 ```
 
 Traversal operates **after the subgraph is constructed**.
@@ -383,8 +382,8 @@ Traversal is **structure-based**, not predicate-based.
 ## 8.1 Direction
 
 ```
-incoming
-outgoing
+in
+out
 both
 ```
 
@@ -633,7 +632,7 @@ stage :=
 
 subgraph_stage :=
     'subgraph' predicate
-    ('follow' direction depth)?
+    ('traverse' direction depth)?
 
 make_stage :=
     'make' target '=' value 'where' predicate
