@@ -5,7 +5,7 @@ description: RFC specification for the GSL Query Language. Covers subgraph extra
 
 # GSL Query Language Specification
 
-Version 0.3.0 (Revised Draft RFC)
+Version 0.4.0 (Revised Draft RFC)
 
 ---
 
@@ -19,22 +19,59 @@ Design goals:
 
 * **Composability** — queries form pipelines of graph transformations
 * **Determinism** — identical inputs produce identical outputs
-* **Graph preservation** — every stage produces a valid GSL graph
+* **Graph preservation** — every expression produces a valid GSL graph
 * **Minimality** — small orthogonal language surface
 
 ---
 
 # 2. Conceptual Model
 
-The query language is a **graph transformation pipeline**.
+The query language is a **pipeline of expressions** applied to a working value.
 
-Each stage performs:
+Each expression transforms an input value into an output value:
+
+```
+Value → Value
+```
+
+In version 1 of the language, the only supported value type is:
+
+```
+Graph
+```
+
+Therefore all expressions defined in this specification have the type:
 
 ```
 Graph → Graph
 ```
 
-A query therefore consists of a sequence of graph transformations applied to a **working graph**.
+Future versions of the language may introduce additional value types, such as:
+
+```
+NodeSet
+EdgeSet
+Scalar
+```
+
+Expressions declare the value types they accept and produce.
+If an expression receives a value of an incompatible type, the query MUST fail with an error.
+
+---
+
+## 2.1 Query State
+
+Evaluation occurs within a **query state** consisting of:
+
+```
+QueryState:
+    input_graph      — the original graph provided to the query
+    working_value    — the current value being transformed
+    named_graphs     — a map of bound named graphs
+```
+
+The query state is initialized with the input graph as both the input graph and the working value.
+Named graphs are initially empty.
 
 ---
 
@@ -184,35 +221,37 @@ Pipelines are evaluated **left to right**.
 
 # 5. Query Pipeline Model
 
-A query consists of sequential stages:
+A query consists of sequential expressions:
 
 ```
-input_graph → stage₁ → stage₂ → … → stageₙ → result_graph
+input_value → expr₁ → expr₂ → … → exprₙ → result_value
 ```
 
-Each stage receives a **working graph** and produces a **new working graph**.
+Each expression receives a **working value** and produces a new value.
 
 ---
 
-## 5.1 Stage Types
+## 5.1 Expression Types (v1)
 
-| Stage                  | Description           |
-| ---------------------- | --------------------- |
-| `subgraph`             | Extract subgraph      |
-| `make`                 | Assign attributes     |
-| `remove edge`          | Remove edges          |
-| `remove attribute`     | Remove attributes     |
-| `remove orphans`       | Remove isolated nodes |
-| `collapse`             | Merge nodes           |
-| `from`                 | Change working graph  |
-| `(<pipeline>) as NAME` | Bind named graph      |
-| graph algebra          | Combine named graphs  |
+In version 1 all expressions accept and return graphs.
+
+| Expression             | Type            | Description           |
+| ---------------------- | --------------- | --------------------- |
+| `subgraph`             | Graph → Graph   | Extract subgraph      |
+| `make`                 | Graph → Graph   | Assign attributes     |
+| `remove edge`          | Graph → Graph   | Remove edges          |
+| `remove attribute`     | Graph → Graph   | Remove attributes     |
+| `remove orphans`       | Graph → Graph   | Remove isolated nodes |
+| `collapse`             | Graph → Graph   | Merge nodes           |
+| `from`                 | Graph → Graph   | Change working graph  |
+| `(<pipeline>) as NAME` | Graph → Graph   | Bind named graph      |
+| graph algebra          | Graph → Graph   | Combine named graphs  |
 
 ---
 
 ## 5.2 Implicit Source
 
-If a query begins without a `from` stage, the working graph is the **input graph**.
+If a query begins without a `from` expression, the working value is the **input graph**.
 
 ---
 
@@ -619,31 +658,31 @@ Duplicate edges are preserved.
 # 14. Grammar (Simplified)
 
 ```
-query := stage ('|' stage)*
+query := expression ('|' expression)*
 
-stage :=
-      subgraph_stage
-    | make_stage
-    | remove_stage
-    | collapse_stage
-    | from_stage
+expression :=
+      subgraph_expr
+    | make_expr
+    | remove_expr
+    | collapse_expr
+    | from_expr
     | binding
     | graph_algebra
 
-subgraph_stage :=
+subgraph_expr :=
     'subgraph' predicate
     ('traverse' direction depth)?
 
-make_stage :=
+make_expr :=
     'make' target '=' value 'where' predicate
 
-remove_stage :=
+remove_expr :=
       'remove edge where' predicate
     | 'remove node.' IDENT 'where' predicate
     | 'remove edge.' IDENT 'where' predicate
     | 'remove orphans'
 
-collapse_stage :=
+collapse_expr :=
     'collapse into' IDENT 'where' predicate
 ```
 
@@ -658,6 +697,8 @@ An implementation MUST produce an error for:
 * invalid attribute paths
 * invalid collapse identifier
 * syntax violations
+* unknown expressions
+* type-incompatible values passed to an expression
 
 ---
 

@@ -1,4 +1,4 @@
-# GSL-QL EBNF Grammar (Spec v0.3)
+# GSL-QL EBNF Grammar (Spec v0.4)
 
 ## 1. Query Structure
 
@@ -7,14 +7,14 @@ query
     = [ graph_source ] , pipeline ;
 
 pipeline
-    = stage , { "|" , stage } ;
+    = expression , { "|" , expression } ;
 
-stage
-    = subgraph_stage
-    | make_stage
-    | remove_stage
-    | collapse_stage
-    | from_stage
+expression
+    = subgraph_expr
+    | make_expr
+    | remove_expr
+    | collapse_expr
+    | from_expr
     | binding
     | graph_algebra ;
 ```
@@ -34,10 +34,10 @@ If no `graph_source` is given, the working graph is the input graph.
 
 ---
 
-# 3. Subgraph Stage
+# 3. Subgraph Expression
 
 ```ebnf
-subgraph_stage
+subgraph_expr
     = "subgraph" , predicate , [ traverse_clause ] ;
 
 traverse_clause
@@ -190,10 +190,10 @@ edge.protocol
 
 ---
 
-# 11. Make Stage
+# 11. Make Expression
 
 ```ebnf
-make_stage
+make_expr
     = "make" , attribute_path , "=" , value , "where" , predicate ;
 ```
 
@@ -208,10 +208,10 @@ make edge.encrypted = true where edge.protocol == "http"
 
 ---
 
-# 12. Remove Stage
+# 12. Remove Expression
 
 ```ebnf
-remove_stage
+remove_expr
     = "remove" , "edge" , "where" , predicate
     | "remove" , attribute_path , "where" , predicate
     | "remove" , "orphans" ;
@@ -228,10 +228,10 @@ remove orphans
 
 ---
 
-# 13. Collapse Stage
+# 13. Collapse Expression
 
 ```ebnf
-collapse_stage
+collapse_expr
     = "collapse" , "into" , identifier , "where" , predicate ;
 ```
 
@@ -245,10 +245,10 @@ collapse into platform_group where node.team == "platform"
 
 ---
 
-# 14. From Stage
+# 14. From Expression
 
 ```ebnf
-from_stage
+from_expr
     = "from" , ( identifier | "*" ) ;
 ```
 
@@ -563,7 +563,7 @@ This keeps the parser simple and deterministic.
 This grammar is intentionally structured so that:
 
 * **Predicates are typed by their attribute path prefix** (`node.` or `edge.`)
-* **Stages always start with a keyword** (`subgraph`, `make`, `remove`, `collapse`, `from`)
+* **Expressions always start with a keyword** (`subgraph`, `make`, `remove`, `collapse`, `from`)
 * **Named graph references are uppercase**, distinguishing them from regular identifiers
 
 This means a parser can decide **what rule to use from the first token**.
@@ -579,24 +579,24 @@ The AST shape implied by this grammar is roughly:
 ```
 Query
  ├─ GraphSource (optional)
- └─ []Stage
+ └─ []Expression
 
-Stage
- ├─ SubgraphStage
+Expression
+ ├─ SubgraphExpr
  │    ├─ Predicate
  │    └─ TraverseClause (optional)
- ├─ MakeStage
+ ├─ MakeExpr
  │    ├─ AttributePath
  │    ├─ Value
  │    └─ Predicate
- ├─ RemoveStage
+ ├─ RemoveExpr
  │    ├─ RemoveEdge + Predicate
  │    ├─ RemoveAttribute + Predicate
  │    └─ RemoveOrphans
- ├─ CollapseStage
+ ├─ CollapseExpr
  │    ├─ Identifier
  │    └─ Predicate
- ├─ FromStage
+ ├─ FromExpr
  ├─ Binding
  │    ├─ Pipeline
  │    └─ NamedGraphId
