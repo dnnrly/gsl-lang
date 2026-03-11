@@ -148,6 +148,11 @@ func (p *expressionParser) parse() (Expression, error) {
 		return p.parseFrom()
 	}
 
+	// Subgraph expression
+	if strings.HasPrefix(input, "subgraph ") || input == "subgraph" {
+		return p.parseSubgraph()
+	}
+
 	// Unknown expression type
 	return nil, fmt.Errorf("unknown expression: %s", input)
 }
@@ -244,6 +249,34 @@ func (p *expressionParser) parseFrom() (Expression, error) {
 	}
 
 	return &FromExpr{IsWildcard: false, Name: arg}, nil
+}
+
+// parseSubgraph parses "subgraph <predicate>"
+func (p *expressionParser) parseSubgraph() (Expression, error) {
+	input := trimSpace(p.input)
+
+	if input == "subgraph" {
+		return nil, fmt.Errorf("subgraph requires a predicate")
+	}
+
+	if !strings.HasPrefix(input, "subgraph ") {
+		return nil, fmt.Errorf("invalid subgraph expression: %s", input)
+	}
+
+	// Extract predicate (everything after "subgraph ")
+	predicateStr := trimSpace(input[9:]) // skip "subgraph "
+
+	if predicateStr == "" {
+		return nil, fmt.Errorf("subgraph requires a predicate")
+	}
+
+	// Parse the predicate
+	pred, err := ParsePredicate(predicateStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse predicate: %w", err)
+	}
+
+	return &SubgraphExpr{Pred: pred}, nil
 }
 
 // isValidGraphName checks if a name matches [A-Z][A-Z0-9_]*
