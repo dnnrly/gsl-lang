@@ -154,6 +154,28 @@ func (p *expressionParser) parse() (Expression, error) {
 		return p.parseSubgraph()
 	}
 
+	// Remove expression
+	if strings.HasPrefix(input, "remove ") || input == "remove" {
+		return p.parseRemove()
+	}
+
+	// Make expression
+	if strings.HasPrefix(input, "make ") || input == "make" {
+		return p.parseMake()
+	}
+
+	// Collapse expression
+	if strings.HasPrefix(input, "collapse ") || input == "collapse" {
+		return p.parseCollapse()
+	}
+
+	// Graph algebra expression (try to parse as algebra)
+	expr, err := p.parseGraphAlgebra()
+	if err == nil {
+		return expr, nil
+	}
+	// If not algebra, try other patterns or fail below
+
 	// Unknown expression type
 	return nil, fmt.Errorf("unknown expression: %s", input)
 }
@@ -308,6 +330,251 @@ func (p *expressionParser) parseSubgraph() (Expression, error) {
 	return &SubgraphExpr{Pred: pred, Traversal: traversal}, nil
 }
 
+// parseRemove parses remove expressions:
+//   remove edge where <predicate>
+//   remove node.<attr> where <predicate>
+//   remove edge.<attr> where <predicate>
+//   remove orphans
+func (p *expressionParser) parseRemove() (Expression, error) {
+	input := trimSpace(p.input)
+
+	if input == "remove" {
+		return nil, fmt.Errorf("remove requires an argument")
+	}
+
+	if !strings.HasPrefix(input, "remove ") {
+		return nil, fmt.Errorf("invalid remove expression: %s", input)
+	}
+
+	// Extract everything after "remove "
+	rest := trimSpace(input[7:])
+
+	if rest == "" {
+		return nil, fmt.Errorf("remove requires an argument")
+	}
+
+	// Handle "remove orphans"
+	if rest == "orphans" {
+		return &RemoveOrphansExpr{}, nil
+	}
+
+	// Handle "remove edge where <predicate>"
+	if strings.HasPrefix(rest, "edge where ") {
+		predicateStr := trimSpace(rest[11:]) // skip "edge where "
+		if predicateStr == "" {
+			return nil, fmt.Errorf("remove edge where requires a predicate")
+		}
+		pred, err := ParsePredicate(predicateStr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse predicate: %w", err)
+		}
+		return &RemoveEdgeExpr{Pred: pred}, nil
+	}
+
+	// Handle "remove node.<attr> where <predicate>"
+	if strings.HasPrefix(rest, "node.") {
+		return p.parseRemoveAttribute("node", rest)
+	}
+
+	// Handle "remove edge.<attr> where <predicate>"
+	if strings.HasPrefix(rest, "edge.") {
+		return p.parseRemoveAttribute("edge", rest)
+	}
+
+	return nil, fmt.Errorf("unknown remove expression: %s", input)
+}
+
+// parseRemoveAttribute parses "node.<attr> where <pred>" or "edge.<attr> where <pred>"
+func (p *expressionParser) parseRemoveAttribute(target string, input string) (Expression, error) {
+	// Extract attribute name and predicate
+	// Format: "node.<attr> where <predicate>"
+	prefix := target + "."
+	if !strings.HasPrefix(input, prefix) {
+		return nil, fmt.Errorf("expected %s. prefix", target)
+	}
+
+	rest := input[len(prefix):]
+
+	// Find "where"
+	whereIdx := strings.Index(rest, " where ")
+	if whereIdx == -1 {
+		return nil, fmt.Errorf("remove %s requires ' where <predicate>'", target)
+	}
+
+	attrName := trimSpace(rest[:whereIdx])
+	predicateStr := trimSpace(rest[whereIdx+7:]) // skip " where "
+
+	if attrName == "" {
+		return nil, fmt.Errorf("attribute name required for remove %s", target)
+	}
+
+	if predicateStr == "" {
+		return nil, fmt.Errorf("predicate required for remove %s", target)
+	}
+
+	// Parse the predicate
+	pred, err := ParsePredicate(predicateStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse predicate: %w", err)
+	}
+
+	return &RemoveAttributeExpr{
+		Target: target,
+		Attr:   attrName,
+		Pred:   pred,
+	}, nil
+}
+
+// parseMake parses make expressions:
+//   make node.<attr> = <value> where <predicate>
+//   make edge.<attr> = <value> where <predicate>
+func (p *expressionParser) parseMake() (Expression, error) {
+	input := trimSpace(p.input)
+
+	if input == "make" {
+		return nil, fmt.Errorf("make requires an argument")
+	}
+
+	if !strings.HasPrefix(input, "make ") {
+		return nil, fmt.Errorf("invalid make expression: %s", input)
+	}
+
+	// Extract everything after "make "
+	rest := trimSpace(input[5:])
+
+	if rest == "" {
+		return nil, fmt.Errorf("make requires an argument")
+	}
+
+	// Handle "make node.<attr> = <value> where <predicate>"
+	if strings.HasPrefix(rest, "node.") {
+		return p.parseMakeAttribute("node", rest)
+	}
+
+	// Handle "make edge.<attr> = <value> where <predicate>"
+	if strings.HasPrefix(rest, "edge.") {
+		return p.parseMakeAttribute("edge", rest)
+	}
+
+	return nil, fmt.Errorf("unknown make expression: %s", input)
+}
+
+// parseMakeAttribute parses "node.<attr> = <value> where <pred>" or "edge.<attr> = <value> where <pred>"
+func (p *expressionParser) parseMakeAttribute(target string, input string) (Expression, error) {
+	prefix := target + "."
+	if !strings.HasPrefix(input, prefix) {
+		return nil, fmt.Errorf("expected %s. prefix", target)
+	}
+
+	rest := input[len(prefix):]
+
+	// Find first " = "
+	eqIdx := strings.Index(rest, " = ")
+	if eqIdx == -1 {
+		return nil, fmt.Errorf("make %s requires ' = <value>'", target)
+	}
+
+	attrName := trimSpace(rest[:eqIdx])
+	afterEq := trimSpace(rest[eqIdx+3:]) // skip " = "
+
+	if attrName == "" {
+		return nil, fmt.Errorf("attribute name required for make %s", target)
+	}
+
+	// Find "where" clause
+	whereIdx := strings.Index(afterEq, " where ")
+	if whereIdx == -1 {
+		return nil, fmt.Errorf("make %s requires ' where <predicate>'", target)
+	}
+
+	valueStr := trimSpace(afterEq[:whereIdx])
+	predicateStr := trimSpace(afterEq[whereIdx+7:]) // skip " where "
+
+	if valueStr == "" {
+		return nil, fmt.Errorf("value required for make %s", target)
+	}
+
+	if predicateStr == "" {
+		return nil, fmt.Errorf("predicate required for make %s", target)
+	}
+
+	// Parse the value
+	value := parseValue(valueStr)
+
+	// Parse the predicate
+	pred, err := ParsePredicate(predicateStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse predicate: %w", err)
+	}
+
+	return &MakeExpr{
+		Target: target,
+		Attr:   attrName,
+		Value:  value,
+		Pred:   pred,
+	}, nil
+}
+
+// parseCollapse parses collapse expressions:
+//   collapse into <id> where <predicate>
+func (p *expressionParser) parseCollapse() (Expression, error) {
+	input := trimSpace(p.input)
+
+	if input == "collapse" {
+		return nil, fmt.Errorf("collapse requires an argument")
+	}
+
+	if !strings.HasPrefix(input, "collapse ") {
+		return nil, fmt.Errorf("invalid collapse expression: %s", input)
+	}
+
+	// Extract everything after "collapse "
+	rest := trimSpace(input[9:])
+
+	if rest == "" {
+		return nil, fmt.Errorf("collapse requires an argument")
+	}
+
+	// Handle "collapse into <id> where <predicate>"
+	if !strings.HasPrefix(rest, "into ") {
+		return nil, fmt.Errorf("collapse requires 'into <id> where <predicate>'")
+	}
+
+	rest = trimSpace(rest[5:]) // skip "into "
+
+	// Find "where"
+	whereIdx := strings.Index(rest, " where ")
+	if whereIdx == -1 {
+		return nil, fmt.Errorf("collapse requires ' where <predicate>'")
+	}
+
+	nodeID := trimSpace(rest[:whereIdx])
+	predicateStr := trimSpace(rest[whereIdx+7:]) // skip " where "
+
+	if nodeID == "" {
+		return nil, fmt.Errorf("collapse requires a node ID")
+	}
+
+	if predicateStr == "" {
+		return nil, fmt.Errorf("collapse requires a predicate")
+	}
+
+	// Validate node ID (any non-empty identifier is acceptable)
+	// Per spec: "<id> MUST be a valid node identifier"
+	// We accept any string as a valid node identifier
+
+	// Parse the predicate
+	pred, err := ParsePredicate(predicateStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse predicate: %w", err)
+	}
+
+	return &CollapseExpr{
+		NodeID: nodeID,
+		Pred:   pred,
+	}, nil
+}
+
 // parseTraversal parses "<direction> <depth>"
 // direction: in, out, both
 // depth: number (1, 2, 3, ...) or "all"
@@ -387,4 +654,57 @@ func trimSpace(s string) string {
 	}
 
 	return s[start:end]
+}
+
+// parseGraphAlgebra parses graph algebra expressions: GRAPHREF OP GRAPHREF
+// where OP is one of: +, &, -, ^
+// GRAPHREF is either "*" (input graph) or a named graph name
+func (p *expressionParser) parseGraphAlgebra() (Expression, error) {
+	input := trimSpace(p.input)
+
+	// Try to find operators: +, &, -, ^
+	// We need to find the operator at the top level (respecting no parens in basic algebra)
+	var opIdx int = -1
+	var op string
+
+	for _, candidate := range []string{"+", "&", "-", "^"} {
+		idx := strings.Index(input, " "+candidate+" ")
+		if idx != -1 {
+			opIdx = idx
+			op = candidate
+			break
+		}
+	}
+
+	// No operator found
+	if opIdx == -1 {
+		return nil, fmt.Errorf("not a graph algebra expression")
+	}
+
+	// Split on operator
+	leftRef := trimSpace(input[:opIdx])
+	rightRef := trimSpace(input[opIdx+3:]) // skip " OP "
+
+	// Validate graph references
+	if !isValidGraphRef(leftRef) {
+		return nil, fmt.Errorf("invalid left graph reference: %s", leftRef)
+	}
+	if !isValidGraphRef(rightRef) {
+		return nil, fmt.Errorf("invalid right graph reference: %s", rightRef)
+	}
+
+	return &GraphAlgebraExpr{
+		LeftRef:  leftRef,
+		RightRef: rightRef,
+		Operator: op,
+	}, nil
+}
+
+// isValidGraphRef checks if a reference is valid (either "*" or a named graph name)
+func isValidGraphRef(ref string) bool {
+	if ref == "*" {
+		return true
+	}
+	// Must match named graph naming: [A-Z][A-Z0-9_]*
+	return isValidGraphName(ref)
 }
