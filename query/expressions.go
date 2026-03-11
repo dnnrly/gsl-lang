@@ -61,13 +61,20 @@ func (e *BindExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	return input, nil
 }
 
-// SubgraphExpr extracts a subgraph matching a predicate
-// Without traversal, includes matching nodes and edges between them
-type SubgraphExpr struct {
-	Pred Predicate // Predicate to match nodes or edges
+// TraversalConfig specifies traversal direction and depth
+type TraversalConfig struct {
+	Direction string // "in", "out", or "both"
+	Depth     int    // number of hops; 0 means no traversal
 }
 
-// Apply filters graph to subgraph matching predicate
+// SubgraphExpr extracts a subgraph matching a predicate, with optional traversal
+// Traversal expands the subgraph structurally (not predicate-based)
+type SubgraphExpr struct {
+	Pred      Predicate        // Predicate to match nodes or edges
+	Traversal *TraversalConfig // nil if no traversal
+}
+
+// Apply filters graph to subgraph matching predicate, then optionally traverses
 func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	// Extract graph
 	graphValue, ok := input.(GraphValue)
@@ -83,7 +90,15 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 		return nil, fmt.Errorf("predicate mixes node and edge targets")
 	}
 
-	// Clone the graph (start with everything)
+	// Build base subgraph
+	baseNodes := e.buildSubgraph(graph, targetType)
+
+	// If traversal requested, expand from base nodes
+	if e.Traversal != nil && e.Traversal.Depth > 0 {
+		baseNodes = e.traverse(graph, baseNodes, e.Traversal)
+	}
+
+	// Construct result graph
 	result := &gsl.Graph{
 		Nodes: make(map[string]*gsl.Node),
 		Edges: []*gsl.Edge{},
@@ -95,97 +110,143 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 		result.Sets[id] = set
 	}
 
-	switch targetType {
-	case "node":
-		// Node predicate: include matching nodes + edges between them
-		matchedNodes := make(map[string]bool)
-
-		// Filter nodes
-		for id, node := range graph.Nodes {
-			if e.Pred.EvaluateNode(node) {
-				matchedNodes[id] = true
-				result.Nodes[id] = node
-			}
+	// Add matched nodes
+	for id := range baseNodes {
+		if node, exists := graph.Nodes[id]; exists {
+			result.Nodes[id] = node
 		}
+	}
 
-		// Include edges where both source and target are matched
-		for _, edge := range graph.Edges {
-			if matchedNodes[edge.From] && matchedNodes[edge.To] {
-				result.Edges = append(result.Edges, edge)
-			}
-		}
-
-	case "edge":
-		// Edge predicate: include matching edges + their source/target nodes
-		matchedNodeIDs := make(map[string]bool)
-
-		// Filter edges and collect node IDs
-		for _, edge := range graph.Edges {
-			if e.Pred.EvaluateEdge(edge) {
-				result.Edges = append(result.Edges, edge)
-				matchedNodeIDs[edge.From] = true
-				matchedNodeIDs[edge.To] = true
-			}
-		}
-
-		// Include source and target nodes
-		for id := range matchedNodeIDs {
-			if node, exists := graph.Nodes[id]; exists {
-				result.Nodes[id] = node
-			}
-		}
-
-	default:
-		// Empty target: check if predicate works on nodes or edges
-		// Try evaluating on nodes first (for set membership predicates without target)
-		matchedNodes := make(map[string]bool)
-		hasMatchingNodes := false
-
-		// Try as node predicate
-		for id, node := range graph.Nodes {
-			if e.Pred.EvaluateNode(node) {
-				matchedNodes[id] = true
-				result.Nodes[id] = node
-				hasMatchingNodes = true
-			}
-		}
-
-		if hasMatchingNodes {
-			// Include edges where both source and target are matched
-			for _, edge := range graph.Edges {
-				if matchedNodes[edge.From] && matchedNodes[edge.To] {
-					result.Edges = append(result.Edges, edge)
-				}
-			}
-		} else {
-			// Try as edge predicate (for exists or other universal predicates)
-			matchedNodeIDs := make(map[string]bool)
-			for _, edge := range graph.Edges {
-				if e.Pred.EvaluateEdge(edge) {
-					result.Edges = append(result.Edges, edge)
-					matchedNodeIDs[edge.From] = true
-					matchedNodeIDs[edge.To] = true
-				}
-			}
-
-			// Include source and target nodes
-			for id := range matchedNodeIDs {
-				if node, exists := graph.Nodes[id]; exists {
-					result.Nodes[id] = node
-				}
-			}
-
-			// If no edges matched either, include all nodes (for exists predicate)
-			if len(matchedNodeIDs) == 0 {
-				for id, node := range graph.Nodes {
-					result.Nodes[id] = node
-				}
-				for _, edge := range graph.Edges {
-					result.Edges = append(result.Edges, edge)
-				}
-			}
+	// Add edges where both endpoints are in baseNodes
+	for _, edge := range graph.Edges {
+		if baseNodes[edge.From] && baseNodes[edge.To] {
+			result.Edges = append(result.Edges, edge)
 		}
 	}
 
 	return GraphValue{result}, nil
+}
+
+// buildSubgraph constructs the initial subgraph matching the predicate
+// Returns a set of node IDs included in the subgraph
+func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) map[string]bool {
+	nodes := make(map[string]bool)
+
+	switch targetType {
+	case "node":
+		// Node predicate: include matching nodes
+		for id, node := range graph.Nodes {
+			if e.Pred.EvaluateNode(node) {
+				nodes[id] = true
+			}
+		}
+
+	case "edge":
+		// Edge predicate: include endpoints of matching edges
+		for _, edge := range graph.Edges {
+			if e.Pred.EvaluateEdge(edge) {
+				nodes[edge.From] = true
+				nodes[edge.To] = true
+			}
+		}
+
+	default:
+		// Empty target: try nodes first, then edges, then all
+		for id, node := range graph.Nodes {
+			if e.Pred.EvaluateNode(node) {
+				nodes[id] = true
+			}
+		}
+
+		if len(nodes) == 0 {
+			// No matching nodes, try edges
+			for _, edge := range graph.Edges {
+				if e.Pred.EvaluateEdge(edge) {
+					nodes[edge.From] = true
+					nodes[edge.To] = true
+				}
+			}
+		}
+
+		if len(nodes) == 0 {
+			// No edges either, include all (for exists predicate)
+			for id := range graph.Nodes {
+				nodes[id] = true
+			}
+		}
+	}
+
+	return nodes
+}
+
+// traverse expands the node set via breadth-first traversal
+func (e *SubgraphExpr) traverse(graph *gsl.Graph, startNodes map[string]bool, cfg *TraversalConfig) map[string]bool {
+	result := make(map[string]bool)
+	for id := range startNodes {
+		result[id] = true
+	}
+
+	visited := make(map[string]bool)
+	for id := range startNodes {
+		visited[id] = true
+	}
+
+	// Breadth-first traversal
+	frontier := make([]string, 0)
+	for id := range startNodes {
+		frontier = append(frontier, id)
+	}
+
+	for depth := 0; depth < cfg.Depth && len(frontier) > 0; depth++ {
+		nextFrontier := make([]string, 0)
+
+		for _, nodeID := range frontier {
+			neighbors := e.getNeighbors(graph, nodeID, cfg.Direction)
+			for _, neighbor := range neighbors {
+				if !visited[neighbor] {
+					visited[neighbor] = true
+					result[neighbor] = true
+					nextFrontier = append(nextFrontier, neighbor)
+				}
+			}
+		}
+
+		frontier = nextFrontier
+	}
+
+	return result
+}
+
+// getNeighbors returns node IDs reachable from nodeID in the given direction
+func (e *SubgraphExpr) getNeighbors(graph *gsl.Graph, nodeID string, direction string) []string {
+	neighbors := make(map[string]bool)
+
+	for _, edge := range graph.Edges {
+		switch direction {
+		case "out":
+			// Outgoing edges: from→to
+			if edge.From == nodeID {
+				neighbors[edge.To] = true
+			}
+		case "in":
+			// Incoming edges: to→from
+			if edge.To == nodeID {
+				neighbors[edge.From] = true
+			}
+		case "both":
+			// Both directions
+			if edge.From == nodeID {
+				neighbors[edge.To] = true
+			}
+			if edge.To == nodeID {
+				neighbors[edge.From] = true
+			}
+		}
+	}
+
+	result := make([]string, 0, len(neighbors))
+	for id := range neighbors {
+		result = append(result, id)
+	}
+	return result
 }

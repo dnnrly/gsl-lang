@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/dnnrly/gsl-lang"
@@ -251,7 +252,7 @@ func (p *expressionParser) parseFrom() (Expression, error) {
 	return &FromExpr{IsWildcard: false, Name: arg}, nil
 }
 
-// parseSubgraph parses "subgraph <predicate>"
+// parseSubgraph parses "subgraph <predicate> [traverse <direction> <depth>]"
 func (p *expressionParser) parseSubgraph() (Expression, error) {
 	input := trimSpace(p.input)
 
@@ -263,8 +264,26 @@ func (p *expressionParser) parseSubgraph() (Expression, error) {
 		return nil, fmt.Errorf("invalid subgraph expression: %s", input)
 	}
 
-	// Extract predicate (everything after "subgraph ")
-	predicateStr := trimSpace(input[9:]) // skip "subgraph "
+	// Extract everything after "subgraph "
+	rest := trimSpace(input[9:]) // skip "subgraph "
+
+	if rest == "" {
+		return nil, fmt.Errorf("subgraph requires a predicate")
+	}
+
+	// Check for traverse clause
+	traverseIdx := strings.Index(rest, " traverse ")
+	var predicateStr, traversalStr string
+
+	if traverseIdx == -1 {
+		// No traversal
+		predicateStr = rest
+		traversalStr = ""
+	} else {
+		// Split predicate and traversal
+		predicateStr = trimSpace(rest[:traverseIdx])
+		traversalStr = trimSpace(rest[traverseIdx+10:]) // skip " traverse "
+	}
 
 	if predicateStr == "" {
 		return nil, fmt.Errorf("subgraph requires a predicate")
@@ -276,7 +295,53 @@ func (p *expressionParser) parseSubgraph() (Expression, error) {
 		return nil, fmt.Errorf("failed to parse predicate: %w", err)
 	}
 
-	return &SubgraphExpr{Pred: pred}, nil
+	// Parse traversal if present
+	var traversal *TraversalConfig
+	if traversalStr != "" {
+		trav, err := parseTraversal(traversalStr)
+		if err != nil {
+			return nil, err
+		}
+		traversal = trav
+	}
+
+	return &SubgraphExpr{Pred: pred, Traversal: traversal}, nil
+}
+
+// parseTraversal parses "<direction> <depth>"
+// direction: in, out, both
+// depth: number (1, 2, 3, ...) or "all"
+func parseTraversal(input string) (*TraversalConfig, error) {
+	parts := strings.Fields(input)
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("traverse requires direction and depth: traverse <direction> <depth>")
+	}
+
+	direction := parts[0]
+	depthStr := parts[1]
+
+	// Validate direction
+	if direction != "in" && direction != "out" && direction != "both" {
+		return nil, fmt.Errorf("invalid traverse direction: %s (must be in, out, or both)", direction)
+	}
+
+	// Parse depth
+	var depth int
+	if depthStr == "all" {
+		depth = 999999 // Large number for unlimited traversal
+	} else {
+		d, err := strconv.Atoi(depthStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid traverse depth: %s (must be number or 'all')", depthStr)
+		}
+		if d <= 0 {
+			return nil, fmt.Errorf("traverse depth must be positive")
+		}
+		depth = d
+	}
+
+	return &TraversalConfig{Direction: direction, Depth: depth}, nil
 }
 
 // isValidGraphName checks if a name matches [A-Z][A-Z0-9_]*
