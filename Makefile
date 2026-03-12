@@ -44,15 +44,16 @@ fuzz: ## run fuzz tests
 
 .PHONY: test-integration
 test-integration: ## run integration tests (skip if tools missing)
-	go test -tags integration -v ./cmd/gsl-diagram/...
+	go test -tags integration -v ./cmd/gsl-diagram/... ./cmd/gsl-query/...
 
 .PHONY: test-integration-strict
 test-integration-strict: ## run integration tests (fail if tools missing)
-	INTEGRATION_STRICT=1 go test -tags integration -v ./cmd/gsl-diagram/...
+	INTEGRATION_STRICT=1 go test -tags integration -v ./cmd/gsl-diagram/... ./cmd/gsl-query/...
 
 .PHONY: build
-build: ## build gsl-diagram CLI tool
+build: ## build CLI tools (gsl-diagram, gsl-query)
 	mkdir -p $(TMP_DIR)
 	go build -o $(TMP_DIR)/gsl-diagram ./cmd/gsl-diagram
+	go build -o $(TMP_DIR)/gsl-query ./cmd/gsl-query
 
 
