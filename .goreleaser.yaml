@@ -2,8 +2,24 @@ version: 2
 
 project_name: gsl-lang
 
-# No builds for library-only project
-# Releases are source-code only via GitHub
+# Build both CLI tools
+builds:
+  - id: gsl-diagram
+    main: ./cmd/gsl-diagram
+    binary: gsl-diagram
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64, 386]
+  - id: gsl-query
+    main: ./cmd/gsl-query
+    binary: gsl-query
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64, 386]
+
+archives:
+  - format: tar.gz
+    goos: [linux, darwin]
+  - format: zip
+    goos: [windows]
 
 checksum:
   name_template: 'checksums.txt'
