@@ -507,8 +507,8 @@ func TestIntegrationAttributePropagation(t *testing.T) {
 		t.Fatalf("node A not found")
 	}
 
-	owner, _ := nodeA.Attributes["owner"]
-	env, _ := nodeA.Attributes["env"]
+	owner := nodeA.Attributes["owner"]
+	env := nodeA.Attributes["env"]
 
 	if owner != "alice" || env != "prod" {
 		t.Errorf("attributes not propagated correctly: owner=%v, env=%v", owner, env)

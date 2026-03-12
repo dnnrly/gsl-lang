@@ -168,22 +168,23 @@ func getExpressionType(expr Expression) string {
 
 // String returns a human-readable summary of execution statistics
 func (s *ExecutionStats) String() string {
-	output := fmt.Sprintf("Query Execution Statistics\n")
-	output += fmt.Sprintf("==========================\n\n")
+	var output string
+	output += "Query Execution Statistics\n"
+	output += "==========================\n\n"
 
-	output += fmt.Sprintf("Result Graph:\n")
+	output += "Result Graph:\n"
 	output += fmt.Sprintf("  Nodes: %d (input: %d, +%d, -%d)\n",
 		s.ResultNodeCount, s.InputNodeCount, s.NodesAdded, s.NodesRemoved)
 	output += fmt.Sprintf("  Edges: %d (input: %d, +%d, -%d)\n",
 		s.ResultEdgeCount, s.InputEdgeCount, s.EdgesAdded, s.EdgesRemoved)
 	output += fmt.Sprintf("  Sets:  %d (input: %d)\n", s.ResultSetCount, s.InputSetCount)
 
-	output += fmt.Sprintf("\nExecution Pipeline:\n")
+	output += "\nExecution Pipeline:\n"
 	for i, timing := range s.ExpressionDurations {
 		output += fmt.Sprintf("  [%d] %s\n", i+1, timing.String())
 	}
 
-	output += fmt.Sprintf("\nTiming:\n")
+	output += "\nTiming:\n"
 	output += fmt.Sprintf("  Total: %v\n", s.TotalDuration)
 
 	return output

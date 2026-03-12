@@ -251,16 +251,17 @@ func toExpressions(sgs []*SubgraphExpr) []Expression {
 
 // String returns a human-readable summary of optimization decisions
 func (os *OptimizationStats) String() string {
-	output := fmt.Sprintf("Query Optimization Report\n")
-	output += fmt.Sprintf("=========================\n\n")
+	var output string
+	output += "Query Optimization Report\n"
+	output += "=========================\n\n"
 
-	output += fmt.Sprintf("Expressions:\n")
+	output += "Expressions:\n"
 	output += fmt.Sprintf("  Original: %d\n", os.OriginalExprCount)
 	output += fmt.Sprintf("  Optimized: %d\n", os.OptimizedExprCount)
 
-	output += fmt.Sprintf("\nOptimizations Applied:\n")
+	output += "\nOptimizations Applied:\n"
 	if os.ReorderingApplied {
-		output += fmt.Sprintf("  ✓ Expression reordering\n")
+		output += "  ✓ Expression reordering\n"
 	}
 	if os.FilterPushdownCount > 0 {
 		output += fmt.Sprintf("  ✓ Filter push-down (%d)\n", os.FilterPushdownCount)
@@ -269,12 +270,12 @@ func (os *OptimizationStats) String() string {
 		output += fmt.Sprintf("  ✓ Early filtering (%d)\n", os.EarlyFilterCount)
 	}
 
-	output += fmt.Sprintf("\nEstimated Impact:\n")
+	output += "\nEstimated Impact:\n"
 	output += fmt.Sprintf("  Expressions removed: %d\n", os.OriginalExprCount-os.OptimizedExprCount)
 	output += fmt.Sprintf("  Estimated savings: %.1f%%\n", os.EstimatedSavings)
 
 	if len(os.ReorderedExpressions) > 0 {
-		output += fmt.Sprintf("\nTransformations:\n")
+		output += "\nTransformations:\n"
 		for _, desc := range os.ReorderedExpressions {
 			output += fmt.Sprintf("  - %s\n", desc)
 		}
