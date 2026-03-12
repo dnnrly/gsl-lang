@@ -191,7 +191,25 @@ See [cmd/gsl-diagram/README.md](cmd/gsl-diagram/README.md) for full documentatio
 
 ## GSL Query Language
 
-GSL also includes a **query language** for selecting and filtering nodes from a graph using a pipeline-based syntax.
+GSL includes a **query language** for selecting, filtering, and transforming graphs using a pipeline-based syntax.
+
+Queries enable you to:
+
+* Extract subgraphs by filtering nodes and edges
+* Traverse graph neighbourhoods (incoming, outgoing, bidirectional)
+* Assign and remove attributes
+* Merge (collapse) nodes
+* Combine multiple graphs using set operations (union, intersection, difference)
+
+### Query Concepts
+
+The core idea is a **pipeline of expressions** where each expression receives a graph and produces a new graph:
+
+```
+input graph → expr₁ → expr₂ → … → result graph
+```
+
+Expressions are separated by `|` and evaluated left-to-right, similar to a Unix shell pipeline but for graphs.
 
 ### Query Quick Start
 
@@ -202,7 +220,7 @@ import (
 )
 
 // Parse a query
-q, errs := query.ParseQuery(`start "AuthService" | flow out recursive | where critical = true`)
+q, errs := query.ParseQuery(`subgraph node.team == "payments" | remove orphans`)
 if len(errs) > 0 {
     log.Fatal(errs)
 }
@@ -212,42 +230,139 @@ queryStr := query.SerializeQuery(q)
 fmt.Println(queryStr)
 ```
 
-### Query Syntax
+### Pipeline Expressions
 
-The query language uses a **pipeline** model where operations are chained with `|`:
+| Expression | Syntax | Purpose |
+|---|---|---|
+| **Source** | `from *` or `from NAME` | Switch the working graph |
+| **Subgraph** | `subgraph <predicate> [traverse <dir> <depth>]` | Filter nodes or edges, optionally traverse |
+| **Make** | `make <path> = <value> where <predicate>` | Assign attributes to matching elements |
+| **Remove** | `remove edge where <predicate>` | Delete matching edges |
+| **Remove** | `remove node.<attr> where <predicate>` | Delete attributes from matching nodes |
+| **Remove** | `remove orphans` | Delete nodes with no incident edges |
+| **Collapse** | `collapse into <id> where <predicate>` | Merge matching nodes into one |
+| **Binding** | `(<pipeline>) as NAME` | Save pipeline result as a named graph |
+| **Algebra** | `NAME + NAME2`, `NAME & NAME2`, etc. | Combine named graphs (union, intersection, etc.) |
 
-**Pipeline Steps:**
-- `start <node_ids>` — select starting nodes
-- `flow <direction> [recursive|*] [where edge.attr op value]` — traverse edges
-  - Direction: `in`, `out`, `both`
-  - Optional `recursive` or `*` for recursive traversal
-  - Optional edge filter
-- `where <attr> <op> <value>` — filter nodes by attribute
-- `minus <pipeline>` — remove nodes from selection
+### Subgraph Filtering (Most Common)
 
-**Combinators:**
-- `union` — merge two pipelines' results
-- `intersect` — intersection of two pipelines' results
-- `minus` — difference of two pipelines' results
+Extract subgraphs by matching nodes or edges:
 
-**Operators (per GQL v1.0 spec):**
-- `=` — equality
-- `!=` — inequality
-- `<` — less than
-- `<=` — less than or equal
-- `>` — greater than
-- `>=` — greater than or equal
+#### Node Matching
 
-**Values:**
-- Strings (quoted): `"value"`
-- Numbers: `42`, `3.14`
-- Booleans: `true`, `false`
+```
+subgraph node.team == "payments"
+```
+
+Selects all nodes where `team` equals `"payments"` and includes edges between matched nodes only.
+
+#### Edge Matching
+
+```
+subgraph edge.protocol == "grpc"
+```
+
+Selects all edges where `protocol` is `"grpc"` and includes their source and target nodes.
+
+#### Traversal
+
+After matching, optionally explore the graph neighbourhood:
+
+```
+subgraph node.team == "payments" traverse out 1
+subgraph node.team == "payments" traverse in all
+```
+
+**Directions:** `in`, `out`, `both`  
+**Depths:** `1`, `2`, `N` (hops), or `all` (unlimited)
+
+### Predicates
+
+Predicates filter by attributes, set membership, or existence:
+
+| Form | Example | Meaning |
+|---|---|---|
+| Equality | `node.team == "payments"` | Attribute equals value |
+| Inequality | `node.zone != "C"` | Attribute does not equal value |
+| Exists | `node.team exists` | Attribute is present |
+| Not exists | `edge.debug not exists` | Attribute is absent |
+| Set membership | `node in @critical` | Node belongs to set |
+| Set non-membership | `edge not in @deprecated` | Node does not belong to set |
+| Compound | `node.team == "payments" AND node.zone == "B"` | Both conditions true |
+
+**Important:** Cannot mix `node.` and `edge.` in one predicate. Only `AND` is supported (no `OR`).
+
+### Transformation Examples
+
+#### Example 1: Basic Filtering
+
+```
+subgraph node.team == "payments"
+```
+
+Result: All nodes from the payments team and edges between them.
+
+#### Example 2: Filtering + Cleanup
+
+```
+subgraph node.team == "payments" | remove orphans
+```
+
+Result: Payments team nodes with any orphaned nodes removed.
+
+#### Example 3: Traversal + Removal
+
+```
+subgraph node.team == "payments" traverse out 1 | remove edge where edge.protocol == "tcp"
+```
+
+Result: Payments team and their direct outbound neighbours, excluding TCP edges.
+
+#### Example 4: Node Collapse
+
+```
+subgraph node.zone == "A" | collapse into zone_a_cluster where node.team == "platform"
+```
+
+Result: All nodes in zone A, with platform team nodes merged into a single `zone_a_cluster` node.
+
+#### Example 5: Named Graphs + Set Operations
+
+```
+(subgraph node.team == "payments") as PAY
+| from *
+| (subgraph node.team == "identity") as ID
+| PAY + ID
+```
+
+Result: Union of payments team and identity team nodes.
+
+### Query Combinators (Graph Algebra)
+
+After binding named graphs, combine them:
+
+```
+GRAPH1 + GRAPH2    # Union: all nodes and edges from both
+GRAPH1 & GRAPH2    # Intersection: only shared elements
+GRAPH1 - GRAPH2    # Difference: in GRAPH1 but not GRAPH2
+GRAPH1 ^ GRAPH2    # Symmetric difference: in exactly one
+```
+
+When the same node appears in both graphs, attributes from the right-hand side overwrite conflicts.
+
+### More Examples
+
+For additional examples and detailed explanations, see:
+
+* [QUERY_TUTORIAL.md](QUERY_TUTORIAL.md) — Step-by-step learning guide  
+* [QUERY_SPEC.md](QUERY_SPEC.md) — Complete formal specification  
+* [query/](query/) — Go package documentation
 
 ### Query Examples
 
 ```gsl-query
-# Select nodes and follow outbound edges
-start A, B | flow out
+# Select a team and show their dependencies
+subgraph node.team == "payments" traverse out all
 
 # Recursive traversal with edge filter
 start "Service" | flow out where edge.color = "Blue" recursive
