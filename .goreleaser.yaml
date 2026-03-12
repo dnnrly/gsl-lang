@@ -17,9 +17,9 @@ builds:
 
 archives:
   - format: tar.gz
-    goos: [linux, darwin]
+    os: [linux, darwin]
   - format: zip
-    goos: [windows]
+    os: [windows]
 
 checksum:
   name_template: 'checksums.txt'
