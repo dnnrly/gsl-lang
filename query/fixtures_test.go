@@ -63,7 +63,10 @@ func TestFixtures(t *testing.T) {
 			require.NoError(t, err, "failed to parse query")
 
 			// Execute the query
-			ctx := &QueryContext{InputGraph: graph}
+			ctx := &QueryContext{
+				InputGraph:  graph,
+				NamedGraphs: make(map[string]*gsl.Graph),
+			}
 			result, err := parsedQuery.Execute(ctx)
 			require.NoError(t, err, "failed to execute query")
 

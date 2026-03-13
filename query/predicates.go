@@ -259,7 +259,7 @@ func parseSimplePredicate(input string) (Predicate, error) {
 	return nil, fmt.Errorf("unknown predicate: %s", input)
 }
 
-// parseNodePredicate parses "node.attr = value"
+// parseNodePredicate parses "node.attr = value" or "node.attr == value"
 func parseNodePredicate(input string) (Predicate, error) {
 	if !strings.HasPrefix(input, "node.") {
 		return nil, fmt.Errorf("expected node. prefix")
@@ -267,14 +267,32 @@ func parseNodePredicate(input string) (Predicate, error) {
 
 	rest := input[5:] // skip "node."
 
-	// Find the = sign
-	idx := strings.Index(rest, " = ")
+	// Find the = or == sign
+	idx := strings.Index(rest, "==")
 	if idx == -1 {
-		return nil, fmt.Errorf("expected ' = ' in node predicate")
+		idx = strings.Index(rest, " = ")
+		if idx == -1 {
+			return nil, fmt.Errorf("expected ' = ' or '==' in node predicate")
+		}
+		attrName := strings.TrimSpace(rest[:idx])
+		valueStr := strings.TrimSpace(rest[idx+3:])
+		if attrName == "" || valueStr == "" {
+			return nil, fmt.Errorf("invalid node predicate: %s", input)
+		}
+
+		// Parse value (simple: string, number, boolean)
+		value := parseValue(valueStr)
+
+		return &AttributeEqualsPredicate{
+			Target: "node",
+			Name:   attrName,
+			Value:  value,
+		}, nil
 	}
 
+	// Handle == case
 	attrName := strings.TrimSpace(rest[:idx])
-	valueStr := strings.TrimSpace(rest[idx+3:])
+	valueStr := strings.TrimSpace(rest[idx+2:])
 
 	if attrName == "" || valueStr == "" {
 		return nil, fmt.Errorf("invalid node predicate: %s", input)
@@ -290,7 +308,7 @@ func parseNodePredicate(input string) (Predicate, error) {
 	}, nil
 }
 
-// parseEdgePredicate parses "edge.attr = value"
+// parseEdgePredicate parses "edge.attr = value" or "edge.attr == value"
 func parseEdgePredicate(input string) (Predicate, error) {
 	if !strings.HasPrefix(input, "edge.") {
 		return nil, fmt.Errorf("expected edge. prefix")
@@ -298,14 +316,32 @@ func parseEdgePredicate(input string) (Predicate, error) {
 
 	rest := input[5:] // skip "edge."
 
-	// Find the = sign
-	idx := strings.Index(rest, " = ")
+	// Find the = or == sign
+	idx := strings.Index(rest, "==")
 	if idx == -1 {
-		return nil, fmt.Errorf("expected ' = ' in edge predicate")
+		idx = strings.Index(rest, " = ")
+		if idx == -1 {
+			return nil, fmt.Errorf("expected ' = ' or '==' in edge predicate")
+		}
+		attrName := strings.TrimSpace(rest[:idx])
+		valueStr := strings.TrimSpace(rest[idx+3:])
+		if attrName == "" || valueStr == "" {
+			return nil, fmt.Errorf("invalid edge predicate: %s", input)
+		}
+
+		// Parse value (simple: string, number, boolean)
+		value := parseValue(valueStr)
+
+		return &AttributeEqualsPredicate{
+			Target: "edge",
+			Name:   attrName,
+			Value:  value,
+		}, nil
 	}
 
+	// Handle == case
 	attrName := strings.TrimSpace(rest[:idx])
-	valueStr := strings.TrimSpace(rest[idx+3:])
+	valueStr := strings.TrimSpace(rest[idx+2:])
 
 	if attrName == "" || valueStr == "" {
 		return nil, fmt.Errorf("invalid edge predicate: %s", input)
