@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	gsl "github.com/dnnrly/gsl-lang"
 )
 
@@ -32,50 +34,53 @@ func TestFixtures(t *testing.T) {
 
 			// Check that all required files exist
 			for _, path := range []string{graphPath, queryPath, resultPath} {
-				if _, err := os.Stat(path); err != nil {
-					t.Fatalf("required file missing: %s", path)
-				}
+				require.FileExists(t, path, "required file missing")
 			}
 
 			// Parse the input graph
 			graphData, err := os.ReadFile(graphPath)
-			if err != nil {
-				t.Fatalf("failed to read graph.gsl: %v", err)
-			}
+			require.NoError(t, err, "failed to read graph.gsl")
 
 			graph, errs, err := gsl.Parse(bytes.NewReader(graphData))
-			if err != nil {
-				t.Fatalf("failed to parse graph.gsl: %v", err)
-			}
-			if len(errs) > 0 {
-				t.Fatalf("failed to parse graph.gsl: %v", errs)
-			}
+			require.NoError(t, err, "failed to parse graph.gsl")
+			require.Empty(t, errs, "parsing errors in graph.gsl")
 
 			// Read the query
 			queryData, err := os.ReadFile(queryPath)
-			if err != nil {
-				t.Fatalf("failed to read query.gql: %v", err)
-			}
+			require.NoError(t, err, "failed to read query.gql")
 
 			// Read expected result
 			resultData, err := os.ReadFile(resultPath)
-			if err != nil {
-				t.Fatalf("failed to read result.gsl: %v", err)
-			}
+			require.NoError(t, err, "failed to read result.gsl")
 
 			expectedResult, errs, err := gsl.Parse(bytes.NewReader(resultData))
-			if err != nil {
-				t.Fatalf("failed to parse result.gsl: %v", err)
-			}
-			if len(errs) > 0 {
-				t.Fatalf("failed to parse result.gsl: %v", errs)
+			require.NoError(t, err, "failed to parse result.gsl")
+			require.Empty(t, errs, "parsing errors in result.gsl")
+
+			// Parse and execute the query
+			queryParser := NewQueryParser(string(queryData))
+			parsedQuery, err := queryParser.Parse()
+			require.NoError(t, err, "failed to parse query")
+
+			// Execute the query
+			ctx := &QueryContext{InputGraph: graph}
+			result, err := parsedQuery.Execute(ctx)
+			require.NoError(t, err, "failed to execute query")
+
+			// Extract the graph from the result
+			var actualGraph *gsl.Graph
+			switch v := result.(type) {
+			case GraphValue:
+				actualGraph = v.Graph
+			default:
+				require.Fail(t, "unexpected result type", "got %T", result)
 			}
 
-			// TODO: Run the query and compare with expected result
-			_ = graph
-			_ = queryData
-			_ = expectedResult
-			t.Logf("Test infrastructure ready. Query test data loaded successfully.")
+			// Compare serialized versions
+			actual := gsl.Serialize(actualGraph)
+			expected := gsl.Serialize(expectedResult)
+
+			assert.Equal(t, expected, actual, "query result mismatch")
 		})
 	}
 }
