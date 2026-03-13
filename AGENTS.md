@@ -4,8 +4,8 @@ This document provides instructions for AI agents working on the GSL-Lang projec
 
 **For comprehensive language specification, see [SPEC.md](SPEC.md).**  
 **For formal grammar, see [GRAMMAR.md](GRAMMAR.md).**  
-**For a description of the query language, see [QUERY_SPEC.md](QUERY_SPEC.md) and [QUERY_GRAMMAR.md](QUERY_GRAMMAR.md).**
-**LLM specific advice, see [LLM_GUIDE.md](LLM_GUIDE.md) and [QUERY_AI_GUIDE.md](QUERY_AI_GUIDE.md).**
+**For a description of the query language, see [QUERY_SPEC.md](query/QUERY_SPEC.md) and [QUERY_GRAMMAR.md](query/QUERY_GRAMMAR.md).**
+**LLM specific advice, see [LLM_GUIDE.md](LLM_GUIDE.md) and [QUERY_AI_GUIDE.md](query/QUERY_AI_GUIDE.md).**
 **See [GO_GUIDE.md](GO_GUIDE.md) for Go API patterns and algorithms.**
 
 ## Quick Commands
