@@ -1,0 +1,1 @@
+make node.reviewed = true where node.team == "payments"

@@ -1,0 +1,7 @@
+node api
+node payments
+node db
+
+api -> payments [protocol="http"]
+payments -> db [protocol="tcp"]
+api -> db [protocol="grpc"]

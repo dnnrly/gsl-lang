@@ -1,0 +1,6 @@
+node api @critical
+node payments @critical
+node debug
+
+api -> payments
+api -> debug

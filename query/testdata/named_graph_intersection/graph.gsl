@@ -1,0 +1,6 @@
+node api [team="gateway", critical=true]
+node payments [team="payments", critical=true]
+node fraud [team="fraud"]
+
+api -> payments
+api -> fraud

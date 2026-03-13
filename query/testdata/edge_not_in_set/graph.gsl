@@ -1,0 +1,7 @@
+node api
+node payments
+node db
+
+api -> payments @deprecated
+api -> db
+payments -> db @deprecated
