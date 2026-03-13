@@ -1,3 +1,14 @@
 .idea
 tmp/
 gsl-diagram
+gsl-query
+
+# Ignore plan and progress files
+*.plan
+*.progress
+.plan.md
+.progress.md
+.test-plan.md
+.quick-ref.md
+TODO.md
+WORK.md
