@@ -1,3 +1,5 @@
+set critical
+
 node api @critical
 node payments @critical
 

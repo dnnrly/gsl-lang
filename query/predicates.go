@@ -49,7 +49,14 @@ type AttributeEqualsPredicate struct {
 }
 
 func (p *AttributeEqualsPredicate) EvaluateNode(node *gsl.Node) bool {
-	if node == nil || node.Attributes == nil {
+	if node == nil {
+		return false
+	}
+	// Special case: "id" refers to the node's ID, not an attribute
+	if p.Name == "id" {
+		return node.ID == p.Value
+	}
+	if node.Attributes == nil {
 		return false
 	}
 	val, exists := node.Attributes[p.Name]

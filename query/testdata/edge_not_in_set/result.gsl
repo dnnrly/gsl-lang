@@ -1,3 +1,5 @@
+set deprecated
+
 node api
 node db
 

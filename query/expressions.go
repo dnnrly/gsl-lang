@@ -90,12 +90,19 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 		return nil, fmt.Errorf("predicate mixes node and edge targets")
 	}
 
-	// Build base subgraph
-	baseNodes := e.buildSubgraph(graph, targetType)
+	// Build base subgraph (returns nodes and edges)
+	baseNodes, baseEdges := e.buildSubgraph(graph, targetType)
 
 	// If traversal requested, expand from base nodes
 	if e.Traversal != nil && e.Traversal.Depth > 0 {
 		baseNodes = e.traverse(graph, baseNodes, e.Traversal)
+		// After traversal, rebuild base edges (include all edges between nodes in traversal result)
+		baseEdges = make(map[int]bool)
+		for i, edge := range graph.Edges {
+			if baseNodes[edge.From] && baseNodes[edge.To] {
+				baseEdges[i] = true
+			}
+		}
 	}
 
 	// Construct result graph
@@ -117,10 +124,18 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 		}
 	}
 
-	// Add edges where both endpoints are in baseNodes
-	for _, edge := range graph.Edges {
-		if baseNodes[edge.From] && baseNodes[edge.To] {
-			result.Edges = append(result.Edges, edge)
+	// Add matched edges (or edges where both endpoints are in baseNodes if edge predicate)
+	if targetType == "edge" {
+		// For edge predicates, only add edges that matched the predicate
+		for idx := range baseEdges {
+			result.Edges = append(result.Edges, graph.Edges[idx])
+		}
+	} else {
+		// For node predicates, add all edges where both endpoints are in baseNodes
+		for _, edge := range graph.Edges {
+			if baseNodes[edge.From] && baseNodes[edge.To] {
+				result.Edges = append(result.Edges, edge)
+			}
 		}
 	}
 
@@ -128,9 +143,10 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 }
 
 // buildSubgraph constructs the initial subgraph matching the predicate
-// Returns a set of node IDs included in the subgraph
-func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) map[string]bool {
+// Returns a set of node IDs and a set of edge indices included in the subgraph
+func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[string]bool, map[int]bool) {
 	nodes := make(map[string]bool)
+	edges := make(map[int]bool)
 
 	switch targetType {
 	case "node":
@@ -143,10 +159,11 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) map[st
 
 	case "edge":
 		// Edge predicate: include endpoints of matching edges
-		for _, edge := range graph.Edges {
+		for i, edge := range graph.Edges {
 			if e.Pred.EvaluateEdge(edge) {
 				nodes[edge.From] = true
 				nodes[edge.To] = true
+				edges[i] = true
 			}
 		}
 
@@ -160,10 +177,11 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) map[st
 
 		if len(nodes) == 0 {
 			// No matching nodes, try edges
-			for _, edge := range graph.Edges {
+			for i, edge := range graph.Edges {
 				if e.Pred.EvaluateEdge(edge) {
 					nodes[edge.From] = true
 					nodes[edge.To] = true
+					edges[i] = true
 				}
 			}
 		}
@@ -176,7 +194,7 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) map[st
 		}
 	}
 
-	return nodes
+	return nodes, edges
 }
 
 // traverse expands the node set via breadth-first traversal
