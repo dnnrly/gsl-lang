@@ -120,6 +120,54 @@ func (p *SetNotMembershipPredicate) EvaluateEdge(edge *gsl.Edge) bool {
 
 func (p *SetNotMembershipPredicate) TargetType() string { return p.Target }
 
+// AttributeExistsPredicate matches nodes/edges that have a specific attribute
+type AttributeExistsPredicate struct {
+	Target string // "node" or "edge"
+	Name   string // attribute name
+}
+
+func (p *AttributeExistsPredicate) EvaluateNode(node *gsl.Node) bool {
+	if node == nil || node.Attributes == nil {
+		return false
+	}
+	_, exists := node.Attributes[p.Name]
+	return exists
+}
+
+func (p *AttributeExistsPredicate) EvaluateEdge(edge *gsl.Edge) bool {
+	if edge == nil || edge.Attributes == nil {
+		return false
+	}
+	_, exists := edge.Attributes[p.Name]
+	return exists
+}
+
+func (p *AttributeExistsPredicate) TargetType() string { return p.Target }
+
+// AttributeNotExistsPredicate matches nodes/edges that do NOT have a specific attribute
+type AttributeNotExistsPredicate struct {
+	Target string // "node" or "edge"
+	Name   string // attribute name
+}
+
+func (p *AttributeNotExistsPredicate) EvaluateNode(node *gsl.Node) bool {
+	if node == nil || node.Attributes == nil {
+		return true
+	}
+	_, exists := node.Attributes[p.Name]
+	return !exists
+}
+
+func (p *AttributeNotExistsPredicate) EvaluateEdge(edge *gsl.Edge) bool {
+	if edge == nil || edge.Attributes == nil {
+		return true
+	}
+	_, exists := edge.Attributes[p.Name]
+	return !exists
+}
+
+func (p *AttributeNotExistsPredicate) TargetType() string { return p.Target }
+
 // AndPredicate combines predicates with AND (both must be true)
 type AndPredicate struct {
 	Left  Predicate
@@ -228,7 +276,43 @@ func parseSimplePredicate(input string) (Predicate, error) {
 		return &ExistsPredicate{}, nil
 	}
 
-	// Handle "in SETNAME"
+	// Handle "node in @SETNAME"
+	if strings.HasPrefix(input, "node in @") {
+		setName := strings.TrimSpace(input[9:]) // skip "node in @"
+		if setName == "" {
+			return nil, fmt.Errorf("set name required for 'node in'")
+		}
+		return &SetMembershipPredicate{Target: "node", SetID: setName}, nil
+	}
+
+	// Handle "node not in @SETNAME"
+	if strings.HasPrefix(input, "node not in @") {
+		setName := strings.TrimSpace(input[13:]) // skip "node not in @"
+		if setName == "" {
+			return nil, fmt.Errorf("set name required for 'node not in'")
+		}
+		return &SetNotMembershipPredicate{Target: "node", SetID: setName}, nil
+	}
+
+	// Handle "edge in @SETNAME"
+	if strings.HasPrefix(input, "edge in @") {
+		setName := strings.TrimSpace(input[9:]) // skip "edge in @"
+		if setName == "" {
+			return nil, fmt.Errorf("set name required for 'edge in'")
+		}
+		return &SetMembershipPredicate{Target: "edge", SetID: setName}, nil
+	}
+
+	// Handle "edge not in @SETNAME"
+	if strings.HasPrefix(input, "edge not in @") {
+		setName := strings.TrimSpace(input[13:]) // skip "edge not in @"
+		if setName == "" {
+			return nil, fmt.Errorf("set name required for 'edge not in'")
+		}
+		return &SetNotMembershipPredicate{Target: "edge", SetID: setName}, nil
+	}
+
+	// Handle "in SETNAME" (legacy, no prefix)
 	if strings.HasPrefix(input, "in ") {
 		setName := strings.TrimSpace(input[3:])
 		if setName == "" {
@@ -237,7 +321,7 @@ func parseSimplePredicate(input string) (Predicate, error) {
 		return &SetMembershipPredicate{Target: "", SetID: setName}, nil
 	}
 
-	// Handle "not in SETNAME"
+	// Handle "not in SETNAME" (legacy, no prefix)
 	if strings.HasPrefix(input, "not in ") {
 		setName := strings.TrimSpace(input[7:])
 		if setName == "" {
@@ -259,7 +343,7 @@ func parseSimplePredicate(input string) (Predicate, error) {
 	return nil, fmt.Errorf("unknown predicate: %s", input)
 }
 
-// parseNodePredicate parses "node.attr = value" or "node.attr == value"
+// parseNodePredicate parses "node.attr = value" or "node.attr == value" or "node.attr exists"
 func parseNodePredicate(input string) (Predicate, error) {
 	if !strings.HasPrefix(input, "node.") {
 		return nil, fmt.Errorf("expected node. prefix")
@@ -267,12 +351,30 @@ func parseNodePredicate(input string) (Predicate, error) {
 
 	rest := input[5:] // skip "node."
 
+	// Check for "not exists" suffix first (longer match)
+	if strings.HasSuffix(rest, " not exists") {
+		attrName := strings.TrimSpace(strings.TrimSuffix(rest, " not exists"))
+		if attrName == "" {
+			return nil, fmt.Errorf("attribute name required for 'not exists'")
+		}
+		return &AttributeNotExistsPredicate{Target: "node", Name: attrName}, nil
+	}
+
+	// Check for "exists" suffix
+	if strings.HasSuffix(rest, " exists") {
+		attrName := strings.TrimSpace(strings.TrimSuffix(rest, " exists"))
+		if attrName == "" {
+			return nil, fmt.Errorf("attribute name required for 'exists'")
+		}
+		return &AttributeExistsPredicate{Target: "node", Name: attrName}, nil
+	}
+
 	// Find the = or == sign
 	idx := strings.Index(rest, "==")
 	if idx == -1 {
 		idx = strings.Index(rest, " = ")
 		if idx == -1 {
-			return nil, fmt.Errorf("expected ' = ' or '==' in node predicate")
+			return nil, fmt.Errorf("expected ' = ', '==', 'exists', or 'not exists' in node predicate")
 		}
 		attrName := strings.TrimSpace(rest[:idx])
 		valueStr := strings.TrimSpace(rest[idx+3:])
@@ -308,7 +410,7 @@ func parseNodePredicate(input string) (Predicate, error) {
 	}, nil
 }
 
-// parseEdgePredicate parses "edge.attr = value" or "edge.attr == value"
+// parseEdgePredicate parses "edge.attr = value" or "edge.attr == value" or "edge.attr exists"
 func parseEdgePredicate(input string) (Predicate, error) {
 	if !strings.HasPrefix(input, "edge.") {
 		return nil, fmt.Errorf("expected edge. prefix")
@@ -316,12 +418,30 @@ func parseEdgePredicate(input string) (Predicate, error) {
 
 	rest := input[5:] // skip "edge."
 
+	// Check for "not exists" suffix first (longer match)
+	if strings.HasSuffix(rest, " not exists") {
+		attrName := strings.TrimSpace(strings.TrimSuffix(rest, " not exists"))
+		if attrName == "" {
+			return nil, fmt.Errorf("attribute name required for 'not exists'")
+		}
+		return &AttributeNotExistsPredicate{Target: "edge", Name: attrName}, nil
+	}
+
+	// Check for "exists" suffix
+	if strings.HasSuffix(rest, " exists") {
+		attrName := strings.TrimSpace(strings.TrimSuffix(rest, " exists"))
+		if attrName == "" {
+			return nil, fmt.Errorf("attribute name required for 'exists'")
+		}
+		return &AttributeExistsPredicate{Target: "edge", Name: attrName}, nil
+	}
+
 	// Find the = or == sign
 	idx := strings.Index(rest, "==")
 	if idx == -1 {
 		idx = strings.Index(rest, " = ")
 		if idx == -1 {
-			return nil, fmt.Errorf("expected ' = ' or '==' in edge predicate")
+			return nil, fmt.Errorf("expected ' = ', '==', 'exists', or 'not exists' in edge predicate")
 		}
 		attrName := strings.TrimSpace(rest[:idx])
 		valueStr := strings.TrimSpace(rest[idx+3:])
