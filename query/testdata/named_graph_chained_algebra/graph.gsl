@@ -1,0 +1,6 @@
+node a [zone="a"]
+node b [zone="b"]
+node c [zone="c"]
+
+a -> b
+b -> c

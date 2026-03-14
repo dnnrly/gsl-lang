@@ -1,0 +1,4 @@
+node api
+node svc1
+
+api->svc1 [timeout="30s"]

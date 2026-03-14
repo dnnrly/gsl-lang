@@ -1,0 +1,9 @@
+node api [debug=true]
+node cache [debug=false]
+node db
+node orphan1 [debug=true]
+node orphan2
+
+api -> cache [protocol="deprecated"]
+cache -> db
+api -> db [protocol="deprecated"]

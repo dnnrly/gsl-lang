@@ -1,0 +1,1 @@
+(subgraph node.team == "api") as SET1 | from * | (subgraph node.team == "fraud") as SET2 | SET1 - SET2

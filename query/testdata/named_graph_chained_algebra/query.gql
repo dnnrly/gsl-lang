@@ -1,0 +1,1 @@
+(subgraph node.zone == "a") as A | from * | (subgraph node.zone == "b") as B | from * | (subgraph node.zone == "c") as C | A + B

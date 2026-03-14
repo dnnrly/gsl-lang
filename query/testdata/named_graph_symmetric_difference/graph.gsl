@@ -1,0 +1,7 @@
+node api1 [team="api", critical=false]
+node api2 [team="api", critical=true]
+node crit1 [team="fraud", critical=true]
+node crit2 [team="fraud", critical=false]
+
+api1 -> api2
+crit1 -> crit2

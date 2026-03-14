@@ -1,0 +1,6 @@
+node api [team="api", priority=0]
+node fraud [team="fraud", priority=0]
+node gateway [team="gateway", priority=0]
+
+api -> fraud
+fraud -> gateway

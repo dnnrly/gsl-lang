@@ -1,0 +1,6 @@
+node prod_svc [env="prod"]
+node staging_svc [env="staging"]
+node dev_svc [env="dev"]
+
+prod_svc -> staging_svc
+staging_svc -> dev_svc

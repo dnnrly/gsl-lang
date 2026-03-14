@@ -1,0 +1,1 @@
+collapse into merged where node.type == "service"

@@ -1,0 +1,1 @@
+subgraph node.id == "b" traverse both 1

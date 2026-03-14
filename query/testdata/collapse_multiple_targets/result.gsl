@@ -1,0 +1,4 @@
+node gateway
+node platform [team="platform"]
+
+gateway->platform

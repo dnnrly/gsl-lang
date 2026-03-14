@@ -1,0 +1,8 @@
+node active_svc1 [active=true]
+node active_svc2 [active=true]
+node inactive_svc [active=false]
+node unknown_svc
+
+active_svc1 -> active_svc2
+active_svc2 -> inactive_svc
+inactive_svc -> unknown_svc

@@ -1,0 +1,7 @@
+node api
+node cache
+node db
+
+api -> cache [timeout=5000]
+cache -> db [timeout=3000]
+api -> db

@@ -1,0 +1,13 @@
+node root
+node child1
+node child2
+node grandchild1
+node grandchild2
+node grandchild3
+node other
+
+root -> child1
+root -> child2
+child1 -> grandchild1
+child1 -> grandchild2
+child2 -> grandchild3

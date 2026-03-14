@@ -1,0 +1,1 @@
+(subgraph node.team == "api") as API | from * | (subgraph node.critical == true) as CRIT | API ^ CRIT

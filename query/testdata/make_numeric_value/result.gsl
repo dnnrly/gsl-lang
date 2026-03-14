@@ -1,0 +1,3 @@
+node api [priority="5", team="api"]
+node web [team="web"]
+node db [team="data"]

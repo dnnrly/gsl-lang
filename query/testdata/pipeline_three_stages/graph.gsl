@@ -1,0 +1,11 @@
+node api [team="api", reviewed="false"]
+node web [team="web", reviewed="false"]
+node auth [team="api", reviewed="false"]
+node cache [team="cache", reviewed="false"]
+node fraud [team="api", reviewed="false"]
+
+api -> web
+web -> auth
+auth -> cache
+cache -> fraud
+fraud -> api

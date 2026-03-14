@@ -1,0 +1,2 @@
+node api1 [team="api", critical=false]
+node crit1 [team="fraud", critical=true]
