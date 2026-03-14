@@ -1,0 +1,1 @@
+(subgraph node.team == "payments") as PAY | from * | (subgraph node.team == "fraud") as FRAUD | PAY + FRAUD

@@ -1,0 +1,10 @@
+node api1 [team="api", verified="false"]
+node api2 [team="api", verified="false"]
+node fraud1 [team="fraud", verified="false"]
+node fraud2 [team="fraud", verified="false"]
+node web [team="web", verified="false"]
+
+api1 -> web
+web -> fraud1
+fraud1 -> api2
+api2 -> fraud2

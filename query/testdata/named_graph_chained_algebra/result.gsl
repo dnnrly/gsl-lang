@@ -1,0 +1,2 @@
+node a [zone="a"]
+node b [zone="b"]

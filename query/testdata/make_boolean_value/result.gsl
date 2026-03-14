@@ -1,0 +1,3 @@
+node svc1 [team="api", active=true]
+node svc2 [team="web", active=true]
+node svc3 [team="data", active=true]

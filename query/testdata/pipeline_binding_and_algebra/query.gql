@@ -1,0 +1,1 @@
+(subgraph node.team == "api") as API | from * | (subgraph node.team == "fraud") as FRAUD | API + FRAUD

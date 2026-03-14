@@ -1,0 +1,10 @@
+set fast
+set slow
+
+node api
+node payments
+node db
+
+api -> payments @fast
+api -> db @slow
+payments -> db @fast

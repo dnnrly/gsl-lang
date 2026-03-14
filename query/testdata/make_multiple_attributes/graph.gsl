@@ -1,0 +1,3 @@
+node api [team="api", env="prod"]
+node web [team="web", env="prod"]
+node cache [team="api", env="prod"]

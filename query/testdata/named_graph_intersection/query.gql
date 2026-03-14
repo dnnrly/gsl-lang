@@ -1,0 +1,1 @@
+(subgraph node.critical == true) as CRIT | from * | (subgraph node.team == "payments") as PAY | CRIT & PAY

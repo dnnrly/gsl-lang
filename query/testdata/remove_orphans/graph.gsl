@@ -1,0 +1,6 @@
+node api
+node payments
+node orphan1
+node orphan2
+
+api -> payments

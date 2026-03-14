@@ -1,0 +1,4 @@
+node api [team="gateway"]
+node payments [team="payments"]
+
+api->payments

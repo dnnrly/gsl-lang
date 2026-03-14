@@ -1,0 +1,6 @@
+node a
+node b [kind="worker"]
+node c [kind="worker"]
+
+a -> b
+a -> c

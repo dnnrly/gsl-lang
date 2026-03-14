@@ -1,0 +1,6 @@
+node a
+node b [type="service"]
+node c [type="service"]
+
+a -> b
+b -> c

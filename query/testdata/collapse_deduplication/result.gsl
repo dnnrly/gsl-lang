@@ -1,0 +1,4 @@
+node a
+node x [kind="worker"]
+
+a->x

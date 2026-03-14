@@ -1,0 +1,8 @@
+node api [team="gateway"]
+node payments [team="payments"]
+node fraud [team="payments"]
+node db [team="platform"]
+
+api -> payments
+payments -> fraud
+fraud -> db

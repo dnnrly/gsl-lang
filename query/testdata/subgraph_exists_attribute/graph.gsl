@@ -1,0 +1,6 @@
+node frontend [env="prod"]
+node worker
+node cache [region="us-west"]
+
+frontend -> worker
+worker -> cache

@@ -354,8 +354,8 @@ When the same node appears in both graphs, attributes from the right-hand side o
 
 For additional examples and detailed explanations, see:
 
-* [QUERY_TUTORIAL.md](QUERY_TUTORIAL.md) — Step-by-step learning guide  
-* [QUERY_SPEC.md](QUERY_SPEC.md) — Complete formal specification  
+* [QUERY_TUTORIAL.md](query/QUERY_TUTORIAL.md) — Step-by-step learning guide  
+* [QUERY_SPEC.md](query/QUERY_SPEC.md) — Complete formal specification  
 * [query/](query/) — Go package documentation
 
 ### Query Examples

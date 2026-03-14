@@ -1,0 +1,4 @@
+node api1 [team="api", verified="false"]
+node api2 [team="api", verified="false"]
+node fraud1 [team="fraud", verified="false"]
+node fraud2 [team="fraud", verified="false"]

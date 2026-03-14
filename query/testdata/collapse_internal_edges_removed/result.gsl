@@ -1,0 +1,4 @@
+node a
+node merged [type="service"]
+
+a->merged

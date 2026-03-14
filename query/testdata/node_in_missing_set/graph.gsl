@@ -1,0 +1,6 @@
+node api
+node payments
+node db
+
+api -> payments
+payments -> db

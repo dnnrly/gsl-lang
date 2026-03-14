@@ -1,0 +1,8 @@
+node api
+node svc1
+node svc2
+node db
+
+api -> svc1 [timeout="30s"]
+svc1 -> svc2
+svc2 -> db [retries="3"]

@@ -1,0 +1,7 @@
+node svc1
+node svc2
+node svc3
+
+svc1 -> svc2 [protocol="grpc"]
+svc1 -> svc3 [protocol="http"]
+svc2 -> svc3 [protocol="tcp"]

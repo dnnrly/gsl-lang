@@ -1,0 +1,4 @@
+node worker
+node cache [region="us-west"]
+
+worker->cache

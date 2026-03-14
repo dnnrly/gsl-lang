@@ -1,0 +1,4 @@
+node b [team="api", merge="yes"]
+node c [env="prod", merge="yes"]
+
+b -> c

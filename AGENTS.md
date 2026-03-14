@@ -4,7 +4,9 @@ This document provides instructions for AI agents working on the GSL-Lang projec
 
 **For comprehensive language specification, see [SPEC.md](SPEC.md).**  
 **For formal grammar, see [GRAMMAR.md](GRAMMAR.md).**  
-**For Go API patterns and algorithms, see [LLM_GUIDE.md](LLM_GUIDE.md).**
+**For a description of the query language, see [QUERY_SPEC.md](query/QUERY_SPEC.md) and [QUERY_GRAMMAR.md](query/QUERY_GRAMMAR.md).**
+**LLM specific advice, see [LLM_GUIDE.md](LLM_GUIDE.md) and [QUERY_AI_GUIDE.md](query/QUERY_AI_GUIDE.md).**
+**See [GO_GUIDE.md](GO_GUIDE.md) for Go API patterns and algorithms.**
 
 ## Quick Commands
 
@@ -70,6 +72,41 @@ make lint
 | Language rules | SPEC.md, GRAMMAR.md, markdown_test.go |
 | CLI diagram tool | cmd/gsl-diagram/*, cli_integration_test.go |
 | Documentation examples | README.md, SPEC.md, LLM_GUIDE.md |
+| Query language tests | query/testdata/*, query/.test-plan.md |
+
+## Planning & Progress Tracking
+
+Subsystems may have planning/progress files for organizing work across multiple agents or sessions.
+
+**Pattern:**
+Each subsystem may contain:
+- `.test-plan.md` — Comprehensive plan with all proposed fixtures/work items
+  - Organized by priority or phase
+  - Includes spec references, complexity estimates, descriptions
+  - Use to identify what to work on next
+  
+- `.progress.md` — Tracking checklist
+  - Mark items as complete as you implement them
+  - Update across sessions to maintain continuity
+  - Organized to match the plan
+  
+- `.quick-ref.md` — Implementation reference guide
+  - Templates and examples for the subsystem
+  - Common commands and patterns
+  - Quick syntax/structure examples
+
+**Rules for planning files:**
+- All plan/progress/reference files MUST be listed in `.gitignore` for their directory
+- These files are **never committed** to git — they are local development aids only
+- Actual artifacts (test fixtures, code, documentation) are committed normally
+- Plan files help agents coordinate work across sessions without cluttering git history
+
+**When working on a subsystem with planning files:**
+1. Read the `.test-plan.md` to understand the scope and priorities
+2. Consult `.quick-ref.md` for implementation patterns and examples
+3. Update `.progress.md` as you complete work items
+4. Create/commit only the actual artifacts (tests, code, docs) — never the plan files
+5. Verify plan files are gitignored before finishing
 
 ## Key Design Patterns
 

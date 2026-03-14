@@ -1,0 +1,7 @@
+node a [team="api"]
+node b [team="api"]
+node c [team="api"]
+node d [team="fraud"]
+
+a -> b
+b -> c

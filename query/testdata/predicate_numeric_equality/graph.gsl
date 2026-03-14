@@ -1,0 +1,6 @@
+node high_priority [priority="10"]
+node medium_priority [priority="5"]
+node low_priority [priority="3"]
+
+high_priority -> medium_priority
+medium_priority -> low_priority

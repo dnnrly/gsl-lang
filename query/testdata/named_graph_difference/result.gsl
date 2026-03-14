@@ -1,0 +1,6 @@
+node a [team="api"]
+node b [team="api"]
+node c [team="api"]
+
+a -> b
+b -> c

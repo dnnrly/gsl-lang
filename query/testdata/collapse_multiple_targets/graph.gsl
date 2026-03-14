@@ -1,0 +1,8 @@
+node api [team="platform"]
+node cache [team="platform"]
+node db [team="platform"]
+node gateway
+
+gateway -> api
+gateway -> cache
+gateway -> db

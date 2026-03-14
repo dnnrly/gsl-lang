@@ -1,0 +1,4 @@
+node active_svc1 [active=true]
+node active_svc2 [active=true]
+
+active_svc1->active_svc2

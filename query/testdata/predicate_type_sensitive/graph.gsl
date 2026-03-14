@@ -1,0 +1,6 @@
+node string_count [count="42"]
+node other_count [count="24"]
+node another_count [count="42"]
+
+string_count -> another_count
+another_count -> other_count
