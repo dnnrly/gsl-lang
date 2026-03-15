@@ -413,4 +413,29 @@ func convertValue(v *ValueAST) interface{} {
 	return ""
 }
 
+// isValidGraphName validates graph names: [A-Z][A-Z0-9_]*
+func isValidGraphName(name string) bool {
+	if len(name) == 0 {
+		return false
+	}
+	if name[0] < 'A' || name[0] > 'Z' {
+		return false
+	}
+	for i := 1; i < len(name); i++ {
+		ch := name[i]
+		if !((ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_') {
+			return false
+		}
+	}
+	return true
+}
+
+// isValidGraphRef checks if a reference is valid (either "*" or a named graph name)
+func isValidGraphRef(ref string) bool {
+	if ref == "*" {
+		return true
+	}
+	// Must match named graph naming: [A-Z][A-Z0-9_]*
+	return isValidGraphName(ref)
+}
 
