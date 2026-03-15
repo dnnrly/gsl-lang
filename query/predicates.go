@@ -265,13 +265,7 @@ func (p *NotPredicate) TargetType() string {
 }
 
 // ParsePredicate parses a predicate string
-// Formats:
-//   exists
-//   node.attr = value
-//   edge.attr = value
-//   in SETNAME
-//   not in SETNAME
-//   pred1 AND pred2
+// This is kept for backward compatibility with tests
 func ParsePredicate(input string) (Predicate, error) {
 	input = strings.TrimSpace(input)
 
