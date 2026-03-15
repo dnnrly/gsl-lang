@@ -108,6 +108,26 @@ Each subsystem may contain:
 4. Create/commit only the actual artifacts (tests, code, docs) — never the plan files
 5. Verify plan files are gitignored before finishing
 
+## Test Fixture Documentation
+
+**Query Language Fixtures** — `query/testdata/README.md`
+
+To avoid context bloat when working with many test fixtures:
+- **All fixtures cataloged** in a single README with quick navigation table
+- **Organized by category** (subgraph filtering, algebra, make, remove, collapse, etc.)
+- **Semantic notes** explain correct behavior for each category
+- **Maintenance checklist** included so agents know when to update
+
+**When adding/modifying query fixtures:**
+1. Create fixture directory with `graph.gsl`, `query.gql`, `result.gsl`
+2. Verify it passes: `go test -v -run TestFixtures ./query`
+3. Update `query/testdata/README.md`:
+   - Add entry to appropriate category table
+   - Include brief description (one line)
+   - Add semantic note if behavior is non-obvious
+4. If adding new category, document it with examples
+5. Follow maintenance checklist at end of README
+
 ## Key Design Patterns
 
 - **Lenient parsing**: Warnings are non-fatal; invalid input generates errors
