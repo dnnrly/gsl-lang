@@ -77,6 +77,62 @@ func TestTypeSensitiveEquality(t *testing.T) {
 	}
 }
 
+// TestAttributeNotEqualsPredicate tests inequality matching
+func TestAttributeNotEqualsPredicate(t *testing.T) {
+	pred := &AttributeNotEqualsPredicate{
+		Target: "node",
+		Name:   "env",
+		Value:  "prod",
+	}
+
+	nodeProd := &gsl.Node{
+		ID:         "A",
+		Attributes: map[string]interface{}{"env": "prod"},
+		Sets:       map[string]struct{}{},
+	}
+
+	nodeDev := &gsl.Node{
+		ID:         "B",
+		Attributes: map[string]interface{}{"env": "dev"},
+		Sets:       map[string]struct{}{},
+	}
+
+	nodeNoEnv := &gsl.Node{
+		ID:         "C",
+		Attributes: map[string]interface{}{},
+		Sets:       map[string]struct{}{},
+	}
+
+	if pred.EvaluateNode(nodeProd) {
+		t.Fatal("Should not match node with env=prod")
+	}
+	if !pred.EvaluateNode(nodeDev) {
+		t.Fatal("Should match node with env=dev")
+	}
+	if pred.EvaluateNode(nodeNoEnv) {
+		t.Fatal("Should not match node without env attribute (spec: missing evaluates false)")
+	}
+}
+
+// TestTypeSensitiveInequality tests that "42" != 42
+func TestTypeSensitiveInequality(t *testing.T) {
+	pred := &AttributeNotEqualsPredicate{
+		Target: "node",
+		Name:   "count",
+		Value:  42,
+	}
+
+	node := &gsl.Node{
+		ID:         "A",
+		Attributes: map[string]interface{}{"count": "42"}, // String, not int
+		Sets:       map[string]struct{}{},
+	}
+
+	if !pred.EvaluateNode(node) {
+		t.Fatal("Should match: \"42\" (string) != 42 (int)")
+	}
+}
+
 // TestSetMembershipPredicate tests set membership
 func TestSetMembershipPredicate(t *testing.T) {
 	pred := &SetMembershipPredicate{
@@ -431,5 +487,60 @@ func TestAndPredicate_MixedTargets(t *testing.T) {
 	// Should differentiate between node/edge targets
 	if pred.TargetType() != "node" && pred.TargetType() != "edge" {
 		t.Fatal("Should detect mixed targets")
+	}
+}
+
+// TestParseNodePredicateNotEqual tests parsing "node.attr != value"
+func TestParseNodePredicateNotEqual(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{"basic string", "node.env != \"prod\"", false},
+		{"no spaces", "node.env!=\"dev\"", false},
+		{"boolean", "node.status != true", false},
+		{"node id", "node.id != \"test\"", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pred, err := ParsePredicate(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if err == nil && pred == nil {
+				t.Fatal("expected non-nil predicate")
+			}
+			if err == nil {
+				_, ok := pred.(*AttributeNotEqualsPredicate)
+				if !ok {
+					t.Fatalf("expected AttributeNotEqualsPredicate, got %T", pred)
+				}
+			}
+		})
+	}
+}
+
+// TestParseEdgePredicateNotEqual tests parsing "edge.attr != value"
+func TestParseEdgePredicateNotEqual(t *testing.T) {
+	pred, err := ParsePredicate("edge.protocol != \"HTTP\"")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	notEqualPred, ok := pred.(*AttributeNotEqualsPredicate)
+	if !ok {
+		t.Fatalf("expected AttributeNotEqualsPredicate, got %T", pred)
+	}
+
+	if notEqualPred.Target != "edge" {
+		t.Fatalf("expected edge target, got %s", notEqualPred.Target)
+	}
+	if notEqualPred.Name != "protocol" {
+		t.Fatalf("expected protocol attribute, got %s", notEqualPred.Name)
+	}
+	if notEqualPred.Value != "HTTP" {
+		t.Fatalf("expected HTTP value, got %v", notEqualPred.Value)
 	}
 }
