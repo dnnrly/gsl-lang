@@ -24,10 +24,11 @@ var queryLexer = lexer.MustSimple([]lexer.SimpleRule{
 
 // QueryAST is the top-level grammar rule
 type QueryAST struct {
-	Expressions []*ExpressionAST `@@ ( Pipe @@ )*`
+	Expressions []*ExpressionAST `( @@ ( Pipe @@ )* )?`
 }
 
-// ExpressionAST is a union of all expression types — first match wins
+// ExpressionAST is a union of all expression types
+// Order matters: keywords must be tried before graph algebra
 type ExpressionAST struct {
 	Binding      *BindingAST      `  @@`
 	Subgraph     *SubgraphAST     `| @@`
@@ -49,6 +50,9 @@ type SubgraphAST struct {
 	Predicate *PredicateAST `"subgraph" @@`
 	Traverse  *TraverseAST  `( @@ )?`
 }
+
+// Ensure SubgraphAST is recognized as starting with "subgraph" keyword
+var _ = "subgraph"
 
 // TraverseAST: "traverse" direction depth
 type TraverseAST struct {
@@ -97,8 +101,12 @@ type PredicateAST struct {
 
 // PredicateTermAST: union of predicate forms
 type PredicateTermAST struct {
-	SetPredicate  *SetPredicateAST  `  @@`
-	AttrPredicate *AttrPredicateAST `| @@`
+	Exists         bool              `  @"exists"`
+	BareSetName    string            `| "in" @Ident`
+	BareNotSetName string            `| "not" "in" @Ident`
+	BareNot        *PredicateAST     `| "not" @@`
+	SetPredicate   *SetPredicateAST  `| @@`
+	AttrPredicate  *AttrPredicateAST `| @@`
 }
 
 // SetPredicateAST: ("node"|"edge") ["not"] "in" "@" ident
@@ -111,7 +119,7 @@ type SetPredicateAST struct {
 // AttrPredicateAST: path (op value | "exists" | "not" "exists")
 type AttrPredicateAST struct {
 	Path      *AttributePathAST `@@`
-	Operator  string            `( @( Operator )`
+	Operator  string            `( @( Operator | Assign )`
 	Value     *ValueAST         `  @@`
 	Exists    bool              `| @"exists"`
 	NotExists bool              `| "not" @"exists" )`
@@ -142,5 +150,5 @@ func (b *Boolean) Capture(values []string) error {
 var queryParser = participle.MustBuild[QueryAST](
 	participle.Lexer(queryLexer),
 	participle.Elide("Comment", "Whitespace"),
-	participle.UseLookahead(3),
+	participle.UseLookahead(10),
 )

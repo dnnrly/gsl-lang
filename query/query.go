@@ -64,26 +64,7 @@ func NewQueryParser(input string) *QueryParser {
 
 // Parse parses the input string and returns a Query
 func (p *QueryParser) Parse() (*Query, error) {
-	// Two-stage parser:
-	// 1. Split on |
-	// 2. Parse each expression individually
-
-	expressions := []Expression{}
-
-	// Split on |
-	pipelineParts := p.splitPipeline()
-
-	// Parse each part as an expression
-	for _, part := range pipelineParts {
-		exprParser := newExpressionParser(part)
-		expr, err := exprParser.parse()
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse expression: %w", err)
-		}
-		expressions = append(expressions, expr)
-	}
-
-	return &Query{Expressions: expressions}, nil
+	return parseQuery(p.input)
 }
 
 // splitPipeline splits the input on | while respecting parentheses
