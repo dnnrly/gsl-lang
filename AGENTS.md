@@ -101,7 +101,7 @@ Each subsystem may contain:
 - Actual artifacts (test fixtures, code, documentation) are committed normally
 - Plan files help agents coordinate work across sessions without cluttering git history
 
-**When working on a subsystem with planning files:**
+**When working with planning files:**
 1. Read the `.test-plan.md` to understand the scope and priorities
 2. Consult `.quick-ref.md` for implementation patterns and examples
 3. Update `.progress.md` as you complete work items
