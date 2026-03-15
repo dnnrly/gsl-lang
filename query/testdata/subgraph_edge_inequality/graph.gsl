@@ -1,0 +1,7 @@
+node A
+node B
+node C
+
+A -> B [protocol = "HTTPS"]
+B -> C [protocol = "HTTP"]
+A -> C [protocol = "gRPC"]

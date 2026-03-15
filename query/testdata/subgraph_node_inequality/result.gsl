@@ -1,0 +1,4 @@
+node dev_api [env = "dev"]
+node staging_api [env = "staging"]
+
+dev_api -> staging_api

@@ -1,0 +1,8 @@
+node prod_api [env = "prod"]
+node dev_api [env = "dev"]
+node staging_api [env = "staging"]
+node worker [env = "prod"]
+
+prod_api -> dev_api
+dev_api -> staging_api
+staging_api -> worker
