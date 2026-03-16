@@ -1,3 +1,4 @@
+//nolint:structtag,composites // Participle uses custom struct tag syntax that standard Go validators don't understand
 package query
 
 import (

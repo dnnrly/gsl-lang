@@ -1,0 +1,8 @@
+linters:
+  disable-all: false
+
+issues:
+  exclude-rules:
+    # Participle uses custom struct tag syntax for parsing rules
+    - path: query/ast\.go
+      text: "struct field tag|struct literal uses unkeyed fields"
