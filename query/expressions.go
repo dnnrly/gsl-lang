@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/dnnrly/gsl-lang"
 )
@@ -593,7 +594,20 @@ func (e *CollapseExpr) edgeKey(edge *gsl.Edge) string {
 	// Key: from|to|attribute_hash
 	// For simplicity, we use from|to and check if exact edge exists
 	// In a real implementation, we'd hash attributes
-	attrs := fmt.Sprintf("%v", edge.Attributes)
+	// Sort attribute keys for deterministic output
+	keys := make([]string, 0, len(edge.Attributes))
+	for k := range edge.Attributes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	
+	var attrs string
+	for _, k := range keys {
+		if attrs != "" {
+			attrs += ","
+		}
+		attrs += fmt.Sprintf("%s:%v", k, edge.Attributes[k])
+	}
 	return edge.From + "|" + edge.To + "|" + attrs
 }
 
