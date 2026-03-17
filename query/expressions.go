@@ -128,7 +128,13 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	// Add matched edges (or edges where both endpoints are in baseNodes if edge predicate)
 	if targetType == "edge" {
 		// For edge predicates, only add edges that matched the predicate
+		// Sort edge indices for deterministic output
+		indices := make([]int, 0, len(baseEdges))
 		for idx := range baseEdges {
+			indices = append(indices, idx)
+		}
+		sort.Ints(indices)
+		for _, idx := range indices {
 			result.Edges = append(result.Edges, graph.Edges[idx])
 		}
 	} else {
