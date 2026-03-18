@@ -20,7 +20,8 @@ func (c *plantUMLComponentConverter) Convert(graph *gsl.Graph) string {
 	usedParents := make(map[string]bool)
 	orphanNodes := []*gsl.Node{}
 
-	for _, node := range graph.Nodes {
+	nodes := graph.GetNodes()
+	for _, node := range nodes {
 		parent, hasParent := node.Attributes["parent"]
 		if hasParent {
 			parentID := fmt.Sprintf("%v", parent)
@@ -32,7 +33,7 @@ func (c *plantUMLComponentConverter) Convert(graph *gsl.Graph) string {
 	}
 
 	for parentID, children := range parentGroups {
-		parentNode := graph.Nodes[parentID]
+		parentNode := nodes[parentID]
 		if parentNode != nil {
 			sb.WriteString(fmt.Sprintf("package \"%s\" as %s {\n", converter.GetNodeLabel(parentNode), parentID))
 			for _, child := range children {
@@ -51,7 +52,8 @@ func (c *plantUMLComponentConverter) Convert(graph *gsl.Graph) string {
 
 	sb.WriteString("\n")
 
-	for _, edge := range graph.Edges {
+	edges := graph.GetEdges()
+	for _, edge := range edges {
 		label := converter.GetEdgeLabel(edge)
 		if label != "" {
 			sb.WriteString(fmt.Sprintf("%s --> %s : %s\n", edge.From, edge.To, label))

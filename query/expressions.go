@@ -99,7 +99,8 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 		baseNodes = e.traverse(graph, baseNodes, e.Traversal)
 		// After traversal, rebuild base edges (include all edges between nodes in traversal result)
 		baseEdges = make(map[int]bool)
-		for i, edge := range graph.Edges {
+		graphEdges := graph.GetEdges()
+		for i, edge := range graphEdges {
 			if baseNodes[edge.From] && baseNodes[edge.To] {
 				baseEdges[i] = true
 			}
@@ -107,25 +108,24 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	}
 
 	// Construct result graph
-	result := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	result := buildGraph()
 
 	// Copy all sets unchanged
-	for id, set := range graph.Sets {
-		result.Sets[id] = set
+	graphSets := graph.GetSets()
+	for id, set := range graphSets {
+		result.addSet(id, set)
 	}
 
 	// Add matched nodes
+	graphNodes := graph.GetNodes()
 	for id := range baseNodes {
-		if node, exists := graph.Nodes[id]; exists {
-			result.Nodes[id] = node
+		if node, exists := graphNodes[id]; exists {
+			result.addNode(id, node)
 		}
 	}
 
 	// Add matched edges (or edges where both endpoints are in baseNodes if edge predicate)
+	graphEdges := graph.GetEdges()
 	if targetType == "edge" {
 		// For edge predicates, only add edges that matched the predicate
 		// Sort edge indices for deterministic output
@@ -135,18 +135,18 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 		}
 		sort.Ints(indices)
 		for _, idx := range indices {
-			result.Edges = append(result.Edges, graph.Edges[idx])
+			result.addEdge(graphEdges[idx])
 		}
 	} else {
 		// For node predicates, add all edges where both endpoints are in baseNodes
-		for _, edge := range graph.Edges {
+		for _, edge := range graphEdges {
 			if baseNodes[edge.From] && baseNodes[edge.To] {
-				result.Edges = append(result.Edges, edge)
+				result.addEdge(edge)
 			}
 		}
 	}
 
-	return GraphValue{result}, nil
+	return GraphValue{result.finalize()}, nil
 }
 
 // buildSubgraph constructs the initial subgraph matching the predicate
@@ -155,10 +155,13 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[s
 	nodes := make(map[string]bool)
 	edges := make(map[int]bool)
 
+	graphNodes := graph.GetNodes()
+	graphEdges := graph.GetEdges()
+
 	switch targetType {
 	case "node":
 		// Node predicate: include matching nodes
-		for id, node := range graph.Nodes {
+		for id, node := range graphNodes {
 			if e.Pred.EvaluateNode(node) {
 				nodes[id] = true
 			}
@@ -166,7 +169,7 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[s
 
 	case "edge":
 		// Edge predicate: include endpoints of matching edges
-		for i, edge := range graph.Edges {
+		for i, edge := range graphEdges {
 			if e.Pred.EvaluateEdge(edge) {
 				nodes[edge.From] = true
 				nodes[edge.To] = true
@@ -176,7 +179,7 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[s
 
 	default:
 		// Empty target: try nodes first, then edges, then all
-		for id, node := range graph.Nodes {
+		for id, node := range graphNodes {
 			if e.Pred.EvaluateNode(node) {
 				nodes[id] = true
 			}
@@ -184,7 +187,7 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[s
 
 		if len(nodes) == 0 {
 			// No matching nodes, try edges
-			for i, edge := range graph.Edges {
+			for i, edge := range graphEdges {
 				if e.Pred.EvaluateEdge(edge) {
 					nodes[edge.From] = true
 					nodes[edge.To] = true
@@ -195,7 +198,7 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[s
 
 		if len(nodes) == 0 {
 			// No edges either, include all (for exists predicate)
-			for id := range graph.Nodes {
+			for id := range graphNodes {
 				nodes[id] = true
 			}
 		}
@@ -246,7 +249,8 @@ func (e *SubgraphExpr) traverse(graph *gsl.Graph, startNodes map[string]bool, cf
 func (e *SubgraphExpr) getNeighbors(graph *gsl.Graph, nodeID string, direction string) []string {
 	neighbors := make(map[string]bool)
 
-	for _, edge := range graph.Edges {
+	graphEdges := graph.GetEdges()
+	for _, edge := range graphEdges {
 		switch direction {
 		case "out":
 			// Outgoing edges: from→to
@@ -299,41 +303,41 @@ func (e *RemoveEdgeExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	}
 
 	// Filter edges: keep those that don't match the predicate
-	result := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	result := buildGraph()
 
 	// Copy all nodes and sets unchanged
-	for id, node := range graph.Nodes {
-		result.Nodes[id] = node
+	graphNodes := graph.GetNodes()
+	graphEdges := graph.GetEdges()
+	graphSets := graph.GetSets()
+	
+	for _, node := range graphNodes {
+		result.addNode(node.ID, node)
 	}
-	for id, set := range graph.Sets {
-		result.Sets[id] = set
+	for _, set := range graphSets {
+		result.addSet(set.ID, set)
 	}
 
 	// Keep edges that don't match the predicate
-	for _, edge := range graph.Edges {
+	for _, edge := range graphEdges {
 		// Check if this edge matches the predicate (only for edge predicates)
 		if targetType == "edge" {
 			if !e.Pred.EvaluateEdge(edge) {
-				result.Edges = append(result.Edges, edge)
+				result.addEdge(edge)
 			}
 		} else if targetType == "" {
 			// Empty target: try edges first (per removal semantics)
 			if !e.Pred.EvaluateEdge(edge) {
-				result.Edges = append(result.Edges, edge)
+				result.addEdge(edge)
 			}
 		} else {
 			// Node predicate on remove edge: error or keep all?
 			// Per spec, "remove edge where" uses edge predicates only
 			// For now, keep all edges if not an edge predicate
-			result.Edges = append(result.Edges, edge)
+			result.addEdge(edge)
 		}
 	}
 
-	return GraphValue{result}, nil
+	return GraphValue{result.finalize()}, nil
 }
 
 // RemoveAttributeExpr removes an attribute from nodes or edges matching a predicate
@@ -359,20 +363,18 @@ func (e *RemoveAttributeExpr) Apply(ctx *QueryContext, input Value) (Value, erro
 		return nil, fmt.Errorf("predicate mixes node and edge targets")
 	}
 
-	// Create result graph (clone structure)
-	result := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	// Create result graph
+	result := buildGraph()
 
 	// Copy all sets
-	for id, set := range graph.Sets {
-		result.Sets[id] = set
+	graphSets := graph.GetSets()
+	for _, set := range graphSets {
+		result.addSet(set.ID, set)
 	}
 
 	// Process nodes
-	for id, node := range graph.Nodes {
+	graphNodes := graph.GetNodes()
+	for id, node := range graphNodes {
 		nodeCopy := *node
 		nodeCopy.Attributes = make(map[string]interface{})
 
@@ -388,11 +390,12 @@ func (e *RemoveAttributeExpr) Apply(ctx *QueryContext, input Value) (Value, erro
 			}
 		}
 
-		result.Nodes[id] = &nodeCopy
+		result.addNode(id, &nodeCopy)
 	}
 
 	// Process edges
-	for _, edge := range graph.Edges {
+	graphEdges := graph.GetEdges()
+	for _, edge := range graphEdges {
 		edgeCopy := *edge
 		edgeCopy.Attributes = make(map[string]interface{})
 
@@ -408,10 +411,10 @@ func (e *RemoveAttributeExpr) Apply(ctx *QueryContext, input Value) (Value, erro
 			}
 		}
 
-		result.Edges = append(result.Edges, &edgeCopy)
+		result.addEdge(&edgeCopy)
 	}
 
-	return GraphValue{result}, nil
+	return GraphValue{result.finalize()}, nil
 }
 
 // RemoveOrphansExpr removes nodes with no incident edges
@@ -429,35 +432,36 @@ func (e *RemoveOrphansExpr) Apply(ctx *QueryContext, input Value) (Value, error)
 	graph := graphValue.Graph
 
 	// Identify nodes with at least one incident edge
+	graphEdges := graph.GetEdges()
 	hasEdge := make(map[string]bool)
-	for _, edge := range graph.Edges {
+	for _, edge := range graphEdges {
 		hasEdge[edge.From] = true
 		hasEdge[edge.To] = true
 	}
 
 	// Build result graph
-	result := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	result := buildGraph()
 
 	// Copy all sets unchanged
-	for id, set := range graph.Sets {
-		result.Sets[id] = set
+	graphSets := graph.GetSets()
+	for _, set := range graphSets {
+		result.addSet(set.ID, set)
 	}
 
 	// Keep only nodes with incident edges
-	for id, node := range graph.Nodes {
+	graphNodes := graph.GetNodes()
+	for id, node := range graphNodes {
 		if hasEdge[id] {
-			result.Nodes[id] = node
+			result.addNode(id, node)
 		}
 	}
 
 	// Copy all edges (endpoints still exist)
-	result.Edges = append(result.Edges, graph.Edges...)
+	for _, edge := range graphEdges {
+		result.addEdge(edge)
+	}
 
-	return GraphValue{result}, nil
+	return GraphValue{result.finalize()}, nil
 }
 
 // CollapseExpr merges multiple nodes matching a predicate into a single node
@@ -487,8 +491,9 @@ func (e *CollapseExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	}
 
 	// Find nodes to collapse
+	graphNodes := graph.GetNodes()
 	collapsedSet := make(map[string]bool)
-	for id, node := range graph.Nodes {
+	for id, node := range graphNodes {
 		if e.Pred.EvaluateNode(node) {
 			collapsedSet[id] = true
 		}
@@ -500,21 +505,18 @@ func (e *CollapseExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	}
 
 	// Create result graph
-	result := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	result := buildGraph()
 
 	// Copy all sets unchanged
-	for id, set := range graph.Sets {
-		result.Sets[id] = set
+	graphSets := graph.GetSets()
+	for _, set := range graphSets {
+		result.addSet(set.ID, set)
 	}
 
 	// Copy nodes that are not being collapsed
-	for id, node := range graph.Nodes {
+	for id, node := range graphNodes {
 		if !collapsedSet[id] {
-			result.Nodes[id] = node
+			result.addNode(id, node)
 		}
 	}
 
@@ -522,7 +524,7 @@ func (e *CollapseExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	mergedAttrs := make(map[string]interface{})
 	for _, id := range e.sortedNodeIDs(graph, collapsedSet) {
 		// Apply attributes in order (last-write-wins)
-		node := graph.Nodes[id]
+		node := graphNodes[id]
 		if node != nil && node.Attributes != nil {
 			for k, v := range node.Attributes {
 				mergedAttrs[k] = v
@@ -530,16 +532,17 @@ func (e *CollapseExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 		}
 	}
 
-	result.Nodes[e.NodeID] = &gsl.Node{
+	result.addNode(e.NodeID, &gsl.Node{
 		ID:         e.NodeID,
 		Attributes: mergedAttrs,
 		Sets:       make(map[string]struct{}),
-	}
+	})
 
 	// Process edges: rewrite external edges, remove internal edges
 	seenEdges := make(map[string]bool) // for deduplication
 
-	for _, edge := range graph.Edges {
+	graphEdges := graph.GetEdges()
+	for _, edge := range graphEdges {
 		fromCollapsed := collapsedSet[edge.From]
 		toCollapsed := collapsedSet[edge.To]
 
@@ -571,11 +574,11 @@ func (e *CollapseExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 		key := e.edgeKey(newEdge)
 		if !seenEdges[key] {
 			seenEdges[key] = true
-			result.Edges = append(result.Edges, newEdge)
+			result.addEdge(newEdge)
 		}
 	}
 
-	return GraphValue{result}, nil
+	return GraphValue{result.finalize()}, nil
 }
 
 // sortedNodeIDs returns collapsed node IDs in a deterministic order
@@ -641,20 +644,18 @@ func (e *MakeExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 		return nil, fmt.Errorf("predicate mixes node and edge targets")
 	}
 
-	// Create result graph (clone structure)
-	result := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	// Create result graph
+	result := buildGraph()
 
 	// Copy all sets
-	for id, set := range graph.Sets {
-		result.Sets[id] = set
+	graphSets := graph.GetSets()
+	for _, set := range graphSets {
+		result.addSet(set.ID, set)
 	}
 
 	// Process nodes
-	for id, node := range graph.Nodes {
+	graphNodes := graph.GetNodes()
+	for id, node := range graphNodes {
 		nodeCopy := *node
 		nodeCopy.Attributes = make(map[string]interface{})
 
@@ -670,11 +671,12 @@ func (e *MakeExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 			}
 		}
 
-		result.Nodes[id] = &nodeCopy
+		result.addNode(id, &nodeCopy)
 	}
 
 	// Process edges
-	for _, edge := range graph.Edges {
+	graphEdges := graph.GetEdges()
+	for _, edge := range graphEdges {
 		edgeCopy := *edge
 		edgeCopy.Attributes = make(map[string]interface{})
 
@@ -690,10 +692,10 @@ func (e *MakeExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 			}
 		}
 
-		result.Edges = append(result.Edges, &edgeCopy)
+		result.addEdge(&edgeCopy)
 	}
 
-	return GraphValue{result}, nil
+	return GraphValue{result.finalize()}, nil
 }
 
 // GraphAlgebraExpr combines two named graphs using an operator
@@ -750,14 +752,18 @@ func (e *GraphAlgebraExpr) resolveGraph(ctx *QueryContext, ref string) (*gsl.Gra
 // union combines all nodes and edges from both graphs
 // For shared nodes: left attributes first, right overwrites conflicts (last-write-wins)
 func (e *GraphAlgebraExpr) union(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
-	result := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	result := buildGraph()
+
+	leftNodes := left.GetNodes()
+	leftEdges := left.GetEdges()
+	leftSets := left.GetSets()
+	rightNodes := right.GetNodes()
+	rightEdges := right.GetEdges()
+	rightSets := right.GetSets()
 
 	// Copy left nodes and sets
-	for id, node := range left.Nodes {
+	resultNodes := make(map[string]*gsl.Node)
+	for id, node := range leftNodes {
 		nodeCopy := *node
 		nodeCopy.Attributes = make(map[string]interface{})
 		for k, v := range node.Attributes {
@@ -767,25 +773,28 @@ func (e *GraphAlgebraExpr) union(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
 		for s := range node.Sets {
 			nodeCopy.Sets[s] = struct{}{}
 		}
-		result.Nodes[id] = &nodeCopy
+		result.addNode(id, &nodeCopy)
+		resultNodes[id] = &nodeCopy
 	}
 
 	// Copy left edges
-	result.Edges = append(result.Edges, left.Edges...)
+	for _, edge := range leftEdges {
+		result.addEdge(edge)
+	}
 
 	// Copy left sets
-	for id, set := range left.Sets {
+	for id, set := range leftSets {
 		setCopy := *set
 		setCopy.Attributes = make(map[string]interface{})
 		for k, v := range set.Attributes {
 			setCopy.Attributes[k] = v
 		}
-		result.Sets[id] = &setCopy
+		result.addSet(id, &setCopy)
 	}
 
 	// Merge right nodes (right overwrites left for attributes)
-	for id, node := range right.Nodes {
-		if existing, exists := result.Nodes[id]; exists {
+	for id, node := range rightNodes {
+		if existing, exists := resultNodes[id]; exists {
 			// Node exists in both: right overwrites left (last-write-wins)
 			for k, v := range node.Attributes {
 				existing.Attributes[k] = v
@@ -805,16 +814,19 @@ func (e *GraphAlgebraExpr) union(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
 			for s := range node.Sets {
 				nodeCopy.Sets[s] = struct{}{}
 			}
-			result.Nodes[id] = &nodeCopy
+			result.addNode(id, &nodeCopy)
+			resultNodes[id] = &nodeCopy
 		}
 	}
 
 	// Add right edges (duplicates preserved)
-	result.Edges = append(result.Edges, right.Edges...)
+	for _, edge := range rightEdges {
+		result.addEdge(edge)
+	}
 
 	// Merge right sets
-	for id, set := range right.Sets {
-		if existing, exists := result.Sets[id]; exists {
+	for id, set := range rightSets {
+		if existing, exists := result.sets[id]; exists {
 			// Set exists in both: right overwrites left
 			for k, v := range set.Attributes {
 				existing.Attributes[k] = v
@@ -826,26 +838,30 @@ func (e *GraphAlgebraExpr) union(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
 			for k, v := range set.Attributes {
 				setCopy.Attributes[k] = v
 			}
-			result.Sets[id] = &setCopy
+			result.addSet(id, &setCopy)
 		}
 	}
 
-	return result
+	return result.finalize()
 }
 
 // intersection returns only nodes/edges present in both graphs
 // A node is in intersection if it exists in both graphs
 // An edge is in intersection if endpoints both exist in result and edge exists in both graphs
 func (e *GraphAlgebraExpr) intersection(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
-	result := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	result := buildGraph()
+	resultNodes := make(map[string]*gsl.Node)
+
+	leftNodes := left.GetNodes()
+	rightNodes := right.GetNodes()
+	leftEdges := left.GetEdges()
+	rightEdges := right.GetEdges()
+	leftSets := left.GetSets()
+	rightSets := right.GetSets()
 
 	// Include nodes that exist in both graphs
-	for id, node := range left.Nodes {
-		if _, exists := right.Nodes[id]; exists {
+	for id, node := range leftNodes {
+		if _, exists := rightNodes[id]; exists {
 			// Node exists in both
 			nodeCopy := *node
 			nodeCopy.Attributes = make(map[string]interface{})
@@ -856,20 +872,21 @@ func (e *GraphAlgebraExpr) intersection(left *gsl.Graph, right *gsl.Graph) *gsl.
 			for s := range node.Sets {
 				nodeCopy.Sets[s] = struct{}{}
 			}
-			result.Nodes[id] = &nodeCopy
+			result.addNode(id, &nodeCopy)
+			resultNodes[id] = &nodeCopy
 		}
 	}
 
 	// Build edge set from right for fast lookup
-	rightEdges := make(map[string]bool) // key: from|to
-	for _, edge := range right.Edges {
-		rightEdges[edge.From+"|"+edge.To] = true
+	rightEdgeSet := make(map[string]bool) // key: from|to
+	for _, edge := range rightEdges {
+		rightEdgeSet[edge.From+"|"+edge.To] = true
 	}
 
 	// Include edges that exist in both graphs (both endpoints in result, edge in both)
-	for _, edge := range left.Edges {
+	for _, edge := range leftEdges {
 		key := edge.From + "|" + edge.To
-		if rightEdges[key] && result.Nodes[edge.From] != nil && result.Nodes[edge.To] != nil {
+		if rightEdgeSet[key] && resultNodes[edge.From] != nil && resultNodes[edge.To] != nil {
 			edgeCopy := *edge
 			edgeCopy.Attributes = make(map[string]interface{})
 			for k, v := range edge.Attributes {
@@ -879,38 +896,42 @@ func (e *GraphAlgebraExpr) intersection(left *gsl.Graph, right *gsl.Graph) *gsl.
 			for s := range edge.Sets {
 				edgeCopy.Sets[s] = struct{}{}
 			}
-			result.Edges = append(result.Edges, &edgeCopy)
+			result.addEdge(&edgeCopy)
 		}
 	}
 
 	// Include sets that exist in both graphs
-	for id, set := range left.Sets {
-		if _, exists := right.Sets[id]; exists {
+	for id, set := range leftSets {
+		if _, exists := rightSets[id]; exists {
 			setCopy := *set
 			setCopy.Attributes = make(map[string]interface{})
 			for k, v := range set.Attributes {
 				setCopy.Attributes[k] = v
 			}
-			result.Sets[id] = &setCopy
+			result.addSet(id, &setCopy)
 		}
 	}
 
-	return result
+	return result.finalize()
 }
 
 // difference returns nodes/edges in left but not in right
 // A node is in difference if it exists in left but not right
 // An edge is in difference if endpoints both exist in result and edge exists in left but not right
 func (e *GraphAlgebraExpr) difference(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
-	result := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	result := buildGraph()
+	resultNodes := make(map[string]*gsl.Node)
+
+	leftNodes := left.GetNodes()
+	rightNodes := right.GetNodes()
+	leftEdges := left.GetEdges()
+	rightEdges := right.GetEdges()
+	leftSets := left.GetSets()
+	rightSets := right.GetSets()
 
 	// Include nodes that exist in left but not right
-	for id, node := range left.Nodes {
-		if _, exists := right.Nodes[id]; !exists {
+	for id, node := range leftNodes {
+		if _, exists := rightNodes[id]; !exists {
 			nodeCopy := *node
 			nodeCopy.Attributes = make(map[string]interface{})
 			for k, v := range node.Attributes {
@@ -920,20 +941,21 @@ func (e *GraphAlgebraExpr) difference(left *gsl.Graph, right *gsl.Graph) *gsl.Gr
 			for s := range node.Sets {
 				nodeCopy.Sets[s] = struct{}{}
 			}
-			result.Nodes[id] = &nodeCopy
+			result.addNode(id, &nodeCopy)
+			resultNodes[id] = &nodeCopy
 		}
 	}
 
 	// Build edge set from right for fast lookup
-	rightEdges := make(map[string]bool)
-	for _, edge := range right.Edges {
-		rightEdges[edge.From+"|"+edge.To] = true
+	rightEdgeSet := make(map[string]bool)
+	for _, edge := range rightEdges {
+		rightEdgeSet[edge.From+"|"+edge.To] = true
 	}
 
 	// Include edges that exist in left but not right
-	for _, edge := range left.Edges {
+	for _, edge := range leftEdges {
 		key := edge.From + "|" + edge.To
-		if !rightEdges[key] && result.Nodes[edge.From] != nil && result.Nodes[edge.To] != nil {
+		if !rightEdgeSet[key] && resultNodes[edge.From] != nil && resultNodes[edge.To] != nil {
 			edgeCopy := *edge
 			edgeCopy.Attributes = make(map[string]interface{})
 			for k, v := range edge.Attributes {
@@ -943,38 +965,42 @@ func (e *GraphAlgebraExpr) difference(left *gsl.Graph, right *gsl.Graph) *gsl.Gr
 			for s := range edge.Sets {
 				edgeCopy.Sets[s] = struct{}{}
 			}
-			result.Edges = append(result.Edges, &edgeCopy)
+			result.addEdge(&edgeCopy)
 		}
 	}
 
 	// Include sets that exist in left but not right
-	for id, set := range left.Sets {
-		if _, exists := right.Sets[id]; !exists {
+	for id, set := range leftSets {
+		if _, exists := rightSets[id]; !exists {
 			setCopy := *set
 			setCopy.Attributes = make(map[string]interface{})
 			for k, v := range set.Attributes {
 				setCopy.Attributes[k] = v
 			}
-			result.Sets[id] = &setCopy
+			result.addSet(id, &setCopy)
 		}
 	}
 
-	return result
+	return result.finalize()
 }
 
 // symmetricDifference returns nodes/edges in exactly one graph
 // A node is in symDiff if it exists in left or right but not both
 // An edge is in symDiff if endpoints both exist in result and edge is in exactly one graph
 func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
-	result := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	result := buildGraph()
+	resultNodes := make(map[string]*gsl.Node)
+
+	leftNodes := left.GetNodes()
+	rightNodes := right.GetNodes()
+	leftEdges := left.GetEdges()
+	rightEdges := right.GetEdges()
+	leftSets := left.GetSets()
+	rightSets := right.GetSets()
 
 	// Include nodes from left that don't exist in right
-	for id, node := range left.Nodes {
-		if _, exists := right.Nodes[id]; !exists {
+	for id, node := range leftNodes {
+		if _, exists := rightNodes[id]; !exists {
 			nodeCopy := *node
 			nodeCopy.Attributes = make(map[string]interface{})
 			for k, v := range node.Attributes {
@@ -984,13 +1010,14 @@ func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph
 			for s := range node.Sets {
 				nodeCopy.Sets[s] = struct{}{}
 			}
-			result.Nodes[id] = &nodeCopy
+			result.addNode(id, &nodeCopy)
+			resultNodes[id] = &nodeCopy
 		}
 	}
 
 	// Include nodes from right that don't exist in left
-	for id, node := range right.Nodes {
-		if _, exists := left.Nodes[id]; !exists {
+	for id, node := range rightNodes {
+		if _, exists := leftNodes[id]; !exists {
 			nodeCopy := *node
 			nodeCopy.Attributes = make(map[string]interface{})
 			for k, v := range node.Attributes {
@@ -1000,24 +1027,25 @@ func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph
 			for s := range node.Sets {
 				nodeCopy.Sets[s] = struct{}{}
 			}
-			result.Nodes[id] = &nodeCopy
+			result.addNode(id, &nodeCopy)
+			resultNodes[id] = &nodeCopy
 		}
 	}
 
 	// Build edge sets for lookup
-	leftEdges := make(map[string]bool)
-	rightEdges := make(map[string]bool)
-	for _, edge := range left.Edges {
-		leftEdges[edge.From+"|"+edge.To] = true
+	leftEdgeSet := make(map[string]bool)
+	rightEdgeSet := make(map[string]bool)
+	for _, edge := range leftEdges {
+		leftEdgeSet[edge.From+"|"+edge.To] = true
 	}
-	for _, edge := range right.Edges {
-		rightEdges[edge.From+"|"+edge.To] = true
+	for _, edge := range rightEdges {
+		rightEdgeSet[edge.From+"|"+edge.To] = true
 	}
 
 	// Include edges from left that don't exist in right
-	for _, edge := range left.Edges {
+	for _, edge := range leftEdges {
 		key := edge.From + "|" + edge.To
-		if !rightEdges[key] && result.Nodes[edge.From] != nil && result.Nodes[edge.To] != nil {
+		if !rightEdgeSet[key] && resultNodes[edge.From] != nil && resultNodes[edge.To] != nil {
 			edgeCopy := *edge
 			edgeCopy.Attributes = make(map[string]interface{})
 			for k, v := range edge.Attributes {
@@ -1027,14 +1055,14 @@ func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph
 			for s := range edge.Sets {
 				edgeCopy.Sets[s] = struct{}{}
 			}
-			result.Edges = append(result.Edges, &edgeCopy)
+			result.addEdge(&edgeCopy)
 		}
 	}
 
 	// Include edges from right that don't exist in left
-	for _, edge := range right.Edges {
+	for _, edge := range rightEdges {
 		key := edge.From + "|" + edge.To
-		if !leftEdges[key] && result.Nodes[edge.From] != nil && result.Nodes[edge.To] != nil {
+		if !leftEdgeSet[key] && resultNodes[edge.From] != nil && resultNodes[edge.To] != nil {
 			edgeCopy := *edge
 			edgeCopy.Attributes = make(map[string]interface{})
 			for k, v := range edge.Attributes {
@@ -1044,33 +1072,87 @@ func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph
 			for s := range edge.Sets {
 				edgeCopy.Sets[s] = struct{}{}
 			}
-			result.Edges = append(result.Edges, &edgeCopy)
+			result.addEdge(&edgeCopy)
 		}
 	}
 
 	// Include sets from left that don't exist in right
-	for id, set := range left.Sets {
-		if _, exists := right.Sets[id]; !exists {
+	for id, set := range leftSets {
+		if _, exists := rightSets[id]; !exists {
 			setCopy := *set
 			setCopy.Attributes = make(map[string]interface{})
 			for k, v := range set.Attributes {
 				setCopy.Attributes[k] = v
 			}
-			result.Sets[id] = &setCopy
+			result.addSet(id, &setCopy)
 		}
 	}
 
 	// Include sets from right that don't exist in left
-	for id, set := range right.Sets {
-		if _, exists := left.Sets[id]; !exists {
+	for id, set := range rightSets {
+		if _, exists := leftSets[id]; !exists {
 			setCopy := *set
 			setCopy.Attributes = make(map[string]interface{})
 			for k, v := range set.Attributes {
 				setCopy.Attributes[k] = v
 			}
-			result.Sets[id] = &setCopy
+			result.addSet(id, &setCopy)
 		}
 	}
 
+	return result.finalize()
+}
+
+// graphBuilder is a helper to build graphs while respecting private fields
+type graphBuilder struct {
+	nodes map[string]*gsl.Node
+	edges []*gsl.Edge
+	sets  map[string]*gsl.Set
+}
+
+// buildGraph creates a new empty graph builder
+func buildGraph() *graphBuilder {
+	return &graphBuilder{
+		nodes: make(map[string]*gsl.Node),
+		edges: make([]*gsl.Edge, 0),
+		sets:  make(map[string]*gsl.Set),
+	}
+}
+
+// addNode adds a node to the builder
+func (gb *graphBuilder) addNode(id string, node *gsl.Node) {
+	gb.nodes[id] = node
+}
+
+// addEdge adds an edge to the builder
+func (gb *graphBuilder) addEdge(edge *gsl.Edge) {
+	gb.edges = append(gb.edges, edge)
+}
+
+// addSet adds a set to the builder
+func (gb *graphBuilder) addSet(id string, set *gsl.Set) {
+	gb.sets[id] = set
+}
+
+// finalize converts the builder to a Graph by creating a new graph with public API
+// This preserves all node/edge/set state including set memberships
+func (gb *graphBuilder) finalize() *gsl.Graph {
+	result := gsl.NewGraph()
+	
+	// Add all nodes with full state preservation
+	for _, node := range gb.nodes {
+		_ = result.AddExistingNode(node)
+	}
+	
+	// Add all edges with full state preservation
+	for _, edge := range gb.edges {
+		_ = result.AddExistingEdge(edge)
+	}
+	
+	// Add all sets with full state preservation
+	for _, set := range gb.sets {
+		_ = result.AddExistingSet(set)
+	}
+	
 	return result
 }

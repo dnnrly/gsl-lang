@@ -9,7 +9,7 @@ import (
 // TestRemoveEdgeBasic tests basic edge removal
 func TestRemoveEdgeBasic(t *testing.T) {
 	// Create simple graph: A -> B, A -> C
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -20,7 +20,7 @@ func TestRemoveEdgeBasic(t *testing.T) {
 			{From: "A", To: "C", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -38,18 +38,18 @@ func TestRemoveEdgeBasic(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Edges) != 0 {
-		t.Errorf("Expected 0 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 0 {
+		t.Errorf("Expected 0 edges, got %d", len(gv.Graph.GetEdges()))
 	}
-	if len(gv.Graph.Nodes) != 3 {
-		t.Errorf("Expected 3 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 3 {
+		t.Errorf("Expected 3 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
 }
 
 // TestRemoveEdgeWithPredicate tests edge removal with attribute predicate
 func TestRemoveEdgeWithPredicate(t *testing.T) {
 	// Create graph with labeled edges
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -60,7 +60,7 @@ func TestRemoveEdgeWithPredicate(t *testing.T) {
 			{From: "A", To: "C", Attributes: map[string]interface{}{"type": "grpc"}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -82,17 +82,17 @@ func TestRemoveEdgeWithPredicate(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Edges) != 1 {
-		t.Errorf("Expected 1 edge, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Errorf("Expected 1 edge, got %d", len(gv.Graph.GetEdges()))
 	}
-	if gv.Graph.Edges[0].To != "C" {
-		t.Errorf("Expected remaining edge to C, got %s", gv.Graph.Edges[0].To)
+	if gv.Graph.GetEdges()[0].To != "C" {
+		t.Errorf("Expected remaining edge to C, got %s", gv.Graph.GetEdges()[0].To)
 	}
 }
 
 // TestRemoveEdgePreservesNodesAndSets tests that nodes and sets are preserved
 func TestRemoveEdgePreservesNodesAndSets(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"foo": "bar"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -103,7 +103,7 @@ func TestRemoveEdgePreservesNodesAndSets(t *testing.T) {
 		Sets: map[string]*gsl.Set{
 			"CRITICAL": {ID: "CRITICAL", Attributes: map[string]interface{}{}},
 		},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -117,13 +117,13 @@ func TestRemoveEdgePreservesNodesAndSets(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 2 {
-		t.Errorf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Errorf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, hasSet := gv.Graph.Sets["CRITICAL"]; !hasSet {
+	if _, hasSet := gv.Graph.GetSets()["CRITICAL"]; !hasSet {
 		t.Error("Expected set CRITICAL to be preserved")
 	}
-	if gv.Graph.Nodes["A"].Attributes["foo"] != "bar" {
+	if gv.Graph.GetNodes()["A"].Attributes["foo"] != "bar" {
 		t.Error("Expected node attributes to be preserved")
 	}
 }
@@ -131,7 +131,7 @@ func TestRemoveEdgePreservesNodesAndSets(t *testing.T) {
 // TestRemoveOrphansBasic tests orphan removal
 func TestRemoveOrphansBasic(t *testing.T) {
 	// A -> B, C is orphan
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -141,7 +141,7 @@ func TestRemoveOrphansBasic(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -155,21 +155,21 @@ func TestRemoveOrphansBasic(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 2 {
-		t.Errorf("Expected 2 nodes (A, B), got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Errorf("Expected 2 nodes (A, B), got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, hasC := gv.Graph.Nodes["C"]; hasC {
+	if _, hasC := gv.Graph.GetNodes()["C"]; hasC {
 		t.Error("Expected orphan C to be removed")
 	}
-	if len(gv.Graph.Edges) != 1 {
-		t.Errorf("Expected 1 edge, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Errorf("Expected 1 edge, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestRemoveOrphansWithSelfLoop tests that self-loops prevent orphan removal
 func TestRemoveOrphansWithSelfLoop(t *testing.T) {
 	// A has self-loop, B is true orphan
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -178,7 +178,7 @@ func TestRemoveOrphansWithSelfLoop(t *testing.T) {
 			{From: "A", To: "A", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -192,24 +192,24 @@ func TestRemoveOrphansWithSelfLoop(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 1 {
-		t.Errorf("Expected 1 node (A with self-loop), got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 1 {
+		t.Errorf("Expected 1 node (A with self-loop), got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, hasA := gv.Graph.Nodes["A"]; !hasA {
+	if _, hasA := gv.Graph.GetNodes()["A"]; !hasA {
 		t.Error("Expected node A with self-loop to remain")
 	}
-	if _, hasB := gv.Graph.Nodes["B"]; hasB {
+	if _, hasB := gv.Graph.GetNodes()["B"]; hasB {
 		t.Error("Expected orphan B to be removed")
 	}
 }
 
 // TestRemoveOrphansEmpty tests remove orphans on empty graph
 func TestRemoveOrphansEmpty(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -223,21 +223,21 @@ func TestRemoveOrphansEmpty(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 0 {
-		t.Errorf("Expected 0 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 0 {
+		t.Errorf("Expected 0 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
 }
 
 // TestRemoveAttributeBasic tests basic attribute removal
 func TestRemoveAttributeBasic(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"team": "payments", "owner": "alice"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"team": "fraud", "owner": "bob"}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -257,7 +257,7 @@ func TestRemoveAttributeBasic(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	for _, node := range gv.Graph.Nodes {
+	for _, node := range gv.Graph.GetNodes() {
 		if _, hasOwner := node.Attributes["owner"]; hasOwner {
 			t.Error("Expected owner attribute to be removed")
 		}
@@ -269,14 +269,14 @@ func TestRemoveAttributeBasic(t *testing.T) {
 
 // TestRemoveAttributeWithPredicate tests attribute removal with predicate
 func TestRemoveAttributeWithPredicate(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"team": "payments", "owner": "alice"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"team": "fraud", "owner": "bob"}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -300,8 +300,8 @@ func TestRemoveAttributeWithPredicate(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	nodeA := gv.Graph.Nodes["A"]
-	nodeB := gv.Graph.Nodes["B"]
+	nodeA := gv.Graph.GetNodes()["A"]
+	nodeB := gv.Graph.GetNodes()["B"]
 
 	if _, hasOwner := nodeA.Attributes["owner"]; hasOwner {
 		t.Error("Expected owner removed from A")
@@ -313,7 +313,7 @@ func TestRemoveAttributeWithPredicate(t *testing.T) {
 
 // TestRemoveAttributeEdges tests edge attribute removal
 func TestRemoveAttributeEdges(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -322,7 +322,7 @@ func TestRemoveAttributeEdges(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{"type": "http", "timeout": 30}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -342,7 +342,7 @@ func TestRemoveAttributeEdges(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	edge := gv.Graph.Edges[0]
+	edge := gv.Graph.GetEdges()[0]
 
 	if _, hasTimeout := edge.Attributes["timeout"]; hasTimeout {
 		t.Error("Expected timeout to be removed")
@@ -398,7 +398,7 @@ func TestRemoveExprParser(t *testing.T) {
 
 // TestRemoveEdgeInPipeline tests remove edge in query pipeline
 func TestRemoveEdgeInPipeline(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -409,7 +409,7 @@ func TestRemoveEdgeInPipeline(t *testing.T) {
 			{From: "B", To: "C", Attributes: map[string]interface{}{"type": "grpc"}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -427,17 +427,17 @@ func TestRemoveEdgeInPipeline(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Edges) != 1 {
-		t.Errorf("Expected 1 edge, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Errorf("Expected 1 edge, got %d", len(gv.Graph.GetEdges()))
 	}
-	if gv.Graph.Edges[0].To != "C" {
-		t.Errorf("Expected B->C, got %s->%s", gv.Graph.Edges[0].From, gv.Graph.Edges[0].To)
+	if gv.Graph.GetEdges()[0].To != "C" {
+		t.Errorf("Expected B->C, got %s->%s", gv.Graph.GetEdges()[0].From, gv.Graph.GetEdges()[0].To)
 	}
 }
 
 // TestRemoveOrphansInPipeline tests remove orphans in query pipeline
 func TestRemoveOrphansInPipeline(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -447,7 +447,7 @@ func TestRemoveOrphansInPipeline(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -465,14 +465,14 @@ func TestRemoveOrphansInPipeline(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 2 {
-		t.Errorf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Errorf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
 }
 
 // TestRemoveEdgeChained tests remove edge chained with other operations
 func TestRemoveEdgeChained(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"team": "payments"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"team": "fraud"}},
@@ -483,7 +483,7 @@ func TestRemoveEdgeChained(t *testing.T) {
 			{From: "B", To: "C", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -502,21 +502,21 @@ func TestRemoveEdgeChained(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 2 {
-		t.Errorf("Expected 2 nodes (A, C), got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Errorf("Expected 2 nodes (A, C), got %d", len(gv.Graph.GetNodes()))
 	}
 }
 
 // TestRemoveAttributeEdgeCases tests edge cases for attribute removal
 func TestRemoveAttributeEdgeCases(t *testing.T) {
 	// Graph where attribute doesn't exist
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"team": "payments"}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -536,18 +536,18 @@ func TestRemoveAttributeEdgeCases(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if gv.Graph.Nodes["A"].Attributes["team"] != "payments" {
+	if gv.Graph.GetNodes()["A"].Attributes["team"] != "payments" {
 		t.Error("Expected team attribute to remain")
 	}
 }
 
 // TestRemoveEdgeEmptyGraph tests remove edge on empty graph
 func TestRemoveEdgeEmptyGraph(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -561,14 +561,14 @@ func TestRemoveEdgeEmptyGraph(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Edges) != 0 || len(gv.Graph.Nodes) != 0 {
+	if len(gv.Graph.GetEdges()) != 0 || len(gv.Graph.GetNodes()) != 0 {
 		t.Error("Expected empty graph to remain empty")
 	}
 }
 
 // TestRemoveOrphansPreservesSets tests that remove orphans preserves sets
 func TestRemoveOrphansPreservesSets(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -579,7 +579,7 @@ func TestRemoveOrphansPreservesSets(t *testing.T) {
 		Sets: map[string]*gsl.Set{
 			"CRITICAL": {ID: "CRITICAL", Attributes: map[string]interface{}{}},
 		},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -593,7 +593,7 @@ func TestRemoveOrphansPreservesSets(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if _, hasSet := gv.Graph.Sets["CRITICAL"]; !hasSet {
+	if _, hasSet := gv.Graph.GetSets()["CRITICAL"]; !hasSet {
 		t.Error("Expected set to be preserved")
 	}
 }

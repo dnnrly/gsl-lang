@@ -9,7 +9,7 @@ import (
 // TestSubgraphNodePredicate tests node-targeted subgraph extraction
 func TestSubgraphNodePredicate(t *testing.T) {
 	// Create a graph with multiple nodes
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"type": "db"}, Sets: map[string]struct{}{}},
@@ -21,7 +21,7 @@ func TestSubgraphNodePredicate(t *testing.T) {
 			{From: "A", To: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -42,31 +42,31 @@ func TestSubgraphNodePredicate(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should have A and C
-	if len(gv.Graph.Nodes) != 2 {
-		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, ok := gv.Graph.Nodes["A"]; !ok {
+	if _, ok := gv.Graph.GetNodes()["A"]; !ok {
 		t.Fatal("Node A should be included")
 	}
-	if _, ok := gv.Graph.Nodes["C"]; !ok {
+	if _, ok := gv.Graph.GetNodes()["C"]; !ok {
 		t.Fatal("Node C should be included")
 	}
-	if _, ok := gv.Graph.Nodes["B"]; ok {
+	if _, ok := gv.Graph.GetNodes()["B"]; ok {
 		t.Fatal("Node B should not be included")
 	}
 
 	// Should only include edge A→C (both ends in result)
-	if len(gv.Graph.Edges) != 1 {
-		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.GetEdges()))
 	}
-	if gv.Graph.Edges[0].From != "A" || gv.Graph.Edges[0].To != "C" {
-		t.Fatalf("Expected edge A→C, got %s→%s", gv.Graph.Edges[0].From, gv.Graph.Edges[0].To)
+	if gv.Graph.GetEdges()[0].From != "A" || gv.Graph.GetEdges()[0].To != "C" {
+		t.Fatalf("Expected edge A→C, got %s→%s", gv.Graph.GetEdges()[0].From, gv.Graph.GetEdges()[0].To)
 	}
 }
 
 // TestSubgraphEdgePredicate tests edge-targeted subgraph extraction
 func TestSubgraphEdgePredicate(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -77,7 +77,7 @@ func TestSubgraphEdgePredicate(t *testing.T) {
 			{From: "B", To: "C", Attributes: map[string]interface{}{"protocol": "grpc"}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -98,31 +98,31 @@ func TestSubgraphEdgePredicate(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include A and B (endpoints of http edge), not C
-	if len(gv.Graph.Nodes) != 2 {
-		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, ok := gv.Graph.Nodes["A"]; !ok {
+	if _, ok := gv.Graph.GetNodes()["A"]; !ok {
 		t.Fatal("Node A should be included")
 	}
-	if _, ok := gv.Graph.Nodes["B"]; !ok {
+	if _, ok := gv.Graph.GetNodes()["B"]; !ok {
 		t.Fatal("Node B should be included")
 	}
-	if _, ok := gv.Graph.Nodes["C"]; ok {
+	if _, ok := gv.Graph.GetNodes()["C"]; ok {
 		t.Fatal("Node C should not be included")
 	}
 
 	// Should only include http edge
-	if len(gv.Graph.Edges) != 1 {
-		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.GetEdges()))
 	}
-	if gv.Graph.Edges[0].From != "A" || gv.Graph.Edges[0].To != "B" {
-		t.Fatalf("Expected edge A→B, got %s→%s", gv.Graph.Edges[0].From, gv.Graph.Edges[0].To)
+	if gv.Graph.GetEdges()[0].From != "A" || gv.Graph.GetEdges()[0].To != "B" {
+		t.Fatalf("Expected edge A→B, got %s→%s", gv.Graph.GetEdges()[0].From, gv.Graph.GetEdges()[0].To)
 	}
 }
 
 // TestSubgraphSetMembership tests set-based node filtering
 func TestSubgraphSetMembership(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"CRITICAL": {}}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -134,7 +134,7 @@ func TestSubgraphSetMembership(t *testing.T) {
 			{From: "A", To: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -155,19 +155,19 @@ func TestSubgraphSetMembership(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should have A and C
-	if len(gv.Graph.Nodes) != 2 {
-		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
 
 	// Should include A→C edge
-	if len(gv.Graph.Edges) != 1 {
-		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestSubgraphExistsPredicateAllElements tests exists predicate (match all)
 func TestSubgraphExistsPredicateAllElements(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -176,7 +176,7 @@ func TestSubgraphExistsPredicateAllElements(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -197,17 +197,17 @@ func TestSubgraphExistsPredicateAllElements(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include everything
-	if len(gv.Graph.Nodes) != 2 {
-		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if len(gv.Graph.Edges) != 1 {
-		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestSubgraphPreserveDuplicateEdges tests that duplicate edges are preserved
 func TestSubgraphPreserveDuplicateEdges(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -217,7 +217,7 @@ func TestSubgraphPreserveDuplicateEdges(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -237,20 +237,20 @@ func TestSubgraphPreserveDuplicateEdges(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should preserve both edges
-	if len(gv.Graph.Edges) != 2 {
-		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 2 {
+		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestSubgraphEmptyResult tests subgraph with no matches
 func TestSubgraphEmptyResult(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -271,17 +271,17 @@ func TestSubgraphEmptyResult(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should have empty result
-	if len(gv.Graph.Nodes) != 0 {
-		t.Fatalf("Expected 0 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 0 {
+		t.Fatalf("Expected 0 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if len(gv.Graph.Edges) != 0 {
-		t.Fatalf("Expected 0 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 0 {
+		t.Fatalf("Expected 0 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestSubgraphAndPredicate tests AND combination in subgraph
 func TestSubgraphAndPredicate(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {
 				ID:         "A",
@@ -303,7 +303,7 @@ func TestSubgraphAndPredicate(t *testing.T) {
 			{From: "A", To: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -324,25 +324,25 @@ func TestSubgraphAndPredicate(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include A and C (both critical, both us zone)
-	if len(gv.Graph.Nodes) != 2 {
-		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, ok := gv.Graph.Nodes["A"]; !ok {
+	if _, ok := gv.Graph.GetNodes()["A"]; !ok {
 		t.Fatal("Node A should be included")
 	}
-	if _, ok := gv.Graph.Nodes["C"]; !ok {
+	if _, ok := gv.Graph.GetNodes()["C"]; !ok {
 		t.Fatal("Node C should be included")
 	}
 
 	// Should include A→C edge
-	if len(gv.Graph.Edges) != 1 {
-		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestSubgraphNotPredicate tests NOT prefix in subgraph
 func TestSubgraphNotPredicate(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"DEPRECATED": {}}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -352,7 +352,7 @@ func TestSubgraphNotPredicate(t *testing.T) {
 			{From: "B", To: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -373,22 +373,22 @@ func TestSubgraphNotPredicate(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include only B
-	if len(gv.Graph.Nodes) != 1 {
-		t.Fatalf("Expected 1 node, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 1 {
+		t.Fatalf("Expected 1 node, got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, ok := gv.Graph.Nodes["B"]; !ok {
+	if _, ok := gv.Graph.GetNodes()["B"]; !ok {
 		t.Fatal("Node B should be included")
 	}
 
 	// No edges (B has no edges to other non-deprecated nodes)
-	if len(gv.Graph.Edges) != 0 {
-		t.Fatalf("Expected 0 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 0 {
+		t.Fatalf("Expected 0 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestSubgraphInPipeline tests subgraph as part of a pipeline
 func TestSubgraphInPipeline(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"type": "db"}, Sets: map[string]struct{}{}},
@@ -397,7 +397,7 @@ func TestSubgraphInPipeline(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -419,10 +419,10 @@ func TestSubgraphInPipeline(t *testing.T) {
 
 	// Result should be the subgraph (services only)
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 1 {
-		t.Fatalf("Expected 1 node in result, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 1 {
+		t.Fatalf("Expected 1 node in result, got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, ok := gv.Graph.Nodes["A"]; !ok {
+	if _, ok := gv.Graph.GetNodes()["A"]; !ok {
 		t.Fatal("Node A should be in result")
 	}
 
@@ -431,8 +431,8 @@ func TestSubgraphInPipeline(t *testing.T) {
 		t.Fatal("SERVICES should be bound")
 	}
 	// SERVICES contains the input graph (from * resets to InputGraph)
-	if len(ctx.NamedGraphs["SERVICES"].Nodes) != 2 {
-		t.Fatalf("SERVICES should contain input graph (2 nodes), got %d", len(ctx.NamedGraphs["SERVICES"].Nodes))
+	if len(ctx.NamedGraphs["SERVICES"].GetNodes()) != 2 {
+		t.Fatalf("SERVICES should contain input graph (2 nodes), got %d", len(ctx.NamedGraphs["SERVICES"].GetNodes()))
 	}
 }
 
@@ -464,7 +464,7 @@ func TestSubgraphInvalidSyntax(t *testing.T) {
 
 // TestSubgraphPreservesSets tests that sets are preserved in subgraph
 func TestSubgraphPreservesSets(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
@@ -472,7 +472,7 @@ func TestSubgraphPreservesSets(t *testing.T) {
 		Sets: map[string]*gsl.Set{
 			"CUSTOM": {ID: "CUSTOM", Attributes: map[string]interface{}{"color": "blue"}},
 		},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -492,23 +492,23 @@ func TestSubgraphPreservesSets(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Sets should be preserved
-	if len(gv.Graph.Sets) != 1 {
-		t.Fatalf("Expected 1 set, got %d", len(gv.Graph.Sets))
+	if len(gv.Graph.GetSets()) != 1 {
+		t.Fatalf("Expected 1 set, got %d", len(gv.Graph.GetSets()))
 	}
-	if _, ok := gv.Graph.Sets["CUSTOM"]; !ok {
+	if _, ok := gv.Graph.GetSets()["CUSTOM"]; !ok {
 		t.Fatal("CUSTOM set should be preserved")
 	}
 }
 
 // TestSubgraphMixedTargetsError tests error when predicate mixes targets
 func TestSubgraphMixedTargetsError(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -533,7 +533,7 @@ func TestSubgraphMixedTargetsError(t *testing.T) {
 
 // TestSubgraphDirectlyOnExpr tests SubgraphExpr.Apply() directly
 func TestSubgraphDirectlyOnExpr(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"X": {ID: "X", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"Y": {ID: "Y", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -542,7 +542,7 @@ func TestSubgraphDirectlyOnExpr(t *testing.T) {
 			{From: "X", To: "Y", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -558,14 +558,14 @@ func TestSubgraphDirectlyOnExpr(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 2 || len(gv.Graph.Edges) != 1 {
+	if len(gv.Graph.GetNodes()) != 2 || len(gv.Graph.GetEdges()) != 1 {
 		t.Fatal("Should preserve all nodes and edges with exists predicate")
 	}
 }
 
 // TestSubgraphNodeIsolation tests nodes with no edges to matched nodes
 func TestSubgraphNodeIsolation(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"tier": "web"}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"tier": "api"}, Sets: map[string]struct{}{}},
@@ -575,7 +575,7 @@ func TestSubgraphNodeIsolation(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -596,10 +596,10 @@ func TestSubgraphNodeIsolation(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include A and C (no edge between them)
-	if len(gv.Graph.Nodes) != 2 {
-		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if len(gv.Graph.Edges) != 0 {
-		t.Fatalf("Expected 0 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 0 {
+		t.Fatalf("Expected 0 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }

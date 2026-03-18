@@ -8,14 +8,14 @@ import (
 
 // TestMakeNodeAttributeBasic tests basic node attribute assignment
 func TestMakeNodeAttributeBasic(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -36,7 +36,7 @@ func TestMakeNodeAttributeBasic(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	for _, node := range gv.Graph.Nodes {
+	for _, node := range gv.Graph.GetNodes() {
 		if val, ok := node.Attributes["team"]; !ok || val != "payments" {
 			t.Errorf("Expected team=payments, got %v", val)
 		}
@@ -45,14 +45,14 @@ func TestMakeNodeAttributeBasic(t *testing.T) {
 
 // TestMakeNodeAttributeWithPredicate tests attribute assignment with predicate
 func TestMakeNodeAttributeWithPredicate(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"type": "database"}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -77,8 +77,8 @@ func TestMakeNodeAttributeWithPredicate(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	nodeA := gv.Graph.Nodes["A"]
-	nodeB := gv.Graph.Nodes["B"]
+	nodeA := gv.Graph.GetNodes()["A"]
+	nodeB := gv.Graph.GetNodes()["B"]
 
 	if owner, ok := nodeA.Attributes["owner"]; !ok || owner != "alice" {
 		t.Errorf("Expected A owner=alice, got %v", owner)
@@ -90,7 +90,7 @@ func TestMakeNodeAttributeWithPredicate(t *testing.T) {
 
 // TestMakeEdgeAttributeBasic tests basic edge attribute assignment
 func TestMakeEdgeAttributeBasic(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -99,7 +99,7 @@ func TestMakeEdgeAttributeBasic(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -120,17 +120,17 @@ func TestMakeEdgeAttributeBasic(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Edges) != 1 {
-		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Fatalf("Expected 1 edge, got %d", len(gv.Graph.GetEdges()))
 	}
-	if val, ok := gv.Graph.Edges[0].Attributes["protocol"]; !ok || val != "http" {
+	if val, ok := gv.Graph.GetEdges()[0].Attributes["protocol"]; !ok || val != "http" {
 		t.Errorf("Expected protocol=http, got %v", val)
 	}
 }
 
 // TestMakeEdgeAttributeWithPredicate tests edge attribute assignment with predicate
 func TestMakeEdgeAttributeWithPredicate(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -141,7 +141,7 @@ func TestMakeEdgeAttributeWithPredicate(t *testing.T) {
 			{From: "B", To: "C", Attributes: map[string]interface{}{"type": "grpc"}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -166,23 +166,23 @@ func TestMakeEdgeAttributeWithPredicate(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if timeout, ok := gv.Graph.Edges[0].Attributes["timeout"]; !ok || timeout != 30 {
+	if timeout, ok := gv.Graph.GetEdges()[0].Attributes["timeout"]; !ok || timeout != 30 {
 		t.Errorf("Expected first edge timeout=30, got %v", timeout)
 	}
-	if _, ok := gv.Graph.Edges[1].Attributes["timeout"]; ok {
+	if _, ok := gv.Graph.GetEdges()[1].Attributes["timeout"]; ok {
 		t.Error("Expected second edge to not have timeout")
 	}
 }
 
 // TestMakeOverwriteAttribute tests overwriting existing attributes
 func TestMakeOverwriteAttribute(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"team": "fraud"}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -203,20 +203,20 @@ func TestMakeOverwriteAttribute(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if team, ok := gv.Graph.Nodes["A"].Attributes["team"]; !ok || team != "payments" {
+	if team, ok := gv.Graph.GetNodes()["A"].Attributes["team"]; !ok || team != "payments" {
 		t.Errorf("Expected team=payments, got %v", team)
 	}
 }
 
 // TestMakePreservesOtherAttributes tests that make preserves other attributes
 func TestMakePreservesOtherAttributes(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"team": "payments", "owner": "alice"}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -237,7 +237,7 @@ func TestMakePreservesOtherAttributes(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	attrs := gv.Graph.Nodes["A"].Attributes
+	attrs := gv.Graph.GetNodes()["A"].Attributes
 	if attrs["team"] != "payments" {
 		t.Error("Expected team to be preserved")
 	}
@@ -251,13 +251,13 @@ func TestMakePreservesOtherAttributes(t *testing.T) {
 
 // TestMakeStringValue tests string value assignment
 func TestMakeStringValue(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -277,20 +277,20 @@ func TestMakeStringValue(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if val := gv.Graph.Nodes["A"].Attributes["name"]; val != "example" {
+	if val := gv.Graph.GetNodes()["A"].Attributes["name"]; val != "example" {
 		t.Errorf("Expected 'example', got %v", val)
 	}
 }
 
 // TestMakeBooleanValue tests boolean value assignment
 func TestMakeBooleanValue(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -310,20 +310,20 @@ func TestMakeBooleanValue(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if val := gv.Graph.Nodes["A"].Attributes["critical"]; val != true {
+	if val := gv.Graph.GetNodes()["A"].Attributes["critical"]; val != true {
 		t.Errorf("Expected true, got %v", val)
 	}
 }
 
 // TestMakeNumericValue tests numeric value assignment
 func TestMakeNumericValue(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -343,7 +343,7 @@ func TestMakeNumericValue(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if val := gv.Graph.Nodes["A"].Attributes["priority"]; val != "42" {
+	if val := gv.Graph.GetNodes()["A"].Attributes["priority"]; val != "42" {
 		t.Errorf("Expected '42', got %v", val)
 	}
 }
@@ -383,14 +383,14 @@ func TestMakeExprParser(t *testing.T) {
 
 // TestMakeInPipeline tests make in query pipeline
 func TestMakeInPipeline(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"type": "database"}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -408,17 +408,17 @@ func TestMakeInPipeline(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if owner, ok := gv.Graph.Nodes["A"].Attributes["owner"]; !ok || owner != "alice" {
+	if owner, ok := gv.Graph.GetNodes()["A"].Attributes["owner"]; !ok || owner != "alice" {
 		t.Errorf("Expected A owner=alice, got %v", owner)
 	}
-	if _, ok := gv.Graph.Nodes["B"].Attributes["owner"]; ok {
+	if _, ok := gv.Graph.GetNodes()["B"].Attributes["owner"]; ok {
 		t.Error("Expected B to not have owner")
 	}
 }
 
 // TestMakeChained tests make chained with other operations
 func TestMakeChained(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -428,7 +428,7 @@ func TestMakeChained(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -447,14 +447,14 @@ func TestMakeChained(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 3 {
-		t.Errorf("Expected 3 nodes in result, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 3 {
+		t.Errorf("Expected 3 nodes in result, got %d", len(gv.Graph.GetNodes()))
 	}
 }
 
 // TestMakePreservesSets tests that make preserves sets
 func TestMakePreservesSets(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 		},
@@ -462,7 +462,7 @@ func TestMakePreservesSets(t *testing.T) {
 		Sets: map[string]*gsl.Set{
 			"CRITICAL": {ID: "CRITICAL", Attributes: map[string]interface{}{}},
 		},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -482,14 +482,14 @@ func TestMakePreservesSets(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if _, hasSet := gv.Graph.Sets["CRITICAL"]; !hasSet {
+	if _, hasSet := gv.Graph.GetSets()["CRITICAL"]; !hasSet {
 		t.Error("Expected set to be preserved")
 	}
 }
 
 // TestMakePreservesSets tests that make preserves nodes and edges
 func TestMakePreservesStructure(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -498,7 +498,7 @@ func TestMakePreservesStructure(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -518,21 +518,21 @@ func TestMakePreservesStructure(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 2 {
-		t.Errorf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Errorf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if len(gv.Graph.Edges) != 1 {
-		t.Errorf("Expected 1 edge, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Errorf("Expected 1 edge, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestMakeEmptyGraph tests make on empty graph
 func TestMakeEmptyGraph(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -552,20 +552,20 @@ func TestMakeEmptyGraph(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 0 {
+	if len(gv.Graph.GetNodes()) != 0 {
 		t.Error("Expected empty graph to remain empty")
 	}
 }
 
 // TestMakeMixedTargets tests that mixed targets produce error
 func TestMakeMixedTargets(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,

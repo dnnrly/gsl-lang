@@ -19,7 +19,8 @@ func (c *mermaidComponentConverter) Convert(graph *gsl.Graph) string {
 	usedParents := make(map[string]bool)
 	orphanNodes := []*gsl.Node{}
 
-	for _, node := range graph.Nodes {
+	nodes := graph.GetNodes()
+	for _, node := range nodes {
 		parent, hasParent := node.Attributes["parent"]
 		if hasParent {
 			parentID := fmt.Sprintf("%v", parent)
@@ -31,7 +32,7 @@ func (c *mermaidComponentConverter) Convert(graph *gsl.Graph) string {
 	}
 
 	for parentID, children := range parentGroups {
-		parentNode := graph.Nodes[parentID]
+		parentNode := nodes[parentID]
 		if parentNode != nil {
 			parentLabel := converter.GetNodeLabel(parentNode)
 			sb.WriteString(fmt.Sprintf("  subgraph %s[\"%s\"]\n", parentID, parentLabel))
@@ -53,7 +54,8 @@ func (c *mermaidComponentConverter) Convert(graph *gsl.Graph) string {
 
 	sb.WriteString("\n")
 
-	for _, edge := range graph.Edges {
+	edges := graph.GetEdges()
+	for _, edge := range edges {
 		label := converter.GetEdgeLabel(edge)
 		if label != "" {
 			sb.WriteString(fmt.Sprintf("  %s -->|%s| %s\n", edge.From, label, edge.To))
@@ -72,14 +74,16 @@ func (g *mermaidGraphConverter) Convert(graph *gsl.Graph) string {
 
 	sb.WriteString("graph TD\n")
 
-	for _, node := range graph.Nodes {
+	nodes := graph.GetNodes()
+	for _, node := range nodes {
 		label := converter.GetNodeLabel(node)
 		sb.WriteString(fmt.Sprintf("  %s[\"%s\"]\n", node.ID, label))
 	}
 
 	sb.WriteString("\n")
 
-	for _, edge := range graph.Edges {
+	edges := graph.GetEdges()
+	for _, edge := range edges {
 		label := converter.GetEdgeLabel(edge)
 		if label != "" {
 			sb.WriteString(fmt.Sprintf("  %s -->|%s| %s\n", edge.From, label, edge.To))

@@ -17,56 +17,56 @@ func TestGraphAlgebraUnion(t *testing.T) {
 	}{
 		{
 			name: "union of two disjoint graphs",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"B": {ID: "B", Attributes: map[string]interface{}{"type": "database"}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{"type": "database"}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
+			}),
 		},
 		{
 			name: "union with overlapping nodes (right overwrites)",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{"team": "payments", "zone": "A"}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{"team": "fraud"}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{"team": "fraud", "zone": "A"}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
+			}),
 		},
 		{
 			name: "union with edges from both graphs",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -75,8 +75,8 @@ func TestGraphAlgebraUnion(t *testing.T) {
 					{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Sets: make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -85,8 +85,8 @@ func TestGraphAlgebraUnion(t *testing.T) {
 					{From: "B", To: "C", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Sets: make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -97,7 +97,7 @@ func TestGraphAlgebraUnion(t *testing.T) {
 					{From: "B", To: "C", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Sets: make(map[string]*gsl.Set),
-			},
+			}),
 		},
 	}
 
@@ -122,33 +122,33 @@ func TestGraphAlgebraIntersection(t *testing.T) {
 	}{
 		{
 			name: "intersection of graphs with one common node",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
+			}),
 		},
 		{
 			name: "intersection with shared edges",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -159,8 +159,8 @@ func TestGraphAlgebraIntersection(t *testing.T) {
 					{From: "B", To: "C", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Sets: make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -169,8 +169,8 @@ func TestGraphAlgebraIntersection(t *testing.T) {
 					{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Sets: make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -179,29 +179,29 @@ func TestGraphAlgebraIntersection(t *testing.T) {
 					{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Sets: make(map[string]*gsl.Set),
-			},
+			}),
 		},
 		{
 			name: "intersection with disjoint graphs",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
+			}),
 		},
 	}
 
@@ -226,33 +226,33 @@ func TestGraphAlgebraDifference(t *testing.T) {
 	}{
 		{
 			name: "difference of overlapping graphs",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
+			}),
 		},
 		{
 			name: "difference with edges",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -263,46 +263,46 @@ func TestGraphAlgebraDifference(t *testing.T) {
 					{From: "B", To: "C", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Sets: make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
+			}),
 		},
 		{
 			name: "difference with disjoint graphs",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
+			}),
 		},
 	}
 
@@ -327,55 +327,55 @@ func TestGraphAlgebraSymmetricDifference(t *testing.T) {
 	}{
 		{
 			name: "symmetric difference of overlapping graphs",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
+			}),
 		},
 		{
 			name: "symmetric difference with disjoint graphs",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
+			}),
 		},
 	}
 
@@ -474,57 +474,87 @@ func TestParseGraphAlgebra(t *testing.T) {
 
 func TestGraphAlgebraIntegration(t *testing.T) {
 	// Test full pipeline execution with algebra
+	// Helper function to build bindings map
+	buildBindings := func(graphs ...struct {
+		key string
+		g   *gsl.Graph
+	}) map[string]*gsl.Graph {
+		result := make(map[string]*gsl.Graph)
+		for _, item := range graphs {
+			result[item.key] = item.g
+		}
+		return result
+	}
+
 	tests := []struct {
-		name    string
-		query   string
-		input   *gsl.Graph
+		name     string
+		query    string
+		input    *gsl.Graph
 		bindings map[string]*gsl.Graph
-		wantErr bool
+		wantErr  bool
 	}{
 		{
 			name:  "union via pipeline",
 			query: "* + G1",
-			input: &gsl.Graph{
+			input: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			bindings: map[string]*gsl.Graph{
-				"G1": {
-					Nodes: map[string]*gsl.Node{
-						"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
-					},
-					Edges: []*gsl.Edge{},
-					Sets:  make(map[string]*gsl.Set),
+			}),
+			bindings: buildBindings(
+				struct {
+					key string
+					g   *gsl.Graph
+				}{
+					key: "G1",
+					g: newTestGraph(testGraphInput{
+						Nodes: map[string]*gsl.Node{
+							"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
+						},
+						Edges: []*gsl.Edge{},
+						Sets:  make(map[string]*gsl.Set),
+					}),
 				},
-			},
+			),
 		},
 		{
 			name:  "intersection via pipeline",
 			query: "G1 & G2",
-			input: &gsl.Graph{
+			input: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{},
 				Edges: []*gsl.Edge{},
 				Sets:  make(map[string]*gsl.Set),
-			},
-			bindings: map[string]*gsl.Graph{
-				"G1": {
-					Nodes: map[string]*gsl.Node{
-						"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
-					},
-					Edges: []*gsl.Edge{},
-					Sets:  make(map[string]*gsl.Set),
+			}),
+			bindings: buildBindings(
+				struct {
+					key string
+					g   *gsl.Graph
+				}{
+					key: "G1",
+					g: newTestGraph(testGraphInput{
+						Nodes: map[string]*gsl.Node{
+							"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
+						},
+						Edges: []*gsl.Edge{},
+						Sets:  make(map[string]*gsl.Set),
+					}),
 				},
-				"G2": {
-					Nodes: map[string]*gsl.Node{
-						"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
-					},
-					Edges: []*gsl.Edge{},
-					Sets:  make(map[string]*gsl.Set),
+				struct {
+					key string
+					g   *gsl.Graph
+				}{
+					key: "G2",
+					g: newTestGraph(testGraphInput{
+						Nodes: map[string]*gsl.Node{
+							"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
+						},
+						Edges: []*gsl.Edge{},
+						Sets:  make(map[string]*gsl.Set),
+					}),
 				},
-			},
+			),
 		},
 	}
 
@@ -559,13 +589,15 @@ func TestGraphAlgebraIntegration(t *testing.T) {
 // Helper to compare graphs structurally
 func graphsEqual(left *gsl.Graph, right *gsl.Graph) bool {
 	// Compare node count
-	if len(left.Nodes) != len(right.Nodes) {
+	leftNodes := left.GetNodes()
+	rightNodes := right.GetNodes()
+	if len(leftNodes) != len(rightNodes) {
 		return false
 	}
 
 	// Compare nodes
-	for id, node := range left.Nodes {
-		rightNode, exists := right.Nodes[id]
+	for id, node := range leftNodes {
+		rightNode, exists := rightNodes[id]
 		if !exists {
 			return false
 		}
@@ -575,23 +607,23 @@ func graphsEqual(left *gsl.Graph, right *gsl.Graph) bool {
 	}
 
 	// Compare edge count
-	if len(left.Edges) != len(right.Edges) {
+	leftEdges := left.GetEdges()
+	rightEdges := right.GetEdges()
+	if len(leftEdges) != len(rightEdges) {
 		return false
 	}
 
 	// Compare edges
-	for i, edge := range left.Edges {
-		if !edgesEqual(edge, right.Edges[i]) {
+	for i, edge := range leftEdges {
+		if !edgesEqual(edge, rightEdges[i]) {
 			return false
 		}
 	}
 
 	// Compare sets
-	if len(left.Sets) != len(right.Sets) {
-		return false
-	}
-
-	return true
+	leftSets := left.GetSets()
+	rightSets := right.GetSets()
+	return len(leftSets) == len(rightSets)
 }
 
 func nodesEqual(left *gsl.Node, right *gsl.Node) bool {
@@ -643,7 +675,7 @@ func TestGraphAlgebraWithSets(t *testing.T) {
 		{
 			name: "union preserves sets from both graphs",
 			op:   "+",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
@@ -651,8 +683,8 @@ func TestGraphAlgebraWithSets(t *testing.T) {
 				Sets: map[string]*gsl.Set{
 					"S1": {ID: "S1", Attributes: map[string]interface{}{"color": "red"}},
 				},
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
@@ -660,8 +692,8 @@ func TestGraphAlgebraWithSets(t *testing.T) {
 				Sets: map[string]*gsl.Set{
 					"S2": {ID: "S2", Attributes: map[string]interface{}{"size": "10"}},
 				},
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -671,12 +703,12 @@ func TestGraphAlgebraWithSets(t *testing.T) {
 					"S1": {ID: "S1", Attributes: map[string]interface{}{"color": "red"}},
 					"S2": {ID: "S2", Attributes: map[string]interface{}{"size": "10"}},
 				},
-			},
+			}),
 		},
 		{
 			name: "intersection only includes shared sets",
 			op:   "&",
-			left: &gsl.Graph{
+			left: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
@@ -685,8 +717,8 @@ func TestGraphAlgebraWithSets(t *testing.T) {
 					"S1": {ID: "S1", Attributes: map[string]interface{}{}},
 					"S2": {ID: "S2", Attributes: map[string]interface{}{}},
 				},
-			},
-			right: &gsl.Graph{
+			}),
+			right: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
@@ -695,8 +727,8 @@ func TestGraphAlgebraWithSets(t *testing.T) {
 					"S1": {ID: "S1", Attributes: map[string]interface{}{}},
 					"S3": {ID: "S3", Attributes: map[string]interface{}{}},
 				},
-			},
-			want: &gsl.Graph{
+			}),
+			want: newTestGraph(testGraphInput{
 				Nodes: map[string]*gsl.Node{
 					"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 				},
@@ -704,7 +736,7 @@ func TestGraphAlgebraWithSets(t *testing.T) {
 				Sets: map[string]*gsl.Set{
 					"S1": {ID: "S1", Attributes: map[string]interface{}{}},
 				},
-			},
+			}),
 		},
 	}
 
@@ -741,13 +773,13 @@ func TestGraphAlgebraResolveGraph(t *testing.T) {
 			name: "resolve wildcard to input graph",
 			ref:  "*",
 			ctx: &QueryContext{
-				InputGraph: &gsl.Graph{
+				InputGraph: newTestGraph(testGraphInput{
 					Nodes: map[string]*gsl.Node{
 						"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					},
 					Edges: []*gsl.Edge{},
 					Sets:  make(map[string]*gsl.Set),
-				},
+				}),
 				NamedGraphs: make(map[string]*gsl.Graph),
 			},
 		},
@@ -755,26 +787,26 @@ func TestGraphAlgebraResolveGraph(t *testing.T) {
 			name: "resolve named graph",
 			ref:  "G1",
 			ctx: &QueryContext{
-				InputGraph: &gsl.Graph{
+				InputGraph: newTestGraph(testGraphInput{
 					Nodes: map[string]*gsl.Node{},
 					Edges: []*gsl.Edge{},
 					Sets:  make(map[string]*gsl.Set),
-				},
+				}),
 				NamedGraphs: map[string]*gsl.Graph{
-					"G1": {
+					"G1": newTestGraph(testGraphInput{
 						Nodes: map[string]*gsl.Node{
 							"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 						},
 						Edges: []*gsl.Edge{},
 						Sets:  make(map[string]*gsl.Set),
-					},
+					}),
 				},
 			},
 		},
 		{
 			name:    "error: graph not found",
 			ref:     "G_MISSING",
-			ctx:     &QueryContext{InputGraph: &gsl.Graph{}, NamedGraphs: make(map[string]*gsl.Graph)},
+			ctx:     &QueryContext{InputGraph: newTestGraph(testGraphInput{}), NamedGraphs: make(map[string]*gsl.Graph)},
 			wantErr: true,
 		},
 	}
@@ -811,21 +843,21 @@ func TestGraphAlgebraApply(t *testing.T) {
 				Operator: "+",
 			},
 			ctx: &QueryContext{
-				InputGraph: &gsl.Graph{
+				InputGraph: newTestGraph(testGraphInput{
 					Nodes: map[string]*gsl.Node{
 						"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 					},
 					Edges: []*gsl.Edge{},
 					Sets:  make(map[string]*gsl.Set),
-				},
+				}),
 				NamedGraphs: map[string]*gsl.Graph{
-					"G1": {
+					"G1": newTestGraph(testGraphInput{
 						Nodes: map[string]*gsl.Node{
 							"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 						},
 						Edges: []*gsl.Edge{},
 						Sets:  make(map[string]*gsl.Set),
-					},
+					}),
 				},
 			},
 		},
@@ -837,7 +869,7 @@ func TestGraphAlgebraApply(t *testing.T) {
 				Operator: "INVALID",
 			},
 			ctx: &QueryContext{
-				InputGraph:  &gsl.Graph{},
+				InputGraph:  newTestGraph(testGraphInput{}),
 				NamedGraphs: make(map[string]*gsl.Graph),
 			},
 			wantErr: true,
@@ -850,7 +882,7 @@ func TestGraphAlgebraApply(t *testing.T) {
 				Operator: "+",
 			},
 			ctx: &QueryContext{
-				InputGraph:  &gsl.Graph{},
+				InputGraph:  newTestGraph(testGraphInput{}),
 				NamedGraphs: make(map[string]*gsl.Graph),
 			},
 			wantErr: true,
@@ -863,7 +895,7 @@ func TestGraphAlgebraApply(t *testing.T) {
 				Operator: "+",
 			},
 			ctx: &QueryContext{
-				InputGraph:  &gsl.Graph{},
+				InputGraph:  newTestGraph(testGraphInput{}),
 				NamedGraphs: make(map[string]*gsl.Graph),
 			},
 			wantErr: true,

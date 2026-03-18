@@ -18,39 +18,42 @@ func Serialize(g *Graph) string {
 	var sections []string
 
 	// Sets, sorted by ID
-	if len(g.Sets) > 0 {
-		setIDs := make([]string, 0, len(g.Sets))
-		for id := range g.Sets {
+	sets := g.GetSets()
+	if len(sets) > 0 {
+		setIDs := make([]string, 0, len(sets))
+		for id := range sets {
 			setIDs = append(setIDs, id)
 		}
 		sort.Strings(setIDs)
 
 		var lines []string
 		for _, id := range setIDs {
-			lines = append(lines, serializeSet(g.Sets[id]))
+			lines = append(lines, serializeSet(sets[id]))
 		}
 		sections = append(sections, strings.Join(lines, "\n"))
 	}
 
 	// Nodes, sorted by ID
-	if len(g.Nodes) > 0 {
-		nodeIDs := make([]string, 0, len(g.Nodes))
-		for id := range g.Nodes {
+	nodes := g.GetNodes()
+	if len(nodes) > 0 {
+		nodeIDs := make([]string, 0, len(nodes))
+		for id := range nodes {
 			nodeIDs = append(nodeIDs, id)
 		}
 		sort.Strings(nodeIDs)
 
 		var lines []string
 		for _, id := range nodeIDs {
-			lines = append(lines, serializeNode(g.Nodes[id]))
+			lines = append(lines, serializeNode(nodes[id]))
 		}
 		sections = append(sections, strings.Join(lines, "\n"))
 	}
 
 	// Edges, in slice order
-	if len(g.Edges) > 0 {
+	edges := g.GetEdges()
+	if len(edges) > 0 {
 		var lines []string
-		for _, e := range g.Edges {
+		for _, e := range edges {
 			lines = append(lines, serializeEdge(e))
 		}
 		sections = append(sections, strings.Join(lines, "\n"))

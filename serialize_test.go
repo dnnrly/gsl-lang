@@ -4,11 +4,33 @@ import (
 	"testing"
 )
 
-func TestSerializeEmptyGraph(t *testing.T) {
+// testGraph is a helper to construct a Graph for testing.
+// It takes maps of nodes, sets, and edges and returns a properly initialized Graph.
+// This avoids relying on struct literals with private fields.
+func testGraph(nodes map[string]*Node, sets map[string]*Set, edges []*Edge) *Graph {
 	g := &Graph{
-		Nodes: make(map[string]*Node),
-		Sets:  make(map[string]*Set),
+		nodes: make(map[string]*Node),
+		sets:  make(map[string]*Set),
+		edges: make([]*Edge, 0),
 	}
+	if nodes != nil {
+		g.nodes = nodes
+	}
+	if sets != nil {
+		g.sets = sets
+	}
+	if edges != nil {
+		g.edges = edges
+	}
+	return g
+}
+
+func TestSerializeEmptyGraph(t *testing.T) {
+	g := testGraph(
+		map[string]*Node{},
+		map[string]*Set{},
+		nil,
+	)
 	got := Serialize(g)
 	if got != "" {
 		t.Errorf("expected empty string, got %q", got)
@@ -23,12 +45,13 @@ func TestSerializeNilGraph(t *testing.T) {
 }
 
 func TestSerializeSingleNode(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
-		Sets: make(map[string]*Set),
-	}
+		map[string]*Set{},
+		nil,
+	)
 	got := Serialize(g)
 	expected := "node A"
 	if got != expected {
@@ -37,8 +60,8 @@ func TestSerializeSingleNode(t *testing.T) {
 }
 
 func TestSerializeNodeWithAttrs(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {
 				ID: "A",
 				Attributes: map[string]interface{}{
@@ -48,8 +71,9 @@ func TestSerializeNodeWithAttrs(t *testing.T) {
 				Sets: map[string]struct{}{},
 			},
 		},
-		Sets: make(map[string]*Set),
-	}
+		map[string]*Set{},
+		nil,
+	)
 	got := Serialize(g)
 	expected := "node A [flag, weight=2]"
 	if got != expected {
@@ -58,16 +82,17 @@ func TestSerializeNodeWithAttrs(t *testing.T) {
 }
 
 func TestSerializeNodeWithTextAttr(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {
 				ID:         "A",
 				Attributes: map[string]interface{}{"text": "Hello"},
 				Sets:       map[string]struct{}{},
 			},
 		},
-		Sets: make(map[string]*Set),
-	}
+		map[string]*Set{},
+		nil,
+	)
 	got := Serialize(g)
 	expected := `node A [text="Hello"]`
 	if got != expected {
@@ -76,18 +101,19 @@ func TestSerializeNodeWithTextAttr(t *testing.T) {
 }
 
 func TestSerializeNodeWithMembership(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {
 				ID:         "A",
 				Attributes: map[string]interface{}{},
 				Sets:       map[string]struct{}{"cluster": {}},
 			},
 		},
-		Sets: map[string]*Set{
+		map[string]*Set{
 			"cluster": {ID: "cluster", Attributes: map[string]interface{}{}},
 		},
-	}
+		nil,
+	)
 	got := Serialize(g)
 	expected := "set cluster\n\nnode A @cluster"
 	if got != expected {
@@ -97,8 +123,8 @@ func TestSerializeNodeWithMembership(t *testing.T) {
 
 func TestSerializeNodeWithParent(t *testing.T) {
 	parent := "B"
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {
 				ID:         "A",
 				Attributes: map[string]interface{}{"parent": NodeRef("B")},
@@ -111,8 +137,9 @@ func TestSerializeNodeWithParent(t *testing.T) {
 				Sets:       map[string]struct{}{},
 			},
 		},
-		Sets: make(map[string]*Set),
-	}
+		map[string]*Set{},
+		nil,
+	)
 	got := Serialize(g)
 	expected := "node A [parent=B]\nnode B"
 	if got != expected {
@@ -121,16 +148,16 @@ func TestSerializeNodeWithParent(t *testing.T) {
 }
 
 func TestSerializeEdge(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
-		Sets: make(map[string]*Set),
-		Edges: []*Edge{
+		map[string]*Set{},
+		[]*Edge{
 			{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
-	}
+	)
 	got := Serialize(g)
 	expected := "node A\nnode B\n\nA->B"
 	if got != expected {
@@ -139,16 +166,16 @@ func TestSerializeEdge(t *testing.T) {
 }
 
 func TestSerializeEdgeWithAttrs(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
-		Sets: make(map[string]*Set),
-		Edges: []*Edge{
+		map[string]*Set{},
+		[]*Edge{
 			{From: "A", To: "B", Attributes: map[string]interface{}{"weight": 1.2}, Sets: map[string]struct{}{}},
 		},
-	}
+	)
 	got := Serialize(g)
 	expected := "node A\nnode B\n\nA->B [weight=1.2]"
 	if got != expected {
@@ -157,18 +184,18 @@ func TestSerializeEdgeWithAttrs(t *testing.T) {
 }
 
 func TestSerializeEdgeWithMembership(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
-		Sets: map[string]*Set{
+		map[string]*Set{
 			"flow": {ID: "flow", Attributes: map[string]interface{}{}},
 		},
-		Edges: []*Edge{
+		[]*Edge{
 			{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"flow": {}}},
 		},
-	}
+	)
 	got := Serialize(g)
 	expected := "set flow\n\nnode A\nnode B\n\nA->B @flow"
 	if got != expected {
@@ -177,12 +204,13 @@ func TestSerializeEdgeWithMembership(t *testing.T) {
 }
 
 func TestSerializeSet(t *testing.T) {
-	g := &Graph{
-		Nodes: make(map[string]*Node),
-		Sets: map[string]*Set{
+	g := testGraph(
+		map[string]*Node{},
+		map[string]*Set{
 			"flow": {ID: "flow", Attributes: map[string]interface{}{}},
 		},
-	}
+		nil,
+	)
 	got := Serialize(g)
 	expected := "set flow"
 	if got != expected {
@@ -191,12 +219,13 @@ func TestSerializeSet(t *testing.T) {
 }
 
 func TestSerializeSetWithAttrs(t *testing.T) {
-	g := &Graph{
-		Nodes: make(map[string]*Node),
-		Sets: map[string]*Set{
+	g := testGraph(
+		map[string]*Node{},
+		map[string]*Set{
 			"flow": {ID: "flow", Attributes: map[string]interface{}{"color": "blue"}},
 		},
-	}
+		nil,
+	)
 	got := Serialize(g)
 	expected := `set flow [color="blue"]`
 	if got != expected {
@@ -205,20 +234,20 @@ func TestSerializeSetWithAttrs(t *testing.T) {
 }
 
 func TestSerializeOrdering(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"Z": {ID: "Z", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
-		Sets: map[string]*Set{
+		map[string]*Set{
 			"beta":  {ID: "beta", Attributes: map[string]interface{}{}},
 			"alpha": {ID: "alpha", Attributes: map[string]interface{}{}},
 		},
-		Edges: []*Edge{
+		[]*Edge{
 			{From: "Z", To: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			{From: "A", To: "Z", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
-	}
+	)
 	got := Serialize(g)
 	expected := "set alpha\nset beta\n\nnode A\nnode Z\n\nZ->A\nA->Z"
 	if got != expected {
@@ -227,16 +256,17 @@ func TestSerializeOrdering(t *testing.T) {
 }
 
 func TestSerializeStringEscaping(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {
 				ID:         "A",
 				Attributes: map[string]interface{}{"msg": "say \"hi\"\nand\t\\done"},
 				Sets:       map[string]struct{}{},
 			},
 		},
-		Sets: make(map[string]*Set),
-	}
+		map[string]*Set{},
+		nil,
+	)
 	got := Serialize(g)
 	expected := `node A [msg="say \"hi\"\nand\t\\done"]`
 	if got != expected {
@@ -245,8 +275,8 @@ func TestSerializeStringEscaping(t *testing.T) {
 }
 
 func TestSerializeBoolAttrs(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {
 				ID: "A",
 				Attributes: map[string]interface{}{
@@ -256,8 +286,9 @@ func TestSerializeBoolAttrs(t *testing.T) {
 				Sets: map[string]struct{}{},
 			},
 		},
-		Sets: make(map[string]*Set),
-	}
+		map[string]*Set{},
+		nil,
+	)
 	got := Serialize(g)
 	expected := "node A [active=true, deleted=false]"
 	if got != expected {
@@ -266,8 +297,8 @@ func TestSerializeBoolAttrs(t *testing.T) {
 }
 
 func TestSerializeNumberFormatting(t *testing.T) {
-	g := &Graph{
-		Nodes: map[string]*Node{
+	g := testGraph(
+		map[string]*Node{
 			"A": {
 				ID: "A",
 				Attributes: map[string]interface{}{
@@ -277,8 +308,9 @@ func TestSerializeNumberFormatting(t *testing.T) {
 				Sets: map[string]struct{}{},
 			},
 		},
-		Sets: make(map[string]*Set),
-	}
+		map[string]*Set{},
+		nil,
+	)
 	got := Serialize(g)
 	expected := "node A [decimal=1.2, whole=2]"
 	if got != expected {

@@ -13,10 +13,11 @@ func TestParseSimpleInput(t *testing.T) {
 	if len(warns) != 0 {
 		t.Errorf("unexpected warnings: %v", warns)
 	}
-	if len(g.Nodes) != 1 {
-		t.Fatalf("expected 1 node, got %d", len(g.Nodes))
+	nodes := g.GetNodes()
+	if len(nodes) != 1 {
+		t.Fatalf("expected 1 node, got %d", len(nodes))
 	}
-	if _, ok := g.Nodes["A"]; !ok {
+	if _, ok := nodes["A"]; !ok {
 		t.Error("expected node A")
 	}
 }
@@ -31,16 +32,19 @@ A->B [weight=1.2] @flow`
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(g.Nodes) != 2 {
-		t.Errorf("expected 2 nodes, got %d", len(g.Nodes))
+	nodes := g.GetNodes()
+	edges := g.GetEdges()
+	sets := g.GetSets()
+	if len(nodes) != 2 {
+		t.Errorf("expected 2 nodes, got %d", len(nodes))
 	}
-	if len(g.Edges) != 1 {
-		t.Errorf("expected 1 edge, got %d", len(g.Edges))
+	if len(edges) != 1 {
+		t.Errorf("expected 1 edge, got %d", len(edges))
 	}
-	if len(g.Sets) != 1 {
-		t.Errorf("expected 1 set, got %d", len(g.Sets))
+	if len(sets) != 1 {
+		t.Errorf("expected 1 set, got %d", len(sets))
 	}
-	a := g.Nodes["A"]
+	a := nodes["A"]
 	if a == nil {
 		t.Fatal("expected node A")
 	}
@@ -50,14 +54,14 @@ A->B [weight=1.2] @flow`
 	if _, ok := a.Sets["flow"]; !ok {
 		t.Error("expected A in set flow")
 	}
-	b := g.Nodes["B"]
+	b := nodes["B"]
 	if b == nil {
 		t.Fatal("expected node B")
 	}
 	if b.Attributes["flag"] != nil {
 		t.Errorf("expected B.flag=nil, got %v", b.Attributes["flag"])
 	}
-	e := g.Edges[0]
+	e := edges[0]
 	if e.From != "A" || e.To != "B" {
 		t.Errorf("expected edge A->B, got %s->%s", e.From, e.To)
 	}
@@ -67,7 +71,7 @@ A->B [weight=1.2] @flow`
 	if _, ok := e.Sets["flow"]; !ok {
 		t.Error("expected edge in set flow")
 	}
-	s := g.Sets["flow"]
+	s := sets["flow"]
 	if s == nil {
 		t.Fatal("expected set flow")
 	}
@@ -104,8 +108,9 @@ func TestRoundTripGroupedEdge(t *testing.T) {
 		t.Fatalf("second parse failed: %v", err)
 	}
 	// Grouped edge expands to 2 edges
-	if len(g1.Edges) != 2 {
-		t.Fatalf("expected 2 edges after expansion, got %d", len(g1.Edges))
+	edges1 := g1.GetEdges()
+	if len(edges1) != 2 {
+		t.Fatalf("expected 2 edges after expansion, got %d", len(edges1))
 	}
 	assertGraphsEqual(t, g1, g2)
 }
@@ -159,7 +164,8 @@ func TestParseWithWarnings(t *testing.T) {
 	if g == nil {
 		t.Fatal("expected non-nil graph")
 	}
-	if _, ok := g.Sets["undeclared"]; !ok {
+	sets := g.GetSets()
+	if _, ok := sets["undeclared"]; !ok {
 		t.Error("expected implicit set to exist")
 	}
 	found := false
@@ -201,13 +207,20 @@ func assertRoundTrip(t *testing.T, input string) {
 func assertGraphsEqual(t *testing.T, g1, g2 *Graph) {
 	t.Helper()
 
+	nodes1 := g1.GetNodes()
+	nodes2 := g2.GetNodes()
+	sets1 := g1.GetSets()
+	sets2 := g2.GetSets()
+	edges1 := g1.GetEdges()
+	edges2 := g2.GetEdges()
+
 	// Compare nodes
-	if len(g1.Nodes) != len(g2.Nodes) {
-		t.Errorf("node count: g1=%d, g2=%d", len(g1.Nodes), len(g2.Nodes))
+	if len(nodes1) != len(nodes2) {
+		t.Errorf("node count: g1=%d, g2=%d", len(nodes1), len(nodes2))
 		return
 	}
-	for id, n1 := range g1.Nodes {
-		n2, ok := g2.Nodes[id]
+	for id, n1 := range nodes1 {
+		n2, ok := nodes2[id]
 		if !ok {
 			t.Errorf("node %q in g1 but not g2", id)
 			continue
@@ -237,12 +250,12 @@ func assertGraphsEqual(t *testing.T, g1, g2 *Graph) {
 	}
 
 	// Compare sets
-	if len(g1.Sets) != len(g2.Sets) {
-		t.Errorf("set count: g1=%d, g2=%d", len(g1.Sets), len(g2.Sets))
+	if len(sets1) != len(sets2) {
+		t.Errorf("set count: g1=%d, g2=%d", len(sets1), len(sets2))
 		return
 	}
-	for id, s1 := range g1.Sets {
-		s2, ok := g2.Sets[id]
+	for id, s1 := range sets1 {
+		s2, ok := sets2[id]
 		if !ok {
 			t.Errorf("set %q in g1 but not g2", id)
 			continue
@@ -263,13 +276,13 @@ func assertGraphsEqual(t *testing.T, g1, g2 *Graph) {
 	}
 
 	// Compare edges
-	if len(g1.Edges) != len(g2.Edges) {
-		t.Errorf("edge count: g1=%d, g2=%d", len(g1.Edges), len(g2.Edges))
+	if len(edges1) != len(edges2) {
+		t.Errorf("edge count: g1=%d, g2=%d", len(edges1), len(edges2))
 		return
 	}
-	for i := range g1.Edges {
-		e1 := g1.Edges[i]
-		e2 := g2.Edges[i]
+	for i := range edges1 {
+		e1 := edges1[i]
+		e2 := edges2[i]
 		if e1.From != e2.From || e1.To != e2.To {
 			t.Errorf("edge %d: g1=%s->%s, g2=%s->%s", i, e1.From, e1.To, e2.From, e2.To)
 		}

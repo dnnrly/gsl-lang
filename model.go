@@ -2,9 +2,9 @@ package gsl
 
 // Graph is the top-level semantic model produced by parsing a GSL document.
 type Graph struct {
-	Nodes map[string]*Node
-	Sets  map[string]*Set
-	Edges []*Edge
+	nodes map[string]*Node
+	sets  map[string]*Set
+	edges []*Edge
 }
 
 // Node represents a node in the graph.

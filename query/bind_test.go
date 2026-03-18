@@ -8,13 +8,13 @@ import (
 
 // TestBindSimple tests basic binding: (from *) as NAME
 func TestBindSimple(t *testing.T) {
-	inputGraph := &gsl.Graph{
+	inputGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  inputGraph,
@@ -50,21 +50,21 @@ func TestBindSimple(t *testing.T) {
 
 // TestBindMultiple tests chaining bindings
 func TestBindMultiple(t *testing.T) {
-	input1 := &gsl.Graph{
+	input1 := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
-	input2 := &gsl.Graph{
+	input2 := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph: input1,
@@ -107,13 +107,13 @@ func TestBindMultiple(t *testing.T) {
 
 // TestBindImmutability tests that names cannot be rebound
 func TestBindImmutability(t *testing.T) {
-	inputGraph := &gsl.Graph{
+	inputGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  inputGraph,
@@ -179,21 +179,21 @@ func TestBindInvalidSyntax(t *testing.T) {
 
 // TestBindNestedPipeline tests complex subpipelines in binding
 func TestBindNestedPipeline(t *testing.T) {
-	graph1 := &gsl.Graph{
+	graph1 := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"X": {ID: "X", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
-	graph2 := &gsl.Graph{
+	graph2 := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"Y": {ID: "Y", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph: graph1,
@@ -223,13 +223,13 @@ func TestBindNestedPipeline(t *testing.T) {
 
 // TestBindThenUse tests binding then using named graph
 func TestBindThenUse(t *testing.T) {
-	originalInput := &gsl.Graph{
+	originalInput := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"ORIG": {ID: "ORIG", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  originalInput,
@@ -257,13 +257,13 @@ func TestBindThenUse(t *testing.T) {
 
 // TestBindExprDirectly tests BindExpr.Apply() directly
 func TestBindExprDirectly(t *testing.T) {
-	inputGraph := &gsl.Graph{
+	inputGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  inputGraph,
@@ -308,7 +308,7 @@ func TestBindValidNames(t *testing.T) {
 	for _, name := range validNames {
 		t.Run(name, func(t *testing.T) {
 			ctx := &QueryContext{
-				InputGraph:  &gsl.Graph{Nodes: map[string]*gsl.Node{}, Edges: []*gsl.Edge{}, Sets: map[string]*gsl.Set{}},
+				InputGraph:  newTestGraph(testGraphInput{Nodes: map[string]*gsl.Node{}, Edges: []*gsl.Edge{}, Sets: map[string]*gsl.Set{}}),
 				NamedGraphs: map[string]*gsl.Graph{},
 			}
 

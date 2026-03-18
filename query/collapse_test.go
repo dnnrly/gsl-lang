@@ -10,7 +10,7 @@ import (
 func TestCollapseBasic(t *testing.T) {
 	// Graph: A -> B, C -> B, B -> D
 	// Collapse A and C into SERVICES
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"type": "db"}},
@@ -23,7 +23,7 @@ func TestCollapseBasic(t *testing.T) {
 			{From: "B", To: "D", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -47,35 +47,35 @@ func TestCollapseBasic(t *testing.T) {
 	gv := result.(GraphValue)
 
 	// Check nodes: SERVICES, B, D (A, C removed)
-	if len(gv.Graph.Nodes) != 3 {
-		t.Errorf("Expected 3 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 3 {
+		t.Errorf("Expected 3 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, hasServices := gv.Graph.Nodes["SERVICES"]; !hasServices {
+	if _, hasServices := gv.Graph.GetNodes()["SERVICES"]; !hasServices {
 		t.Error("Expected SERVICES node")
 	}
-	if _, hasA := gv.Graph.Nodes["A"]; hasA {
+	if _, hasA := gv.Graph.GetNodes()["A"]; hasA {
 		t.Error("Expected A to be removed")
 	}
-	if _, hasC := gv.Graph.Nodes["C"]; hasC {
+	if _, hasC := gv.Graph.GetNodes()["C"]; hasC {
 		t.Error("Expected C to be removed")
 	}
 
 	// Check edges: SERVICES -> B, B -> D
-	if len(gv.Graph.Edges) != 2 {
-		t.Errorf("Expected 2 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 2 {
+		t.Errorf("Expected 2 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestCollapseAttributeMerge tests attribute merging during collapse
 func TestCollapseAttributeMerge(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"team": "payments", "owner": "alice"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"team": "fraud", "env": "prod"}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -93,7 +93,7 @@ func TestCollapseAttributeMerge(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	merged := gv.Graph.Nodes["MERGED"]
+	merged := gv.Graph.GetNodes()["MERGED"]
 
 	// Attributes should be merged with last-write-wins
 	// Since we sort deterministically, we get: A, B
@@ -115,7 +115,7 @@ func TestCollapseAttributeMerge(t *testing.T) {
 // TestCollapseRemovesInternalEdges tests that edges between collapsed nodes are removed
 func TestCollapseRemovesInternalEdges(t *testing.T) {
 	// Graph: A -> B, B -> C, A -> C (A and B will be collapsed)
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"type": "service"}},
@@ -127,7 +127,7 @@ func TestCollapseRemovesInternalEdges(t *testing.T) {
 			{From: "A", To: "C", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -152,11 +152,11 @@ func TestCollapseRemovesInternalEdges(t *testing.T) {
 
 	// Should have only 2 edges: SERVICES -> C (A->B is internal, A->C and B->C both become SERVICES->C)
 	// After dedup, just SERVICES -> C
-	if len(gv.Graph.Edges) != 1 {
-		t.Errorf("Expected 1 edge after dedup, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 1 {
+		t.Errorf("Expected 1 edge after dedup, got %d", len(gv.Graph.GetEdges()))
 	}
-	if gv.Graph.Edges[0].From != "SERVICES" || gv.Graph.Edges[0].To != "C" {
-		t.Errorf("Expected SERVICES->C, got %s->%s", gv.Graph.Edges[0].From, gv.Graph.Edges[0].To)
+	if gv.Graph.GetEdges()[0].From != "SERVICES" || gv.Graph.GetEdges()[0].To != "C" {
+		t.Errorf("Expected SERVICES->C, got %s->%s", gv.Graph.GetEdges()[0].From, gv.Graph.GetEdges()[0].To)
 	}
 }
 
@@ -165,7 +165,7 @@ func TestCollapseEdgeDeduplication(t *testing.T) {
 	// Graph: A -> C, B -> C (where A and B have same outgoing edge attributes)
 	// D -> A, D -> B (both will become D -> MERGED)
 	// When A and B collapse, edges are deduplicated
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"type": "service"}},
@@ -179,7 +179,7 @@ func TestCollapseEdgeDeduplication(t *testing.T) {
 			{From: "B", To: "C", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -205,14 +205,14 @@ func TestCollapseEdgeDeduplication(t *testing.T) {
 	// Should have: D -> SERVICES (deduplicated, both had same attributes)
 	// SERVICES -> C (deduplicated from A->C and B->C with same attributes)
 	// Total: 2 edges
-	if len(gv.Graph.Edges) != 2 {
-		t.Errorf("Expected 2 edges after dedup, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 2 {
+		t.Errorf("Expected 2 edges after dedup, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestCollapsePreservesSets tests that sets are preserved during collapse
 func TestCollapsePreservesSets(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}},
@@ -221,7 +221,7 @@ func TestCollapsePreservesSets(t *testing.T) {
 		Sets: map[string]*gsl.Set{
 			"CRITICAL": {ID: "CRITICAL", Attributes: map[string]interface{}{}},
 		},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -239,14 +239,14 @@ func TestCollapsePreservesSets(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if _, hasSet := gv.Graph.Sets["CRITICAL"]; !hasSet {
+	if _, hasSet := gv.Graph.GetSets()["CRITICAL"]; !hasSet {
 		t.Error("Expected set to be preserved")
 	}
 }
 
 // TestCollapseNoMatch tests collapse when no nodes match
 func TestCollapseNoMatch(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"type": "db"}},
@@ -255,7 +255,7 @@ func TestCollapseNoMatch(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -279,10 +279,10 @@ func TestCollapseNoMatch(t *testing.T) {
 	gv := result.(GraphValue)
 
 	// Graph should be unchanged
-	if len(gv.Graph.Nodes) != 2 {
-		t.Errorf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Errorf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, hasMerged := gv.Graph.Nodes["MERGED"]; hasMerged {
+	if _, hasMerged := gv.Graph.GetNodes()["MERGED"]; hasMerged {
 		t.Error("Expected no MERGED node")
 	}
 }
@@ -320,7 +320,7 @@ func TestCollapseParserBasic(t *testing.T) {
 
 // TestCollapseInPipeline tests collapse in query pipeline
 func TestCollapseInPipeline(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"type": "service"}},
@@ -331,7 +331,7 @@ func TestCollapseInPipeline(t *testing.T) {
 			{From: "B", To: "C", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -349,17 +349,17 @@ func TestCollapseInPipeline(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 2 {
-		t.Errorf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Errorf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if _, hasServices := gv.Graph.Nodes["SERVICES"]; !hasServices {
+	if _, hasServices := gv.Graph.GetNodes()["SERVICES"]; !hasServices {
 		t.Error("Expected SERVICES node")
 	}
 }
 
 // TestCollapseChained tests collapse chained with other operations
 func TestCollapseChained(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"team": "payments"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"team": "payments"}},
@@ -370,7 +370,7 @@ func TestCollapseChained(t *testing.T) {
 			{From: "B", To: "C", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -390,7 +390,7 @@ func TestCollapseChained(t *testing.T) {
 	gv := result.(GraphValue)
 
 	// Check that all nodes are marked critical
-	for _, node := range gv.Graph.Nodes {
+	for _, node := range gv.Graph.GetNodes() {
 		if val := node.Attributes["critical"]; val != true {
 			t.Errorf("Expected critical=true, got %v", val)
 		}
@@ -401,7 +401,7 @@ func TestCollapseChained(t *testing.T) {
 func TestCollapseSelfLoop(t *testing.T) {
 	// A -> A (self-loop), A -> B, C -> A
 	// Collapse A into MERGED, keeping B and C
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"type": "service"}},
 			"B": {ID: "B", Attributes: map[string]interface{}{"type": "db"}},
@@ -413,7 +413,7 @@ func TestCollapseSelfLoop(t *testing.T) {
 			{From: "C", To: "A", Attributes: map[string]interface{}{}},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -439,18 +439,18 @@ func TestCollapseSelfLoop(t *testing.T) {
 	// Should have: C -> MERGED (from C->A), MERGED -> B (from A->B)
 	// A -> A becomes internal edge (removed)
 	// Total: 2 edges
-	if len(gv.Graph.Edges) != 2 {
-		t.Errorf("Expected 2 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 2 {
+		t.Errorf("Expected 2 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestCollapseEmptyGraph tests collapse on empty graph
 func TestCollapseEmptyGraph(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -468,20 +468,20 @@ func TestCollapseEmptyGraph(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 0 {
+	if len(gv.Graph.GetNodes()) != 0 {
 		t.Error("Expected empty graph to remain empty")
 	}
 }
 
 // TestCollapseSingleNode tests collapse of single node
 func TestCollapseSingleNode(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"team": "payments"}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -499,10 +499,10 @@ func TestCollapseSingleNode(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 1 {
-		t.Errorf("Expected 1 node, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 1 {
+		t.Errorf("Expected 1 node, got %d", len(gv.Graph.GetNodes()))
 	}
-	if node, ok := gv.Graph.Nodes["SINGLE"]; !ok {
+	if node, ok := gv.Graph.GetNodes()["SINGLE"]; !ok {
 		t.Error("Expected SINGLE node")
 	} else {
 		if node.Attributes["team"] != "payments" {
@@ -513,13 +513,13 @@ func TestCollapseSingleNode(t *testing.T) {
 
 // TestCollapseMixedTargets tests that mixed targets produce error
 func TestCollapseMixedTargets(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -543,13 +543,13 @@ func TestCollapseMixedTargets(t *testing.T) {
 
 // TestCollapseEdgePredicate tests that edge predicates are rejected
 func TestCollapseEdgePredicate(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,

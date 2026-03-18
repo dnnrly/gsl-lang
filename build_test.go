@@ -18,10 +18,11 @@ func TestBuildSimpleNode(t *testing.T) {
 	if len(warns) != 0 {
 		t.Errorf("unexpected warnings: %v", warns)
 	}
-	if len(g.Nodes) != 1 {
-		t.Fatalf("expected 1 node, got %d", len(g.Nodes))
+	nodes := g.GetNodes()
+	if len(nodes) != 1 {
+		t.Fatalf("expected 1 node, got %d", len(nodes))
 	}
-	n, ok := g.Nodes["A"]
+	n, ok := nodes["A"]
 	if !ok {
 		t.Fatal("node A not found")
 	}
@@ -50,7 +51,8 @@ func TestBuildNodeWithAttrs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	n := g.Nodes["A"]
+	nodes := g.GetNodes()
+	n := nodes["A"]
 	if n.Attributes["label"] != "hello" {
 		t.Errorf("expected label %q, got %v", "hello", n.Attributes["label"])
 	}
@@ -79,8 +81,9 @@ func TestBuildNodeTextShorthand(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if g.Nodes["A"].Attributes["text"] != "Start" {
-		t.Errorf("expected text %q, got %v", "Start", g.Nodes["A"].Attributes["text"])
+	nodes := g.GetNodes()
+	if nodes["A"].Attributes["text"] != "Start" {
+		t.Errorf("expected text %q, got %v", "Start", nodes["A"].Attributes["text"])
 	}
 }
 
@@ -112,7 +115,8 @@ func TestBuildNodeMerging(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	n := g.Nodes["A"]
+	nodes := g.GetNodes()
+	n := nodes["A"]
 	if n.Attributes["color"] != "blue" {
 		t.Errorf("expected color %q (last-write-wins), got %v", "blue", n.Attributes["color"])
 	}
@@ -146,7 +150,8 @@ func TestBuildBlockDesugaring(t *testing.T) {
 	if len(warns) != 0 {
 		t.Errorf("unexpected warnings: %v", warns)
 	}
-	child := g.Nodes["Child"]
+	nodes := g.GetNodes()
+	child := nodes["Child"]
 	if child == nil {
 		t.Fatal("child node not found")
 	}
@@ -180,7 +185,8 @@ func TestBuildBlockParentOverride(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	child := g.Nodes["Child"]
+	nodes := g.GetNodes()
+	child := nodes["Child"]
 	if child.Attributes["parent"] != NodeRef("Other") {
 		t.Errorf("expected parent NodeRef(Other), got %v", child.Attributes["parent"])
 	}
@@ -222,11 +228,12 @@ func TestBuildNestedBlocks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	b := g.Nodes["B"]
+	nodes := g.GetNodes()
+	b := nodes["B"]
 	if b.Parent == nil || *b.Parent != "A" {
 		t.Errorf("expected B.Parent = %q, got %v", "A", b.Parent)
 	}
-	c := g.Nodes["C"]
+	c := nodes["C"]
 	if c.Parent == nil || *c.Parent != "B" {
 		t.Errorf("expected C.Parent = %q, got %v", "B", c.Parent)
 	}
@@ -244,11 +251,12 @@ func TestBuildSimpleEdge(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(g.Edges) != 1 {
-		t.Fatalf("expected 1 edge, got %d", len(g.Edges))
+	edges := g.GetEdges()
+	if len(edges) != 1 {
+		t.Fatalf("expected 1 edge, got %d", len(edges))
 	}
-	if g.Edges[0].From != "A" || g.Edges[0].To != "B" {
-		t.Errorf("expected A->B, got %s->%s", g.Edges[0].From, g.Edges[0].To)
+	if edges[0].From != "A" || edges[0].To != "B" {
+		t.Errorf("expected A->B, got %s->%s", edges[0].From, edges[0].To)
 	}
 }
 
@@ -262,14 +270,15 @@ func TestBuildGroupedEdgeLeft(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(g.Edges) != 2 {
-		t.Fatalf("expected 2 edges, got %d", len(g.Edges))
+	edges := g.GetEdges()
+	if len(edges) != 2 {
+		t.Fatalf("expected 2 edges, got %d", len(edges))
 	}
-	if g.Edges[0].From != "A" || g.Edges[0].To != "C" {
-		t.Errorf("expected A->C, got %s->%s", g.Edges[0].From, g.Edges[0].To)
+	if edges[0].From != "A" || edges[0].To != "C" {
+		t.Errorf("expected A->C, got %s->%s", edges[0].From, edges[0].To)
 	}
-	if g.Edges[1].From != "B" || g.Edges[1].To != "C" {
-		t.Errorf("expected B->C, got %s->%s", g.Edges[1].From, g.Edges[1].To)
+	if edges[1].From != "B" || edges[1].To != "C" {
+		t.Errorf("expected B->C, got %s->%s", edges[1].From, edges[1].To)
 	}
 }
 
@@ -283,14 +292,15 @@ func TestBuildGroupedEdgeRight(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(g.Edges) != 2 {
-		t.Fatalf("expected 2 edges, got %d", len(g.Edges))
+	edges := g.GetEdges()
+	if len(edges) != 2 {
+		t.Fatalf("expected 2 edges, got %d", len(edges))
 	}
-	if g.Edges[0].From != "C" || g.Edges[0].To != "D" {
-		t.Errorf("expected C->D, got %s->%s", g.Edges[0].From, g.Edges[0].To)
+	if edges[0].From != "C" || edges[0].To != "D" {
+		t.Errorf("expected C->D, got %s->%s", edges[0].From, edges[0].To)
 	}
-	if g.Edges[1].From != "C" || g.Edges[1].To != "E" {
-		t.Errorf("expected C->E, got %s->%s", g.Edges[1].From, g.Edges[1].To)
+	if edges[1].From != "C" || edges[1].To != "E" {
+		t.Errorf("expected C->E, got %s->%s", edges[1].From, edges[1].To)
 	}
 }
 
@@ -309,8 +319,9 @@ func TestBuildEdgeTextShorthand(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if g.Edges[0].Attributes["text"] != "Next" {
-		t.Errorf("expected text %q, got %v", "Next", g.Edges[0].Attributes["text"])
+	edges := g.GetEdges()
+	if edges[0].Attributes["text"] != "Next" {
+		t.Errorf("expected text %q, got %v", "Next", edges[0].Attributes["text"])
 	}
 }
 
@@ -353,7 +364,8 @@ func TestBuildSetDeclaration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	s, ok := g.Sets["cluster"]
+	sets := g.GetSets()
+	s, ok := sets["cluster"]
 	if !ok {
 		t.Fatal("set cluster not found")
 	}
@@ -389,7 +401,8 @@ func TestBuildSetMerging(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	s := g.Sets["s"]
+	sets := g.GetSets()
+	s := sets["s"]
 	if s.Attributes["a"] != "second" {
 		t.Errorf("expected a %q (last-write-wins), got %v", "second", s.Attributes["a"])
 	}
@@ -433,7 +446,8 @@ func TestBuildImplicitSetCreation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if _, ok := g.Sets["undeclared"]; !ok {
+	sets := g.GetSets()
+	if _, ok := sets["undeclared"]; !ok {
 		t.Fatal("expected implicit set to be created")
 	}
 	found := false
@@ -486,7 +500,8 @@ func TestBuildEdgeMembership(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if _, ok := g.Edges[0].Sets["flow"]; !ok {
+	edges := g.GetEdges()
+	if _, ok := edges[0].Sets["flow"]; !ok {
 		t.Error("expected edge membership in flow")
 	}
 }
@@ -501,13 +516,14 @@ func TestBuildForwardDeclaredNodes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if _, ok := g.Nodes["X"]; !ok {
+	nodes := g.GetNodes()
+	if _, ok := nodes["X"]; !ok {
 		t.Error("expected forward-declared node X")
 	}
-	if _, ok := g.Nodes["Y"]; !ok {
+	if _, ok := nodes["Y"]; !ok {
 		t.Error("expected forward-declared node Y")
 	}
-	if len(g.Nodes["X"].Attributes) != 0 {
+	if len(nodes["X"].Attributes) != 0 {
 		t.Error("expected empty attributes for forward-declared node")
 	}
 }
