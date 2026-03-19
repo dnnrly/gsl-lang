@@ -150,6 +150,17 @@ Before submitting changes:
 - [ ] New code examples in markdown are valid `gsl` blocks
 - [ ] Commit message references relevant files
 
+## Refactoring and tool use
+
+Where available, the `gopls` command can be used to:
+- Format code: `gopls format`
+- Analyze code: `gopls analyze`
+- Generate code: `gopls generate`
+- Inspect code: `gopls inspect`
+- Rename identifiers: `gopls rename`
+
+More details about `gopls` can be found by running `gopls help`.
+
 ## Notes
 
 - Parser is hand-written, not generated
