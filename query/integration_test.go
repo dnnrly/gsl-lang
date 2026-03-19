@@ -8,7 +8,7 @@ import (
 
 func TestIntegrationComplexPipeline(t *testing.T) {
 	// Test: Extract critical services, collapse by team, mark as high-priority
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"api": {ID: "api", Attributes: map[string]interface{}{"type": "service", "team": "platform"}, Sets: make(map[string]struct{})},
 			"db": {ID: "db", Attributes: map[string]interface{}{"type": "database", "team": "platform"}, Sets: make(map[string]struct{})},
@@ -21,7 +21,7 @@ func TestIntegrationComplexPipeline(t *testing.T) {
 			{From: "api", To: "cache", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	// Pipeline: subgraph node.team = "platform" | collapse into PLATFORM where exists | make node.critical = true where exists
 	// Note: subgraph filters to team=platform nodes only (api, db, cache)
@@ -48,17 +48,17 @@ func TestIntegrationComplexPipeline(t *testing.T) {
 	// After subgraph filters to platform nodes, we only have api, db, cache
 	// After collapse, they become PLATFORM
 	// So should have only 1 node
-	if len(graph.Nodes) != 1 {
-		t.Errorf("expected 1 node, got %d", len(graph.Nodes))
+	if len(graph.GetNodes()) != 1 {
+		t.Errorf("expected 1 node, got %d", len(graph.GetNodes()))
 	}
 
 	// Should have collapsed node
-	if _, exists := graph.Nodes["PLATFORM"]; !exists {
+	if _, exists := graph.GetNodes()["PLATFORM"]; !exists {
 		t.Errorf("collapsed node PLATFORM not found")
 	}
 
 	// Should have critical attribute
-	node := graph.Nodes["PLATFORM"]
+	node := graph.GetNodes()["PLATFORM"]
 	if critical, ok := node.Attributes["critical"]; !ok || critical != true {
 		t.Errorf("critical attribute not set on PLATFORM")
 	}
@@ -66,7 +66,7 @@ func TestIntegrationComplexPipeline(t *testing.T) {
 
 func TestIntegrationMultipleBindings(t *testing.T) {
 	// Test: bind services, bind databases, union them
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"api": {ID: "api", Attributes: map[string]interface{}{"type": "service"}, Sets: make(map[string]struct{})},
 			"web": {ID: "web", Attributes: map[string]interface{}{"type": "service"}, Sets: make(map[string]struct{})},
@@ -74,7 +74,7 @@ func TestIntegrationMultipleBindings(t *testing.T) {
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	// Pipeline: (subgraph node.type = "service") as SERVICES | (from * | subgraph node.type = "database") as DATABASES | SERVICES + DATABASES
 	query, err := NewQueryParser(`(subgraph node.type = "service") as SERVICES | (from * | subgraph node.type = "database") as DATABASES | SERVICES + DATABASES`).Parse()
@@ -96,8 +96,8 @@ func TestIntegrationMultipleBindings(t *testing.T) {
 	graph := graphValue.Graph
 
 	// Union should include all 3 nodes
-	if len(graph.Nodes) != 3 {
-		t.Errorf("expected 3 nodes in union, got %d", len(graph.Nodes))
+	if len(graph.GetNodes()) != 3 {
+		t.Errorf("expected 3 nodes in union, got %d", len(graph.GetNodes()))
 	}
 
 	// Check named graphs were bound
@@ -111,7 +111,7 @@ func TestIntegrationMultipleBindings(t *testing.T) {
 
 func TestIntegrationTraversalAndTransform(t *testing.T) {
 	// Test: find critical nodes and their neighbors, mark as related
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"critical": {ID: "critical", Attributes: map[string]interface{}{"critical": true}, Sets: make(map[string]struct{})},
 			"neighbor1": {ID: "neighbor1", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -123,7 +123,7 @@ func TestIntegrationTraversalAndTransform(t *testing.T) {
 			{From: "neighbor1", To: "neighbor2", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	// Pipeline: subgraph node.critical = true traverse out 2 | make node.related = true where exists
 	query, err := NewQueryParser(`subgraph node.critical = true traverse out 2 | make node.related = true where exists`).Parse()
@@ -145,12 +145,12 @@ func TestIntegrationTraversalAndTransform(t *testing.T) {
 	graph := graphValue.Graph
 
 	// Should have critical, neighbor1, neighbor2 (traversed 2 hops out)
-	if len(graph.Nodes) != 3 {
-		t.Errorf("expected 3 nodes after traversal, got %d", len(graph.Nodes))
+	if len(graph.GetNodes()) != 3 {
+		t.Errorf("expected 3 nodes after traversal, got %d", len(graph.GetNodes()))
 	}
 
 	// All should have related = true
-	for id, node := range graph.Nodes {
+	for id, node := range graph.GetNodes() {
 		if related, ok := node.Attributes["related"]; !ok || related != true {
 			t.Errorf("node %s missing related attribute", id)
 		}
@@ -159,7 +159,7 @@ func TestIntegrationTraversalAndTransform(t *testing.T) {
 
 func TestIntegrationRemoveAndFilter(t *testing.T) {
 	// Test: filter active nodes and clean orphans
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"active1": {ID: "active1", Attributes: map[string]interface{}{"status": "active"}, Sets: make(map[string]struct{})},
 			"active2": {ID: "active2", Attributes: map[string]interface{}{"status": "active"}, Sets: make(map[string]struct{})},
@@ -170,7 +170,7 @@ func TestIntegrationRemoveAndFilter(t *testing.T) {
 			{From: "active1", To: "active2", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	// Pipeline: subgraph node.status = "active" | remove orphans
 	// This filters to active nodes only (active1, active2 with edge between them)
@@ -194,25 +194,25 @@ func TestIntegrationRemoveAndFilter(t *testing.T) {
 	graph := graphValue.Graph
 
 	// Should have both active nodes
-	if len(graph.Nodes) != 2 {
-		t.Errorf("expected 2 nodes, got %d", len(graph.Nodes))
+	if len(graph.GetNodes()) != 2 {
+		t.Errorf("expected 2 nodes, got %d", len(graph.GetNodes()))
 	}
 
-	if _, exists := graph.Nodes["active1"]; !exists {
+	if _, exists := graph.GetNodes()["active1"]; !exists {
 		t.Errorf("active1 node not found")
 	}
-	if _, exists := graph.Nodes["active2"]; !exists {
+	if _, exists := graph.GetNodes()["active2"]; !exists {
 		t.Errorf("active2 node not found")
 	}
 }
 
 func TestIntegrationEmptyGraph(t *testing.T) {
 	// Test: all operations on empty graph
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: make(map[string]*gsl.Node),
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	tests := []struct {
 		name  string
@@ -251,13 +251,13 @@ func TestIntegrationEmptyGraph(t *testing.T) {
 
 func TestIntegrationSingleNode(t *testing.T) {
 	// Test: operations on single-node graph
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	// Pipeline: make node.label = "single" where exists | collapse into MERGED where exists
 	query, err := NewQueryParser(`make node.label = "single" where exists | collapse into MERGED where exists`).Parse()
@@ -279,18 +279,18 @@ func TestIntegrationSingleNode(t *testing.T) {
 	graph := graphValue.Graph
 
 	// Should have merged node with label
-	if _, exists := graph.Nodes["MERGED"]; !exists {
+	if _, exists := graph.GetNodes()["MERGED"]; !exists {
 		t.Errorf("MERGED node not found")
 	}
 
-	if label, ok := graph.Nodes["MERGED"].Attributes["label"]; !ok || label != "single" {
+	if label, ok := graph.GetNodes()["MERGED"].Attributes["label"]; !ok || label != "single" {
 		t.Errorf("label attribute not preserved")
 	}
 }
 
 func TestIntegrationCyclePreservation(t *testing.T) {
 	// Test: cyclic graphs are preserved through operations
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -302,7 +302,7 @@ func TestIntegrationCyclePreservation(t *testing.T) {
 			{From: "C", To: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	// Pipeline: make node.visited = true where exists | subgraph exists
 	query, err := NewQueryParser(`make node.visited = true where exists | subgraph exists`).Parse()
@@ -324,16 +324,16 @@ func TestIntegrationCyclePreservation(t *testing.T) {
 	graph := graphValue.Graph
 
 	// All 3 nodes and 3 edges preserved
-	if len(graph.Nodes) != 3 {
-		t.Errorf("expected 3 nodes, got %d", len(graph.Nodes))
+	if len(graph.GetNodes()) != 3 {
+		t.Errorf("expected 3 nodes, got %d", len(graph.GetNodes()))
 	}
 
-	if len(graph.Edges) != 3 {
-		t.Errorf("expected 3 edges, got %d", len(graph.Edges))
+	if len(graph.GetEdges()) != 3 {
+		t.Errorf("expected 3 edges, got %d", len(graph.GetEdges()))
 	}
 
 	// All nodes marked as visited
-	for _, node := range graph.Nodes {
+	for _, node := range graph.GetNodes() {
 		if visited, ok := node.Attributes["visited"]; !ok || visited != true {
 			t.Errorf("node %s not marked visited", node.ID)
 		}
@@ -342,7 +342,7 @@ func TestIntegrationCyclePreservation(t *testing.T) {
 
 func TestIntegrationSetPreservation(t *testing.T) {
 	// Test: sets are preserved through complex operations
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"critical": {}, "monitored": {}}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"monitored": {}}},
@@ -354,7 +354,7 @@ func TestIntegrationSetPreservation(t *testing.T) {
 			"critical": {ID: "critical", Attributes: map[string]interface{}{}},
 			"monitored": {ID: "monitored", Attributes: map[string]interface{}{}},
 		},
-	}
+	})
 
 	// Pipeline: subgraph in critical | collapse into CRITICAL where exists
 	query, err := NewQueryParser(`subgraph in critical | collapse into CRITICAL where exists`).Parse()
@@ -376,26 +376,26 @@ func TestIntegrationSetPreservation(t *testing.T) {
 	graph := graphValue.Graph
 
 	// Sets should be preserved
-	if len(graph.Sets) != 2 {
-		t.Errorf("expected 2 sets, got %d", len(graph.Sets))
+	if len(graph.GetSets()) != 2 {
+		t.Errorf("expected 2 sets, got %d", len(graph.GetSets()))
 	}
 
-	if _, exists := graph.Sets["critical"]; !exists {
+	if _, exists := graph.GetSets()["critical"]; !exists {
 		t.Errorf("critical set not found")
 	}
 
-	if _, exists := graph.Sets["monitored"]; !exists {
+	if _, exists := graph.GetSets()["monitored"]; !exists {
 		t.Errorf("monitored set not found")
 	}
 }
 
 func TestIntegrationErrorPropagation(t *testing.T) {
 	// Test: errors in pipeline stop execution
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	tests := []struct {
 		name    string
@@ -434,7 +434,7 @@ func TestIntegrationErrorPropagation(t *testing.T) {
 
 func TestIntegrationDuplicateEdges(t *testing.T) {
 	// Test: duplicate edges are preserved through operations
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: make(map[string]struct{})},
@@ -444,7 +444,7 @@ func TestIntegrationDuplicateEdges(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{"type": "async"}, Sets: make(map[string]struct{})},
 		},
 		Sets: make(map[string]*gsl.Set),
-	}
+	})
 
 	// Pipeline: make node.marked = true where exists
 	query, err := NewQueryParser(`make node.marked = true where exists`).Parse()
@@ -466,21 +466,21 @@ func TestIntegrationDuplicateEdges(t *testing.T) {
 	graph := graphValue.Graph
 
 	// Duplicate edges should be preserved
-	if len(graph.Edges) != 2 {
-		t.Errorf("expected 2 edges (duplicates), got %d", len(graph.Edges))
+	if len(graph.GetEdges()) != 2 {
+		t.Errorf("expected 2 edges (duplicates), got %d", len(graph.GetEdges()))
 	}
 }
 
 func TestIntegrationAttributePropagation(t *testing.T) {
 	// Test: attributes propagate correctly through transformations
-	input := &gsl.Graph{
+	input := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{"owner": "alice", "env": "prod"}, Sets: make(map[string]struct{})},
 			"B": {ID: "B", Attributes: map[string]interface{}{"owner": "bob", "env": "staging"}, Sets: make(map[string]struct{})},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  make(map[string]*gsl.Set),
-	}
+	})
 
 	// Pipeline: subgraph node.owner = "alice" | make node.env = "prod" where exists
 	query, err := NewQueryParser(`subgraph node.owner = "alice" | make node.env = "prod" where exists`).Parse()
@@ -502,7 +502,7 @@ func TestIntegrationAttributePropagation(t *testing.T) {
 	graph := graphValue.Graph
 
 	// Should have A with owner=alice and env=prod
-	nodeA := graph.Nodes["A"]
+	nodeA := graph.GetNodes()["A"]
 	if nodeA == nil {
 		t.Fatalf("node A not found")
 	}
@@ -517,17 +517,14 @@ func TestIntegrationAttributePropagation(t *testing.T) {
 
 func TestIntegrationLargeGraph(t *testing.T) {
 	// Test: operations on larger graph
-	input := &gsl.Graph{
-		Nodes: make(map[string]*gsl.Node),
-		Edges: []*gsl.Edge{},
-		Sets:  make(map[string]*gsl.Set),
-	}
+	nodes := make(map[string]*gsl.Node)
+	edges := []*gsl.Edge{}
 
 	// Create 100 nodes
 	for i := 0; i < 100; i++ {
 		id := "node_" + string(rune('0' + i % 10)) + string(rune('A' + i / 10))
 		isService := i % 2 == 0
-		input.Nodes[id] = &gsl.Node{
+		nodes[id] = &gsl.Node{
 			ID: id,
 			Attributes: map[string]interface{}{
 				"type": map[bool]string{true: "service", false: "database"}[isService],
@@ -541,13 +538,19 @@ func TestIntegrationLargeGraph(t *testing.T) {
 	for i := 0; i < 90; i++ {
 		fromId := "node_" + string(rune('0' + i % 10)) + string(rune('A' + i / 10))
 		toId := "node_" + string(rune('0' + (i+1) % 10)) + string(rune('A' + (i + 1) / 10))
-		input.Edges = append(input.Edges, &gsl.Edge{
+		edges = append(edges, &gsl.Edge{
 			From:       fromId,
 			To:         toId,
 			Attributes: map[string]interface{}{},
 			Sets:       make(map[string]struct{}),
 		})
 	}
+
+	input := newTestGraph(testGraphInput{
+		Nodes: nodes,
+		Edges: edges,
+		Sets:  make(map[string]*gsl.Set),
+	})
 
 	// Pipeline: subgraph node.type = "service" | make node.priority = "high" where exists
 	query, err := NewQueryParser(`subgraph node.type = "service" | make node.priority = "high" where exists`).Parse()
@@ -569,12 +572,12 @@ func TestIntegrationLargeGraph(t *testing.T) {
 	graph := graphValue.Graph
 
 	// Should have 50 service nodes
-	if len(graph.Nodes) != 50 {
-		t.Errorf("expected 50 service nodes, got %d", len(graph.Nodes))
+	if len(graph.GetNodes()) != 50 {
+		t.Errorf("expected 50 service nodes, got %d", len(graph.GetNodes()))
 	}
 
 	// All should have priority=high
-	for _, node := range graph.Nodes {
+	for _, node := range graph.GetNodes() {
 		if priority, ok := node.Attributes["priority"]; !ok || priority != "high" {
 			t.Errorf("node %s missing priority attribute", node.ID)
 		}

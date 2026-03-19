@@ -11,8 +11,8 @@ type builder struct {
 func buildGraph(prog *program) (*Graph, []error, error) {
 	b := &builder{
 		graph: &Graph{
-			Nodes: make(map[string]*Node),
-			Sets:  make(map[string]*Set),
+			nodes: make(map[string]*Node),
+			sets:  make(map[string]*Set),
 		},
 	}
 
@@ -34,7 +34,7 @@ func buildGraph(prog *program) (*Graph, []error, error) {
 }
 
 func (b *builder) ensureNode(name string) *Node {
-	if n, ok := b.graph.Nodes[name]; ok {
+	if n, ok := b.graph.nodes[name]; ok {
 		return n
 	}
 	n := &Node{
@@ -42,19 +42,19 @@ func (b *builder) ensureNode(name string) *Node {
 		Attributes: make(map[string]interface{}),
 		Sets:       make(map[string]struct{}),
 	}
-	b.graph.Nodes[name] = n
+	b.graph.nodes[name] = n
 	return n
 }
 
 func (b *builder) ensureSet(name string, implicit bool) *Set {
-	if s, ok := b.graph.Sets[name]; ok {
+	if s, ok := b.graph.sets[name]; ok {
 		return s
 	}
 	s := &Set{
 		ID:         name,
 		Attributes: make(map[string]interface{}),
 	}
-	b.graph.Sets[name] = s
+	b.graph.sets[name] = s
 	if implicit {
 		b.warnings = append(b.warnings, fmt.Errorf("implicit set creation: %q", name))
 	}
@@ -83,12 +83,10 @@ func (b *builder) processNodeDecl(nd *nodeDecl, enclosingParent *string) {
 		}
 	}
 
-	// Cache Parent field
-	if p, ok := node.Attributes["parent"]; ok {
-		if ref, isRef := p.(NodeRef); isRef {
-			s := string(ref)
-			node.Parent = &s
-		}
+	// Cache Parent field using typed accessor
+	if ref, ok := node.GetRef("parent"); ok {
+		s := string(*ref)
+		node.Parent = &s
 	}
 
 	// Memberships
@@ -98,7 +96,7 @@ func (b *builder) processNodeDecl(nd *nodeDecl, enclosingParent *string) {
 	}
 
 	// Check node/set name collision
-	if _, ok := b.graph.Sets[nd.name]; ok {
+	if _, ok := b.graph.sets[nd.name]; ok {
 		b.warnings = append(b.warnings, fmt.Errorf("node and set name collision: %q", nd.name))
 	}
 
@@ -148,14 +146,14 @@ func (b *builder) processEdgeDecl(ed *edgeDecl) {
 				edge.Sets[setName] = struct{}{}
 			}
 
-			b.graph.Edges = append(b.graph.Edges, edge)
+			b.graph.edges = append(b.graph.edges, edge)
 		}
 	}
 }
 
 func (b *builder) processSetDecl(sd *setDecl) {
 	// Check node/set name collision
-	if _, ok := b.graph.Nodes[sd.name]; ok {
+	if _, ok := b.graph.nodes[sd.name]; ok {
 		b.warnings = append(b.warnings, fmt.Errorf("node and set name collision: %q", sd.name))
 	}
 
@@ -174,7 +172,7 @@ func (b *builder) processSetDecl(sd *setDecl) {
 
 // setDeclared checks whether a set was explicitly declared (not just implicitly created).
 func (b *builder) setDeclared(name string) bool {
-	if s, ok := b.graph.Sets[name]; ok {
+	if s, ok := b.graph.sets[name]; ok {
 		return s.declared
 	}
 	return false

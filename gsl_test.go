@@ -6,17 +6,18 @@ import (
 )
 
 func TestParseSimpleInput(t *testing.T) {
-	g, warns, err := Parse(strings.NewReader("node A"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	g, parseErr := Parse(strings.NewReader("node A"))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("unexpected error: %v", parseErr)
 	}
-	if len(warns) != 0 {
-		t.Errorf("unexpected warnings: %v", warns)
+	if parseErr != nil && parseErr.HasWarnings() {
+		t.Errorf("unexpected warnings: %v", parseErr.Warnings)
 	}
-	if len(g.Nodes) != 1 {
-		t.Fatalf("expected 1 node, got %d", len(g.Nodes))
+	nodes := g.GetNodes()
+	if len(nodes) != 1 {
+		t.Fatalf("expected 1 node, got %d", len(nodes))
 	}
-	if _, ok := g.Nodes["A"]; !ok {
+	if _, ok := nodes["A"]; !ok {
 		t.Error("expected node A")
 	}
 }
@@ -27,20 +28,23 @@ node A: "Start" @flow
 node B [flag]
 A->B [weight=1.2] @flow`
 
-	g, _, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	g, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("unexpected error: %v", parseErr)
 	}
-	if len(g.Nodes) != 2 {
-		t.Errorf("expected 2 nodes, got %d", len(g.Nodes))
+	nodes := g.GetNodes()
+	edges := g.GetEdges()
+	sets := g.GetSets()
+	if len(nodes) != 2 {
+		t.Errorf("expected 2 nodes, got %d", len(nodes))
 	}
-	if len(g.Edges) != 1 {
-		t.Errorf("expected 1 edge, got %d", len(g.Edges))
+	if len(edges) != 1 {
+		t.Errorf("expected 1 edge, got %d", len(edges))
 	}
-	if len(g.Sets) != 1 {
-		t.Errorf("expected 1 set, got %d", len(g.Sets))
+	if len(sets) != 1 {
+		t.Errorf("expected 1 set, got %d", len(sets))
 	}
-	a := g.Nodes["A"]
+	a := nodes["A"]
 	if a == nil {
 		t.Fatal("expected node A")
 	}
@@ -50,14 +54,14 @@ A->B [weight=1.2] @flow`
 	if _, ok := a.Sets["flow"]; !ok {
 		t.Error("expected A in set flow")
 	}
-	b := g.Nodes["B"]
+	b := nodes["B"]
 	if b == nil {
 		t.Fatal("expected node B")
 	}
 	if b.Attributes["flag"] != nil {
 		t.Errorf("expected B.flag=nil, got %v", b.Attributes["flag"])
 	}
-	e := g.Edges[0]
+	e := edges[0]
 	if e.From != "A" || e.To != "B" {
 		t.Errorf("expected edge A->B, got %s->%s", e.From, e.To)
 	}
@@ -67,7 +71,7 @@ A->B [weight=1.2] @flow`
 	if _, ok := e.Sets["flow"]; !ok {
 		t.Error("expected edge in set flow")
 	}
-	s := g.Sets["flow"]
+	s := sets["flow"]
 	if s == nil {
 		t.Fatal("expected set flow")
 	}
@@ -94,50 +98,51 @@ func TestRoundTripEdge(t *testing.T) {
 
 func TestRoundTripGroupedEdge(t *testing.T) {
 	input := "A,B->C"
-	g1, _, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("first parse failed: %v", err)
+	g1, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("first parse failed: %v", parseErr)
 	}
 	canonical := Serialize(g1)
-	g2, _, err := Parse(strings.NewReader(canonical))
-	if err != nil {
-		t.Fatalf("second parse failed: %v", err)
+	g2, parseErr := Parse(strings.NewReader(canonical))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("second parse failed: %v", parseErr)
 	}
 	// Grouped edge expands to 2 edges
-	if len(g1.Edges) != 2 {
-		t.Fatalf("expected 2 edges after expansion, got %d", len(g1.Edges))
+	edges1 := g1.GetEdges()
+	if len(edges1) != 2 {
+		t.Fatalf("expected 2 edges after expansion, got %d", len(edges1))
 	}
 	assertGraphsEqual(t, g1, g2)
 }
 
 func TestRoundTripBlock(t *testing.T) {
 	input := "node C { node D }"
-	g1, _, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("first parse failed: %v", err)
+	g1, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("first parse failed: %v", parseErr)
 	}
 	canonical := Serialize(g1)
-	g2, _, err := Parse(strings.NewReader(canonical))
-	if err != nil {
-		t.Fatalf("second parse failed: %v", err)
+	g2, parseErr := Parse(strings.NewReader(canonical))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("second parse failed: %v", parseErr)
 	}
 	assertGraphsEqual(t, g1, g2)
 }
 
 func TestRoundTripTextShorthand(t *testing.T) {
 	input := `node A: "Hello"`
-	g1, _, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("first parse failed: %v", err)
+	g1, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("first parse failed: %v", parseErr)
 	}
 	canonical := Serialize(g1)
 	// Should use [text="Hello"] not shorthand
 	if strings.Contains(canonical, `:`) {
 		t.Errorf("canonical should not use text shorthand, got %q", canonical)
 	}
-	g2, _, err := Parse(strings.NewReader(canonical))
-	if err != nil {
-		t.Fatalf("second parse failed: %v", err)
+	g2, parseErr := Parse(strings.NewReader(canonical))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("second parse failed: %v", parseErr)
 	}
 	assertGraphsEqual(t, g1, g2)
 }
@@ -152,21 +157,24 @@ A->B [weight=1.2] @flow`
 
 func TestParseWithWarnings(t *testing.T) {
 	input := "node A @undeclared"
-	g, warns, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	g, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("unexpected error: %v", parseErr)
 	}
 	if g == nil {
 		t.Fatal("expected non-nil graph")
 	}
-	if _, ok := g.Sets["undeclared"]; !ok {
+	sets := g.GetSets()
+	if _, ok := sets["undeclared"]; !ok {
 		t.Error("expected implicit set to exist")
 	}
 	found := false
-	for _, w := range warns {
-		if strings.Contains(w.Error(), "implicit set") {
-			found = true
-			break
+	if parseErr != nil {
+		for _, w := range parseErr.Warnings {
+			if strings.Contains(w.Error(), "implicit set") {
+				found = true
+				break
+			}
 		}
 	}
 	if !found {
@@ -176,8 +184,8 @@ func TestParseWithWarnings(t *testing.T) {
 
 func TestParseWithErrors(t *testing.T) {
 	input := "node [invalid]"
-	_, _, err := Parse(strings.NewReader(input))
-	if err == nil {
+	_, parseErr := Parse(strings.NewReader(input))
+	if parseErr == nil || !parseErr.HasError() {
 		t.Fatal("expected error for invalid input")
 	}
 }
@@ -185,14 +193,14 @@ func TestParseWithErrors(t *testing.T) {
 // assertRoundTrip parses input, serializes, re-parses, and checks equality.
 func assertRoundTrip(t *testing.T, input string) {
 	t.Helper()
-	g1, _, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("first parse failed: %v", err)
+	g1, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("first parse failed: %v", parseErr)
 	}
 	canonical := Serialize(g1)
-	g2, _, err := Parse(strings.NewReader(canonical))
-	if err != nil {
-		t.Fatalf("second parse failed (canonical=%q): %v", canonical, err)
+	g2, parseErr := Parse(strings.NewReader(canonical))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("second parse failed (canonical=%q): %v", canonical, parseErr)
 	}
 	assertGraphsEqual(t, g1, g2)
 }
@@ -201,13 +209,20 @@ func assertRoundTrip(t *testing.T, input string) {
 func assertGraphsEqual(t *testing.T, g1, g2 *Graph) {
 	t.Helper()
 
+	nodes1 := g1.GetNodes()
+	nodes2 := g2.GetNodes()
+	sets1 := g1.GetSets()
+	sets2 := g2.GetSets()
+	edges1 := g1.GetEdges()
+	edges2 := g2.GetEdges()
+
 	// Compare nodes
-	if len(g1.Nodes) != len(g2.Nodes) {
-		t.Errorf("node count: g1=%d, g2=%d", len(g1.Nodes), len(g2.Nodes))
+	if len(nodes1) != len(nodes2) {
+		t.Errorf("node count: g1=%d, g2=%d", len(nodes1), len(nodes2))
 		return
 	}
-	for id, n1 := range g1.Nodes {
-		n2, ok := g2.Nodes[id]
+	for id, n1 := range nodes1 {
+		n2, ok := nodes2[id]
 		if !ok {
 			t.Errorf("node %q in g1 but not g2", id)
 			continue
@@ -237,12 +252,12 @@ func assertGraphsEqual(t *testing.T, g1, g2 *Graph) {
 	}
 
 	// Compare sets
-	if len(g1.Sets) != len(g2.Sets) {
-		t.Errorf("set count: g1=%d, g2=%d", len(g1.Sets), len(g2.Sets))
+	if len(sets1) != len(sets2) {
+		t.Errorf("set count: g1=%d, g2=%d", len(sets1), len(sets2))
 		return
 	}
-	for id, s1 := range g1.Sets {
-		s2, ok := g2.Sets[id]
+	for id, s1 := range sets1 {
+		s2, ok := sets2[id]
 		if !ok {
 			t.Errorf("set %q in g1 but not g2", id)
 			continue
@@ -263,13 +278,13 @@ func assertGraphsEqual(t *testing.T, g1, g2 *Graph) {
 	}
 
 	// Compare edges
-	if len(g1.Edges) != len(g2.Edges) {
-		t.Errorf("edge count: g1=%d, g2=%d", len(g1.Edges), len(g2.Edges))
+	if len(edges1) != len(edges2) {
+		t.Errorf("edge count: g1=%d, g2=%d", len(edges1), len(edges2))
 		return
 	}
-	for i := range g1.Edges {
-		e1 := g1.Edges[i]
-		e2 := g2.Edges[i]
+	for i := range edges1 {
+		e1 := edges1[i]
+		e2 := edges2[i]
 		if e1.From != e2.From || e1.To != e2.To {
 			t.Errorf("edge %d: g1=%s->%s, g2=%s->%s", i, e1.From, e1.To, e2.From, e2.To)
 		}

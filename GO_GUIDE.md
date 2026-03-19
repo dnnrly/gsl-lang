@@ -68,20 +68,35 @@ type Set struct {
 
 ```go
 // Iterate all nodes
-for nodeID, node := range graph.Nodes {
+for nodeID, node := range graph.GetNodes() {
 	fmt.Println(nodeID)
 	
-	// Get text attribute
-	if text, ok := node.Attributes["text"]; ok {
-		fmt.Println(text.(string))
+	// Get text attribute using typed accessor (recommended)
+	if text, ok := node.GetString("text"); ok {
+		fmt.Println(text)
 	}
 	
-	// Check parent
-	if parent, ok := node.Attributes["parent"]; ok {
-		fmt.Println(parent.(string))
+	// Check parent reference
+	if parent, ok := node.GetRef("parent"); ok {
+		fmt.Println(string(*parent))
+	}
+	
+	// Access other attribute types
+	if timeout, ok := node.GetInt("timeout"); ok {
+		fmt.Println(timeout)
+	}
+	
+	if critical, ok := node.GetBool("critical"); ok {
+		fmt.Println(critical)
 	}
 }
 ```
+
+**Typed Accessors** (recommended for new code):
+- `node.GetString(key)` — safe string access
+- `node.GetInt(key)` — safe int64 access
+- `node.GetBool(key)` — safe bool access
+- `node.GetRef(key)` — safe NodeRef access (for parent references)
 
 #### Traverse Edges
 
@@ -138,6 +153,53 @@ fmt.Println(canonical)
 graph2, _, _ := gsl.Parse(bytes.NewReader([]byte(canonical)))
 // graph and graph2 are semantically equivalent
 ```
+
+#### Clone (Deep Copy)
+
+```go
+// Create an independent copy of the graph
+original := gsl.NewGraph()
+original.AddNode("A", nil)
+original.AddNode("B", nil)
+original.AddEdge("A", "B", nil)
+
+cloned := original.Clone()
+
+// Mutations to the clone do NOT affect the original
+cloned.AddNode("C", nil)
+
+len(original.GetNodes()) // 2
+len(cloned.GetNodes())   // 3
+
+// All attributes and set memberships are preserved
+clonedNodeA := cloned.GetNode("A")
+// clonedNodeA.Attributes is a deep copy of original's attributes
+```
+
+**Use cases:**
+- Safe mutations for query transformations (e.g., remove nodes, add edges)
+- Experimental graph modifications without side effects
+- Creating multiple variations of a base graph
+- Testing graph operations in isolation
+
+#### Set Attributes
+
+```go
+// Set node attributes using typed setters (recommended)
+node := graph.GetNode("API")
+
+node.SetAttribute("timeout", int64(5000))
+node.SetAttribute("critical", true)
+node.SetAttribute("text", "API Server")
+
+// Alternative: direct map access (not recommended)
+node.Attributes["count"] = 42
+```
+
+**Typed Setters:**
+- `node.SetAttribute(key, value)` — set any attribute (validation ready)
+- Also available on `Edge` and `Set`
+- Returns error on nil receiver or empty key
 
 ## Algorithm Patterns
 

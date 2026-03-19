@@ -9,13 +9,13 @@ import (
 // TestFromWildcard tests "from *" - selects input graph
 func TestFromWildcard(t *testing.T) {
 	// Create input graph
-	inputGraph := &gsl.Graph{
+	inputGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  inputGraph,
@@ -41,21 +41,21 @@ func TestFromWildcard(t *testing.T) {
 
 // TestFromNamedGraph tests "from NAME" - selects named graph
 func TestFromNamedGraph(t *testing.T) {
-	namedGraph := &gsl.Graph{
+	namedGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
-	inputGraph := &gsl.Graph{
+	inputGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph: inputGraph,
@@ -84,7 +84,7 @@ func TestFromNamedGraph(t *testing.T) {
 // TestFromMissingNamedGraph tests error when named graph doesn't exist
 func TestFromMissingNamedGraph(t *testing.T) {
 	ctx := &QueryContext{
-		InputGraph:  &gsl.Graph{Nodes: map[string]*gsl.Node{}, Edges: []*gsl.Edge{}, Sets: map[string]*gsl.Set{}},
+		InputGraph:  newTestGraph(testGraphInput{Nodes: map[string]*gsl.Node{}, Edges: []*gsl.Edge{}, Sets: map[string]*gsl.Set{}}),
 		NamedGraphs: map[string]*gsl.Graph{},
 	}
 
@@ -147,9 +147,9 @@ func TestFromValidGraphNames(t *testing.T) {
 	for _, name := range validNames {
 		t.Run(name, func(t *testing.T) {
 			ctx := &QueryContext{
-				InputGraph: &gsl.Graph{Nodes: map[string]*gsl.Node{}, Edges: []*gsl.Edge{}, Sets: map[string]*gsl.Set{}},
+				InputGraph: newTestGraph(testGraphInput{Nodes: map[string]*gsl.Node{}, Edges: []*gsl.Edge{}, Sets: map[string]*gsl.Set{}}),
 				NamedGraphs: map[string]*gsl.Graph{
-					name: &gsl.Graph{Nodes: map[string]*gsl.Node{}, Edges: []*gsl.Edge{}, Sets: map[string]*gsl.Set{}},
+					name: newTestGraph(testGraphInput{Nodes: map[string]*gsl.Node{}, Edges: []*gsl.Edge{}, Sets: map[string]*gsl.Set{}}),
 				},
 			}
 
@@ -194,22 +194,22 @@ func TestFromInvalidGraphNames(t *testing.T) {
 
 // TestFromInPipeline tests "from" as part of a pipeline
 func TestFromInPipeline(t *testing.T) {
-	named := &gsl.Graph{
+	named := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
-		InputGraph: &gsl.Graph{
+		InputGraph: newTestGraph(testGraphInput{
 			Nodes: map[string]*gsl.Node{
 				"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			},
 			Edges: []*gsl.Edge{},
 			Sets:  map[string]*gsl.Set{},
-		},
+		}),
 		NamedGraphs: map[string]*gsl.Graph{
 			"NAMED": named,
 		},
@@ -227,31 +227,31 @@ func TestFromInPipeline(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 1 {
+	if len(gv.Graph.GetNodes()) != 1 {
 		t.Fatal("Pipeline should execute from and return correct graph")
 	}
-	if _, ok := gv.Graph.Nodes["C"]; !ok {
+	if _, ok := gv.Graph.GetNodes()["C"]; !ok {
 		t.Fatal("Pipeline should contain node C")
 	}
 }
 
 // TestFromExprDirectly tests FromExpr.Apply() directly
 func TestFromExprDirectly(t *testing.T) {
-	namedGraph := &gsl.Graph{
+	namedGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"X": {ID: "X", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
-	inputGraph := &gsl.Graph{
+	inputGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"Y": {ID: "Y", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph: inputGraph,

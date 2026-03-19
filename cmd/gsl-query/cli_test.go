@@ -247,14 +247,15 @@ B -> C [status="deprecated"]
 	result := string(output)
 
 	// Parse output to verify edges
-	graph, _, err := gsl.Parse(bytes.NewReader(output))
-	if err != nil {
-		t.Fatalf("failed to parse result: %v", err)
+	graph, parseErr := gsl.Parse(bytes.NewReader(output))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("failed to parse result: %v", parseErr)
 	}
 
 	// Should have 1 edge (A->C)
-	if len(graph.Edges) != 1 {
-		t.Errorf("expected 1 edge after removal, got %d", len(graph.Edges))
+	edges := graph.GetEdges()
+	if len(edges) != 1 {
+		t.Errorf("expected 1 edge after removal, got %d", len(edges))
 	}
 
 	// Verify A->C is active
@@ -306,10 +307,11 @@ API -> DB
 	output, _ := os.ReadFile(outputFile.Name())
 
 	// Parse and verify attributes
-	graph, _, _ := gsl.Parse(bytes.NewReader(output))
+	graph, _ := gsl.Parse(bytes.NewReader(output))
 
 	// Check that all platform team nodes have reviewed attribute
-	for _, node := range graph.Nodes {
+	nodes := graph.GetNodes()
+	for _, node := range nodes {
 		if team, ok := node.Attributes["team"]; ok && team == "platform" {
 			reviewed, ok := node.Attributes["reviewed"]
 			if !ok || reviewed != "true" {

@@ -37,15 +37,17 @@ func Execute(cfg *Config) error {
 	}
 
 	// Parse GSL
-	graph, warnings, err := gsl.Parse(bytes.NewReader(input))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to parse %s: %v\n", cfg.InputName, err)
-		return err
+	graph, parseErr := gsl.Parse(bytes.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		fmt.Fprintf(os.Stderr, "Error: failed to parse %s: %v\n", cfg.InputName, parseErr)
+		return parseErr
 	}
 
 	// Log warnings if any
-	for _, w := range warnings {
-		fmt.Fprintf(os.Stderr, "Warning [%s]: %v\n", cfg.InputName, w)
+	if parseErr != nil && parseErr.HasWarnings() {
+		for _, w := range parseErr.Warnings {
+			fmt.Fprintf(os.Stderr, "Warning [%s]: %v\n", cfg.InputName, w)
+		}
 	}
 
 	// Parse query

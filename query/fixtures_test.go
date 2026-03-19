@@ -41,9 +41,9 @@ func TestFixtures(t *testing.T) {
 			graphData, err := os.ReadFile(graphPath)
 			require.NoError(t, err, "failed to read graph.gsl")
 
-			graph, errs, err := gsl.Parse(bytes.NewReader(graphData))
-			require.NoError(t, err, "failed to parse graph.gsl")
-			require.Empty(t, errs, "parsing errors in graph.gsl")
+			graph, parseErr := gsl.Parse(bytes.NewReader(graphData))
+			require.False(t, parseErr != nil && parseErr.HasError(), "failed to parse graph.gsl: %v", parseErr)
+			require.False(t, parseErr != nil && parseErr.HasWarnings(), "parsing warnings in graph.gsl")
 
 			// Read the query
 			queryData, err := os.ReadFile(queryPath)
@@ -53,9 +53,9 @@ func TestFixtures(t *testing.T) {
 			resultData, err := os.ReadFile(resultPath)
 			require.NoError(t, err, "failed to read result.gsl")
 
-			expectedResult, errs, err := gsl.Parse(bytes.NewReader(resultData))
-			require.NoError(t, err, "failed to parse result.gsl")
-			require.Empty(t, errs, "parsing errors in result.gsl")
+			expectedResult, parseErr := gsl.Parse(bytes.NewReader(resultData))
+			require.False(t, parseErr != nil && parseErr.HasError(), "failed to parse result.gsl: %v", parseErr)
+			require.False(t, parseErr != nil && parseErr.HasWarnings(), "parsing warnings in result.gsl")
 
 			// Parse and execute the query
 			queryParser := NewQueryParser(string(queryData))

@@ -11,7 +11,7 @@ import (
 
 func TestIdentityQuery(t *testing.T) {
 	// Create a simple input graph
-	inputGraph := &gsl.Graph{
+	inputGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -20,7 +20,7 @@ func TestIdentityQuery(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	// Create context
 	ctx := &QueryContext{
@@ -55,13 +55,13 @@ func TestIdentityQuery(t *testing.T) {
 
 func TestEmptyQuery(t *testing.T) {
 	// Empty query should pass through input graph unchanged
-	inputGraph := &gsl.Graph{
+	inputGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"X": {ID: "X", Attributes: map[string]interface{}{"color": "red"}, Sets: map[string]struct{}{}},
 		},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  inputGraph,
@@ -80,7 +80,7 @@ func TestEmptyQuery(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if gv.Graph.Nodes["X"].Attributes["color"] != "red" {
+	if gv.Graph.GetNodes()["X"].Attributes["color"] != "red" {
 		t.Fatal("Attributes not preserved")
 	}
 }
@@ -127,11 +127,11 @@ func TestPipelineParsingWithParentheses(t *testing.T) {
 }
 
 func TestQueryContextInitialization(t *testing.T) {
-	inputGraph := &gsl.Graph{
+	inputGraph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{},
 		Edges: []*gsl.Edge{},
 		Sets:  map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  inputGraph,

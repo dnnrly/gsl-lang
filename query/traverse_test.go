@@ -9,7 +9,7 @@ import (
 // TestTraverseOutDirection tests outgoing edge traversal
 func TestTraverseOutDirection(t *testing.T) {
 	// Graph: A → B → C → D
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -22,7 +22,7 @@ func TestTraverseOutDirection(t *testing.T) {
 			{From: "C", To: "D", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -43,23 +43,23 @@ func TestTraverseOutDirection(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include A, B, C (2 hops out from A)
-	if len(gv.Graph.Nodes) != 3 {
-		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 3 {
+		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if !contains(gv.Graph.Nodes, "A", "B", "C") {
+	if !contains(gv.Graph.GetNodes(), "A", "B", "C") {
 		t.Fatal("Should contain A, B, C")
 	}
 
 	// Should have edges A→B, B→C
-	if len(gv.Graph.Edges) != 2 {
-		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 2 {
+		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestTraverseInDirection tests incoming edge traversal
 func TestTraverseInDirection(t *testing.T) {
 	// Graph: A → B → C
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -70,7 +70,7 @@ func TestTraverseInDirection(t *testing.T) {
 			{From: "B", To: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -91,23 +91,23 @@ func TestTraverseInDirection(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include C, B, A (2 hops in from C)
-	if len(gv.Graph.Nodes) != 3 {
-		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 3 {
+		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if !contains(gv.Graph.Nodes, "A", "B", "C") {
+	if !contains(gv.Graph.GetNodes(), "A", "B", "C") {
 		t.Fatal("Should contain A, B, C")
 	}
 
 	// Should have edges A→B, B→C
-	if len(gv.Graph.Edges) != 2 {
-		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 2 {
+		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestTraverseBothDirection tests bidirectional traversal
 func TestTraverseBothDirection(t *testing.T) {
 	// Graph: A → B ← C (B is center)
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
@@ -118,7 +118,7 @@ func TestTraverseBothDirection(t *testing.T) {
 			{From: "C", To: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -139,23 +139,23 @@ func TestTraverseBothDirection(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include A, B, C (both directions)
-	if len(gv.Graph.Nodes) != 3 {
-		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 3 {
+		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if !contains(gv.Graph.Nodes, "A", "B", "C") {
+	if !contains(gv.Graph.GetNodes(), "A", "B", "C") {
 		t.Fatal("Should contain A, B, C")
 	}
 
 	// Should have both edges
-	if len(gv.Graph.Edges) != 2 {
-		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 2 {
+		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestTraverseAll traverses unlimited depth
 func TestTraverseAll(t *testing.T) {
 	// Graph: A → B → C → D → E
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -170,7 +170,7 @@ func TestTraverseAll(t *testing.T) {
 			{From: "D", To: "E", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -191,23 +191,23 @@ func TestTraverseAll(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include all nodes A-E
-	if len(gv.Graph.Nodes) != 5 {
-		t.Fatalf("Expected 5 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 5 {
+		t.Fatalf("Expected 5 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if !contains(gv.Graph.Nodes, "A", "B", "C", "D", "E") {
+	if !contains(gv.Graph.GetNodes(), "A", "B", "C", "D", "E") {
 		t.Fatal("Should contain all nodes")
 	}
 
 	// Should have all edges
-	if len(gv.Graph.Edges) != 4 {
-		t.Fatalf("Expected 4 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 4 {
+		t.Fatalf("Expected 4 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestTraverseCycles handles cyclic graphs correctly
 func TestTraverseCycles(t *testing.T) {
 	// Graph: A → B → C → A (cycle)
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -219,7 +219,7 @@ func TestTraverseCycles(t *testing.T) {
 			{From: "C", To: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -240,13 +240,13 @@ func TestTraverseCycles(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include all nodes (visited set prevents revisiting)
-	if len(gv.Graph.Nodes) != 3 {
-		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 3 {
+		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
 
 	// Should have all edges
-	if len(gv.Graph.Edges) != 3 {
-		t.Fatalf("Expected 3 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 3 {
+		t.Fatalf("Expected 3 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
@@ -284,7 +284,7 @@ func TestTraverseInvalidDirection(t *testing.T) {
 func TestTraverseWithPredicate(t *testing.T) {
 	// Graph: All marked A (critical), B, C (normal)
 	// A → B → C
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {
 				ID:         "A",
@@ -307,7 +307,7 @@ func TestTraverseWithPredicate(t *testing.T) {
 			{From: "B", To: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -328,20 +328,20 @@ func TestTraverseWithPredicate(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include A, B, C (starting from CRITICAL A, traverse 2 hops)
-	if len(gv.Graph.Nodes) != 3 {
-		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 3 {
+		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
 
 	// Should have both edges
-	if len(gv.Graph.Edges) != 2 {
-		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 2 {
+		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestTraversePreservesEdgeDuplicates tests that duplicate edges are included
 func TestTraversePreservesEdgeDuplicates(t *testing.T) {
 	// Graph with duplicate edge: A → B → C, and a duplicate A→B
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -353,7 +353,7 @@ func TestTraversePreservesEdgeDuplicates(t *testing.T) {
 			{From: "B", To: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -374,8 +374,8 @@ func TestTraversePreservesEdgeDuplicates(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should preserve duplicate edges
-	if len(gv.Graph.Edges) != 3 {
-		t.Fatalf("Expected 3 edges (including duplicate), got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 3 {
+		t.Fatalf("Expected 3 edges (including duplicate), got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
@@ -383,7 +383,7 @@ func TestTraversePreservesEdgeDuplicates(t *testing.T) {
 func TestTraverseNoEdgesOutOfSubgraph(t *testing.T) {
 	// Graph: A → B → C, D (isolated)
 	// Traverse from A but C has edge to D (outside traversal result)
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -396,7 +396,7 @@ func TestTraverseNoEdgesOutOfSubgraph(t *testing.T) {
 			{From: "C", To: "D", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -417,23 +417,23 @@ func TestTraverseNoEdgesOutOfSubgraph(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should have A, B, C (not D)
-	if len(gv.Graph.Nodes) != 3 {
-		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 3 {
+		t.Fatalf("Expected 3 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
-	if gv.Graph.Nodes["D"] != nil {
+	if gv.Graph.GetNodes()["D"] != nil {
 		t.Fatal("Should not include D")
 	}
 
 	// Should only include edges between A, B, C (not C→D)
-	if len(gv.Graph.Edges) != 2 {
-		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 2 {
+		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestTraverseSelfLoop tests traversal with self-loops
 func TestTraverseSelfLoop(t *testing.T) {
 	// Graph: A self-loop, A → B
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -443,7 +443,7 @@ func TestTraverseSelfLoop(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -464,19 +464,19 @@ func TestTraverseSelfLoop(t *testing.T) {
 
 	gv := result.(GraphValue)
 	// Should include A, B
-	if len(gv.Graph.Nodes) != 2 {
-		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.Nodes))
+	if len(gv.Graph.GetNodes()) != 2 {
+		t.Fatalf("Expected 2 nodes, got %d", len(gv.Graph.GetNodes()))
 	}
 
 	// Should include self-loop and A→B
-	if len(gv.Graph.Edges) != 2 {
-		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.Edges))
+	if len(gv.Graph.GetEdges()) != 2 {
+		t.Fatalf("Expected 2 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
 
 // TestTraverseWithoutTraversal tests subgraph without traversal still works
 func TestTraverseWithoutTraversal(t *testing.T) {
-	graph := &gsl.Graph{
+	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
@@ -485,7 +485,7 @@ func TestTraverseWithoutTraversal(t *testing.T) {
 			{From: "A", To: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
 		},
 		Sets: map[string]*gsl.Set{},
-	}
+	})
 
 	ctx := &QueryContext{
 		InputGraph:  graph,
@@ -505,7 +505,7 @@ func TestTraverseWithoutTraversal(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if len(gv.Graph.Nodes) != 2 || len(gv.Graph.Edges) != 1 {
+	if len(gv.Graph.GetNodes()) != 2 || len(gv.Graph.GetEdges()) != 1 {
 		t.Fatal("Subgraph without traversal should return base subgraph")
 	}
 }
