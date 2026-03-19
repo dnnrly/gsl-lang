@@ -46,9 +46,9 @@ API -> DB [label="query"]
 API -> Cache [label="cache"]
 `
 
-	graph, _, err := gsl.Parse(bytes.NewReader([]byte(gslInput)))
-	if err != nil {
-		t.Fatalf("failed to parse GSL: %v", err)
+	graph, parseErr := gsl.Parse(bytes.NewReader([]byte(gslInput)))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("failed to parse GSL: %v", parseErr)
 	}
 
 	factory, err := formats.GetFactory("mermaid")
@@ -87,9 +87,9 @@ Start -> Process [label="execute"]
 Process -> End
 `
 
-	graph, _, err := gsl.Parse(bytes.NewReader([]byte(gslInput)))
-	if err != nil {
-		t.Fatalf("failed to parse GSL: %v", err)
+	graph, parseErr := gsl.Parse(bytes.NewReader([]byte(gslInput)))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("failed to parse GSL: %v", parseErr)
 	}
 
 	factory, err := formats.GetFactory("mermaid")
@@ -125,9 +125,9 @@ API -> DB [label="query"]
 API -> Cache [label="cache"]
 `
 
-	graph, _, err := gsl.Parse(bytes.NewReader([]byte(gslInput)))
-	if err != nil {
-		t.Fatalf("failed to parse GSL: %v", err)
+	graph, parseErr := gsl.Parse(bytes.NewReader([]byte(gslInput)))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("failed to parse GSL: %v", parseErr)
 	}
 
 	factory, err := formats.GetFactory("plantuml")
@@ -171,9 +171,9 @@ System -> Auth
 System -> DB
 `
 
-	graph, _, err := gsl.Parse(bytes.NewReader([]byte(gslInput)))
-	if err != nil {
-		t.Fatalf("failed to parse GSL: %v", err)
+	graph, parseErr := gsl.Parse(bytes.NewReader([]byte(gslInput)))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("failed to parse GSL: %v", parseErr)
 	}
 
 	factory, err := formats.GetFactory("plantuml")
@@ -208,9 +208,9 @@ System -> Auth
 System -> DB
 `
 
-	graph, _, err := gsl.Parse(bytes.NewReader([]byte(gslInput)))
-	if err != nil {
-		t.Fatalf("failed to parse GSL: %v", err)
+	graph, parseErr := gsl.Parse(bytes.NewReader([]byte(gslInput)))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("failed to parse GSL: %v", parseErr)
 	}
 
 	factory, err := formats.GetFactory("mermaid")
@@ -390,14 +390,16 @@ func TestExampleFilesWithMermaid(t *testing.T) {
 				t.Fatalf("failed to read example file %s: %v", filePath, err)
 			}
 
-			graph, warnings, err := gsl.Parse(bytes.NewReader(input))
-			if err != nil {
-				t.Fatalf("failed to parse GSL from %s: %v", filePath, err)
+			graph, parseErr := gsl.Parse(bytes.NewReader(input))
+			if parseErr != nil && parseErr.HasError() {
+				t.Fatalf("failed to parse GSL from %s: %v", filePath, parseErr)
 			}
 
 			// Log warnings if any
-			for _, w := range warnings {
-				t.Logf("Warning from %s: %v", filePath, w)
+			if parseErr != nil && parseErr.HasWarnings() {
+				for _, w := range parseErr.Warnings {
+					t.Logf("Warning from %s: %v", filePath, w)
+				}
 			}
 
 			// Convert to both diagram types
@@ -442,14 +444,16 @@ func TestExampleFilesWithPlantUML(t *testing.T) {
 				t.Fatalf("failed to read example file %s: %v", filePath, err)
 			}
 
-			graph, warnings, err := gsl.Parse(bytes.NewReader(input))
-			if err != nil {
-				t.Fatalf("failed to parse GSL from %s: %v", filePath, err)
+			graph, parseErr := gsl.Parse(bytes.NewReader(input))
+			if parseErr != nil && parseErr.HasError() {
+				t.Fatalf("failed to parse GSL from %s: %v", filePath, parseErr)
 			}
 
 			// Log warnings if any
-			for _, w := range warnings {
-				t.Logf("Warning from %s: %v", filePath, w)
+			if parseErr != nil && parseErr.HasWarnings() {
+				for _, w := range parseErr.Warnings {
+					t.Logf("Warning from %s: %v", filePath, w)
+				}
 			}
 
 			conv := factory("component")

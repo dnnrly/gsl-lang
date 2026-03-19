@@ -6,12 +6,12 @@ import (
 )
 
 func TestParseSimpleInput(t *testing.T) {
-	g, warns, err := Parse(strings.NewReader("node A"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	g, parseErr := Parse(strings.NewReader("node A"))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("unexpected error: %v", parseErr)
 	}
-	if len(warns) != 0 {
-		t.Errorf("unexpected warnings: %v", warns)
+	if parseErr != nil && parseErr.HasWarnings() {
+		t.Errorf("unexpected warnings: %v", parseErr.Warnings)
 	}
 	nodes := g.GetNodes()
 	if len(nodes) != 1 {
@@ -28,9 +28,9 @@ node A: "Start" @flow
 node B [flag]
 A->B [weight=1.2] @flow`
 
-	g, _, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	g, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("unexpected error: %v", parseErr)
 	}
 	nodes := g.GetNodes()
 	edges := g.GetEdges()
@@ -98,14 +98,14 @@ func TestRoundTripEdge(t *testing.T) {
 
 func TestRoundTripGroupedEdge(t *testing.T) {
 	input := "A,B->C"
-	g1, _, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("first parse failed: %v", err)
+	g1, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("first parse failed: %v", parseErr)
 	}
 	canonical := Serialize(g1)
-	g2, _, err := Parse(strings.NewReader(canonical))
-	if err != nil {
-		t.Fatalf("second parse failed: %v", err)
+	g2, parseErr := Parse(strings.NewReader(canonical))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("second parse failed: %v", parseErr)
 	}
 	// Grouped edge expands to 2 edges
 	edges1 := g1.GetEdges()
@@ -117,32 +117,32 @@ func TestRoundTripGroupedEdge(t *testing.T) {
 
 func TestRoundTripBlock(t *testing.T) {
 	input := "node C { node D }"
-	g1, _, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("first parse failed: %v", err)
+	g1, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("first parse failed: %v", parseErr)
 	}
 	canonical := Serialize(g1)
-	g2, _, err := Parse(strings.NewReader(canonical))
-	if err != nil {
-		t.Fatalf("second parse failed: %v", err)
+	g2, parseErr := Parse(strings.NewReader(canonical))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("second parse failed: %v", parseErr)
 	}
 	assertGraphsEqual(t, g1, g2)
 }
 
 func TestRoundTripTextShorthand(t *testing.T) {
 	input := `node A: "Hello"`
-	g1, _, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("first parse failed: %v", err)
+	g1, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("first parse failed: %v", parseErr)
 	}
 	canonical := Serialize(g1)
 	// Should use [text="Hello"] not shorthand
 	if strings.Contains(canonical, `:`) {
 		t.Errorf("canonical should not use text shorthand, got %q", canonical)
 	}
-	g2, _, err := Parse(strings.NewReader(canonical))
-	if err != nil {
-		t.Fatalf("second parse failed: %v", err)
+	g2, parseErr := Parse(strings.NewReader(canonical))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("second parse failed: %v", parseErr)
 	}
 	assertGraphsEqual(t, g1, g2)
 }
@@ -157,9 +157,9 @@ A->B [weight=1.2] @flow`
 
 func TestParseWithWarnings(t *testing.T) {
 	input := "node A @undeclared"
-	g, warns, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	g, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("unexpected error: %v", parseErr)
 	}
 	if g == nil {
 		t.Fatal("expected non-nil graph")
@@ -169,10 +169,12 @@ func TestParseWithWarnings(t *testing.T) {
 		t.Error("expected implicit set to exist")
 	}
 	found := false
-	for _, w := range warns {
-		if strings.Contains(w.Error(), "implicit set") {
-			found = true
-			break
+	if parseErr != nil {
+		for _, w := range parseErr.Warnings {
+			if strings.Contains(w.Error(), "implicit set") {
+				found = true
+				break
+			}
 		}
 	}
 	if !found {
@@ -182,8 +184,8 @@ func TestParseWithWarnings(t *testing.T) {
 
 func TestParseWithErrors(t *testing.T) {
 	input := "node [invalid]"
-	_, _, err := Parse(strings.NewReader(input))
-	if err == nil {
+	_, parseErr := Parse(strings.NewReader(input))
+	if parseErr == nil || !parseErr.HasError() {
 		t.Fatal("expected error for invalid input")
 	}
 }
@@ -191,14 +193,14 @@ func TestParseWithErrors(t *testing.T) {
 // assertRoundTrip parses input, serializes, re-parses, and checks equality.
 func assertRoundTrip(t *testing.T, input string) {
 	t.Helper()
-	g1, _, err := Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("first parse failed: %v", err)
+	g1, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("first parse failed: %v", parseErr)
 	}
 	canonical := Serialize(g1)
-	g2, _, err := Parse(strings.NewReader(canonical))
-	if err != nil {
-		t.Fatalf("second parse failed (canonical=%q): %v", canonical, err)
+	g2, parseErr := Parse(strings.NewReader(canonical))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("second parse failed (canonical=%q): %v", canonical, parseErr)
 	}
 	assertGraphsEqual(t, g1, g2)
 }

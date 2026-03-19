@@ -104,17 +104,17 @@ func extractCodeBlocks(content string) []codeBlock {
 
 // testValidGSL ensures the code parses successfully
 func testValidGSL(code string) error {
-	_, _, err := Parse(io.NopCloser(strings.NewReader(code)))
-	if err != nil {
-		return fmt.Errorf("parse failed: %w", err)
+	_, parseErr := Parse(io.NopCloser(strings.NewReader(code)))
+	if parseErr != nil && parseErr.HasError() {
+		return fmt.Errorf("parse failed: %w", parseErr)
 	}
 	return nil
 }
 
 // testInvalidGSL ensures the code fails to parse
 func testInvalidGSL(code string) error {
-	_, _, err := Parse(io.NopCloser(strings.NewReader(code)))
-	if err == nil {
+	_, parseErr := Parse(io.NopCloser(strings.NewReader(code)))
+	if parseErr == nil || !parseErr.HasError() {
 		return fmt.Errorf("expected parse to fail but it succeeded")
 	}
 	return nil

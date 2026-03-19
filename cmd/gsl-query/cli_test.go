@@ -247,9 +247,9 @@ B -> C [status="deprecated"]
 	result := string(output)
 
 	// Parse output to verify edges
-	graph, _, err := gsl.Parse(bytes.NewReader(output))
-	if err != nil {
-		t.Fatalf("failed to parse result: %v", err)
+	graph, parseErr := gsl.Parse(bytes.NewReader(output))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("failed to parse result: %v", parseErr)
 	}
 
 	// Should have 1 edge (A->C)
@@ -307,7 +307,7 @@ API -> DB
 	output, _ := os.ReadFile(outputFile.Name())
 
 	// Parse and verify attributes
-	graph, _, _ := gsl.Parse(bytes.NewReader(output))
+	graph, _ := gsl.Parse(bytes.NewReader(output))
 
 	// Check that all platform team nodes have reviewed attribute
 	nodes := graph.GetNodes()

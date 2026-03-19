@@ -13,7 +13,7 @@ import (
 // Example_parseSimpleWorkflow demonstrates parsing a basic workflow graph.
 func Example_parseSimpleWorkflow() {
 	content, _ := os.ReadFile("simple_workflow.gsl")
-	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
 	edges := graph.GetEdges()
@@ -48,7 +48,7 @@ func Example_parseSimpleWorkflow() {
 // Example_parseHierarchicalSystem demonstrates parsing a graph with parent-child relationships.
 func Example_parseHierarchicalSystem() {
 	content, _ := os.ReadFile("hierarchical_system.gsl")
-	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
 	sets := graph.GetSets()
@@ -78,7 +78,7 @@ func Example_parseHierarchicalSystem() {
 // Example_microservicesArchitecture demonstrates analyzing a microservices graph.
 func Example_microservicesArchitecture() {
 	content, _ := os.ReadFile("microservices.gsl")
-	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
 	fmt.Printf("Microservices: %d services\n", len(nodes))
@@ -111,7 +111,7 @@ func Example_microservicesArchitecture() {
 // Example_queryNodeDependencies demonstrates querying outbound edges from a node.
 func Example_queryNodeDependencies() {
 	content, _ := os.ReadFile("microservices.gsl")
-	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
 	edges := graph.GetEdges()
@@ -143,7 +143,7 @@ func Example_queryNodeDependencies() {
 // Example_parseDataPipeline demonstrates parsing an ETL pipeline graph.
 func Example_parseDataPipeline() {
 	content, _ := os.ReadFile("data_pipeline.gsl")
-	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
 	edges := graph.GetEdges()
@@ -186,11 +186,11 @@ func Example_serializeGraph() {
 node B: "End"
 A->B`
 
-	graph, _, _ := gsl.Parse(bytes.NewReader([]byte(input)))
+	graph, _ := gsl.Parse(bytes.NewReader([]byte(input)))
 	serialized := gsl.Serialize(graph)
 
 	// Re-parse the serialized form
-	graph2, _, _ := gsl.Parse(bytes.NewReader([]byte(serialized)))
+	graph2, _ := gsl.Parse(bytes.NewReader([]byte(serialized)))
 
 	fmt.Printf("Round-trip: %d nodes → %d nodes\n", len(graph.GetNodes()), len(graph2.GetNodes()))
 	fmt.Println("Serialized:")
@@ -208,7 +208,7 @@ A->B`
 // Example_graphStatistics demonstrates basic graph statistics.
 func Example_graphStatistics() {
 	content, _ := os.ReadFile("microservices.gsl")
-	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
 	// Count attributes
@@ -242,9 +242,13 @@ func Example_graphStatistics() {
 // Example_implicitSets demonstrates parsing with implicit set creation warnings.
 func Example_implicitSets() {
 	content, _ := os.ReadFile("implicit_sets.gsl")
-	graph, warnings, _ := gsl.Parse(bytes.NewReader(content))
+	graph, parseErr := gsl.Parse(bytes.NewReader(content))
 
 	fmt.Printf("Graph: %d sets created\n", len(graph.GetSets()))
+	warnings := []error{}
+	if parseErr != nil && parseErr.HasWarnings() {
+		warnings = parseErr.Warnings
+	}
 	fmt.Printf("Warnings: %d\n", len(warnings))
 
 	// Print warnings
@@ -262,9 +266,13 @@ func Example_implicitSets() {
 // Example_nameCollision demonstrates parsing with name collision warnings.
 func Example_nameCollision() {
 	content, _ := os.ReadFile("name_collision.gsl")
-	graph, warnings, _ := gsl.Parse(bytes.NewReader(content))
+	graph, parseErr := gsl.Parse(bytes.NewReader(content))
 
 	fmt.Printf("Graph: %d nodes, %d sets\n", len(graph.GetNodes()), len(graph.GetSets()))
+	warnings := []error{}
+	if parseErr != nil && parseErr.HasWarnings() {
+		warnings = parseErr.Warnings
+	}
 	fmt.Printf("Warnings: %d\n", len(warnings))
 
 	// Print warnings
@@ -281,10 +289,14 @@ func Example_nameCollision() {
 // Example_parentOverride demonstrates parsing with parent override warnings.
 func Example_parentOverride() {
 	content, _ := os.ReadFile("parent_override.gsl")
-	graph, warnings, _ := gsl.Parse(bytes.NewReader(content))
+	graph, parseErr := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
 	fmt.Printf("Graph: %d nodes\n", len(nodes))
+	warnings := []error{}
+	if parseErr != nil && parseErr.HasWarnings() {
+		warnings = parseErr.Warnings
+	}
 	fmt.Printf("Warnings: %d\n", len(warnings))
 
 	// Print warnings
@@ -318,7 +330,7 @@ func Example_parentOverride() {
 // Example_topologicalSort demonstrates topological sorting on a task dependency graph.
 func Example_topologicalSort() {
 	content, _ := os.ReadFile("task_scheduling.gsl")
-	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
 	edges := graph.GetEdges()
@@ -391,7 +403,7 @@ func Example_topologicalSort() {
 // Example_cycleDetection demonstrates detecting cycles in a dependency graph using DFS.
 func Example_cycleDetection() {
 	content, _ := os.ReadFile("circular_dependencies.gsl")
-	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
 	edges := graph.GetEdges()
@@ -472,7 +484,7 @@ func Example_cycleDetection() {
 // Example_pathFinding demonstrates finding all paths between two nodes using DFS.
 func Example_pathFinding() {
 	content, _ := os.ReadFile("social_network.gsl")
-	graph, _, _ := gsl.Parse(bytes.NewReader(content))
+	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
 	edges := graph.GetEdges()
