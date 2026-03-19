@@ -3,9 +3,75 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
+
+// extractFrontmatter extracts YAML frontmatter from markdown
+// Returns name, description, and remaining content
+func extractFrontmatter(md string) (name, description, content string) {
+	if !strings.HasPrefix(md, "---") {
+		return "", "", md
+	}
+
+	// Find closing ---
+	rest := md[3:]
+	endIdx := strings.Index(rest, "---")
+	if endIdx == -1 {
+		return "", "", md
+	}
+
+	frontmatter := rest[:endIdx]
+	content = strings.TrimPrefix(rest[endIdx+3:], "\n")
+
+	// Extract name and description from YAML
+	for _, line := range strings.Split(frontmatter, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "name:") {
+			name = strings.Trim(strings.TrimPrefix(line, "name:"), " \"'")
+		} else if strings.HasPrefix(line, "description:") {
+			description = strings.Trim(strings.TrimPrefix(line, "description:"), " \"'")
+		}
+	}
+
+	return name, description, content
+}
+
+// loadGuide loads a guide file and extracts its metadata
+func loadGuide(filename string) (name, description, content string, err error) {
+	// Try to find the file
+	execPath, _ := os.Executable()
+	cwd, _ := os.Getwd()
+
+	searchPaths := []string{
+		// Try relative to executable (for installed binaries)
+		filepath.Join(filepath.Dir(execPath), "..", "..", filename),
+		filepath.Join(filepath.Dir(execPath), filename),
+		// Try current working directory
+		filepath.Join(cwd, filename),
+		// Try repo structure from cwd
+		filename,
+	}
+
+	var data []byte
+	var lastErr error
+	for _, path := range searchPaths {
+		data, err = os.ReadFile(path)
+		if err == nil {
+			break
+		}
+		lastErr = err
+	}
+
+	if err != nil {
+		return "", "", "", fmt.Errorf("could not find %s: %w", filename, lastErr)
+	}
+
+	name, description, content = extractFrontmatter(string(data))
+	return name, description, content, nil
+}
 
 func main() {
 	var inputFile, outputFile, queryFile string
@@ -14,7 +80,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "gsl-query [query]",
 		Short: "Query GSL graphs",
-		Long:  "Execute queries against GSL (Graph Specification Language) graphs and output filtered/transformed results",
+		Long:  "Execute queries against GSL (Graph Specification Language) graphs and output filtered/transformed results.\n\nFor AI/LLM guidance, use: gsl-query help ai",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Determine query source
@@ -60,6 +126,53 @@ func main() {
 		},
 	}
 
+	// Load guides
+	_, gslDesc, gslContent, gslErr := loadGuide("LLM_GUIDE.md")
+	_, queryDesc, queryContent, queryErr := loadGuide("query/QUERY_AI_GUIDE.md")
+
+	// help ai command - lists available guides
+	helpAICmd := &cobra.Command{
+		Use:   "ai",
+		Short: "Show AI/LLM guides",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("Available AI/LLM guides:")
+			fmt.Println()
+			if gslErr == nil {
+				fmt.Printf("  gsl    - %s\n", gslDesc)
+			}
+			if queryErr == nil {
+				fmt.Printf("  query  - %s\n", queryDesc)
+			}
+			fmt.Println()
+			fmt.Println("Run 'gsl-query help ai <guide>' to view a guide")
+		},
+	}
+
+	// help ai gsl command - prints LLM_GUIDE.md
+	if gslErr == nil {
+		helpAIGSLCmd := &cobra.Command{
+			Use:   "gsl",
+			Short: gslDesc,
+			Run: func(cmd *cobra.Command, args []string) {
+				fmt.Println(gslContent)
+			},
+		}
+		helpAICmd.AddCommand(helpAIGSLCmd)
+	}
+
+	// help ai query command - prints QUERY_AI_GUIDE.md
+	if queryErr == nil {
+		helpAIQueryCmd := &cobra.Command{
+			Use:   "query",
+			Short: queryDesc,
+			Run: func(cmd *cobra.Command, args []string) {
+				fmt.Println(queryContent)
+			},
+		}
+		helpAICmd.AddCommand(helpAIQueryCmd)
+	}
+
+	helpCmd.AddCommand(helpAICmd)
 	rootCmd.AddCommand(helpCmd)
 
 	if err := rootCmd.Execute(); err != nil {

@@ -43,11 +43,11 @@ fuzz: ## run fuzz tests
 	go test -tags fuzz -fuzztime=2m
 
 .PHONY: test-integration
-test-integration: ## run integration tests (skip if tools missing)
+test-integration: build ## run integration tests (skip if tools missing)
 	go test -tags integration -v ./cmd/gsl-diagram/... ./cmd/gsl-query/...
 
 .PHONY: test-integration-strict
-test-integration-strict: ## run integration tests (fail if tools missing)
+test-integration-strict: build ## run integration tests (fail if tools missing)
 	INTEGRATION_STRICT=1 go test -tags integration -v ./cmd/gsl-diagram/... ./cmd/gsl-query/...
 
 .PHONY: build
