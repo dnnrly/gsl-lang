@@ -83,12 +83,10 @@ func (b *builder) processNodeDecl(nd *nodeDecl, enclosingParent *string) {
 		}
 	}
 
-	// Cache Parent field
-	if p, ok := node.Attributes["parent"]; ok {
-		if ref, isRef := p.(NodeRef); isRef {
-			s := string(ref)
-			node.Parent = &s
-		}
+	// Cache Parent field using typed accessor
+	if ref, ok := node.GetRef("parent"); ok {
+		s := string(*ref)
+		node.Parent = &s
 	}
 
 	// Memberships

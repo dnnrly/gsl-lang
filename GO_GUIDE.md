@@ -68,20 +68,35 @@ type Set struct {
 
 ```go
 // Iterate all nodes
-for nodeID, node := range graph.Nodes {
+for nodeID, node := range graph.GetNodes() {
 	fmt.Println(nodeID)
 	
-	// Get text attribute
-	if text, ok := node.Attributes["text"]; ok {
-		fmt.Println(text.(string))
+	// Get text attribute using typed accessor (recommended)
+	if text, ok := node.GetString("text"); ok {
+		fmt.Println(text)
 	}
 	
-	// Check parent
-	if parent, ok := node.Attributes["parent"]; ok {
-		fmt.Println(parent.(string))
+	// Check parent reference
+	if parent, ok := node.GetRef("parent"); ok {
+		fmt.Println(string(*parent))
+	}
+	
+	// Access other attribute types
+	if timeout, ok := node.GetInt("timeout"); ok {
+		fmt.Println(timeout)
+	}
+	
+	if critical, ok := node.GetBool("critical"); ok {
+		fmt.Println(critical)
 	}
 }
 ```
+
+**Typed Accessors** (recommended for new code):
+- `node.GetString(key)` — safe string access
+- `node.GetInt(key)` — safe int64 access
+- `node.GetBool(key)` — safe bool access
+- `node.GetRef(key)` — safe NodeRef access (for parent references)
 
 #### Traverse Edges
 
@@ -166,6 +181,25 @@ clonedNodeA := cloned.GetNode("A")
 - Experimental graph modifications without side effects
 - Creating multiple variations of a base graph
 - Testing graph operations in isolation
+
+#### Set Attributes
+
+```go
+// Set node attributes using typed setters (recommended)
+node := graph.GetNode("API")
+
+node.SetAttribute("timeout", int64(5000))
+node.SetAttribute("critical", true)
+node.SetAttribute("text", "API Server")
+
+// Alternative: direct map access (not recommended)
+node.Attributes["count"] = 42
+```
+
+**Typed Setters:**
+- `node.SetAttribute(key, value)` — set any attribute (validation ready)
+- Also available on `Edge` and `Set`
+- Returns error on nil receiver or empty key
 
 ## Algorithm Patterns
 
