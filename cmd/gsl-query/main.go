@@ -175,6 +175,50 @@ func main() {
 	helpCmd.AddCommand(helpAICmd)
 	rootCmd.AddCommand(helpCmd)
 
+	// ai command - synonym for help ai
+	aiCmd := &cobra.Command{
+		Use:   "ai",
+		Short: "Show AI/LLM guides",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("Available AI/LLM guides:")
+			fmt.Println()
+			if gslErr == nil {
+				fmt.Printf("  gsl    - %s\n", gslDesc)
+			}
+			if queryErr == nil {
+				fmt.Printf("  query  - %s\n", queryDesc)
+			}
+			fmt.Println()
+			fmt.Println("Run 'gsl-query ai <guide>' to view a guide")
+		},
+	}
+
+	// ai gsl command
+	if gslErr == nil {
+		aiGSLCmd := &cobra.Command{
+			Use:   "gsl",
+			Short: gslDesc,
+			Run: func(cmd *cobra.Command, args []string) {
+				fmt.Println(gslContent)
+			},
+		}
+		aiCmd.AddCommand(aiGSLCmd)
+	}
+
+	// ai query command
+	if queryErr == nil {
+		aiQueryCmd := &cobra.Command{
+			Use:   "query",
+			Short: queryDesc,
+			Run: func(cmd *cobra.Command, args []string) {
+				fmt.Println(queryContent)
+			},
+		}
+		aiCmd.AddCommand(aiQueryCmd)
+	}
+
+	rootCmd.AddCommand(aiCmd)
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
