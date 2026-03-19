@@ -23,12 +23,6 @@ builds:
       - -X main.Commit={{.Commit}}
       - -X main.BuildDate={{.CommitDate}}
 
-archives:
-  - format: tar.gz
-    os: [linux, darwin]
-  - format: zip
-    os: [windows]
-
 checksum:
   name_template: 'checksums.txt'
   algorithm: sha256
