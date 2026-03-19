@@ -92,18 +92,18 @@ DB -> Cache
 	}
 
 	// Parse output to verify it's valid GSL
-	result, _, err := gsl.Parse(bytes.NewReader(content))
-	if err != nil {
-		t.Fatalf("failed to parse query result as GSL: %v", err)
+	result, pErr := gsl.Parse(bytes.NewReader(content))
+	if pErr != nil {
+		t.Fatalf("failed to parse query result as GSL: %v", pErr)
 	}
 
 	// Should have at least API and DB nodes
-	if len(result.Nodes) < 2 {
-		t.Errorf("expected at least 2 nodes, got %d", len(result.Nodes))
+	if len(result.GetNodes()) < 2 {
+		t.Errorf("expected at least 2 nodes, got %d", len(result.GetNodes()))
 	}
 
 	// Should have edges between nodes
-	if len(result.Edges) == 0 {
+	if len(result.GetEdges()) == 0 {
 		t.Errorf("expected edges in result, got 0")
 	}
 }
@@ -141,15 +141,15 @@ PaymentSvc -> LegacySvc
 
 	// Verify output
 	content, _ := os.ReadFile(outputFile.Name())
-	result, _, _ := gsl.Parse(bytes.NewReader(content))
+	result, _ := gsl.Parse(bytes.NewReader(content))
 
 	// Should have PaymentSvc
-	if len(result.Nodes) == 0 {
+	if len(result.GetNodes()) == 0 {
 		t.Errorf("expected nodes in result, got 0")
 	}
 
 	foundPaymentSvc := false
-	for _, node := range result.Nodes {
+	for _, node := range result.GetNodes() {
 		if node.ID == "PaymentSvc" {
 			foundPaymentSvc = true
 			break
@@ -197,16 +197,16 @@ DB -> Cache [status="deprecated"]
 	}
 
 	content, _ := os.ReadFile(outputFile.Name())
-	result, _, _ := gsl.Parse(bytes.NewReader(content))
+	result, _ := gsl.Parse(bytes.NewReader(content))
 
 	// Should only have API->DB edge (active)
-	if len(result.Edges) != 1 {
-		t.Errorf("expected 1 edge after pipeline, got %d", len(result.Edges))
+	if len(result.GetEdges()) != 1 {
+		t.Errorf("expected 1 edge after pipeline, got %d", len(result.GetEdges()))
 	}
 
 	// Should have API and DB
-	if len(result.Nodes) < 2 {
-		t.Errorf("expected at least 2 nodes, got %d", len(result.Nodes))
+	if len(result.GetNodes()) < 2 {
+		t.Errorf("expected at least 2 nodes, got %d", len(result.GetNodes()))
 	}
 }
 
@@ -255,9 +255,9 @@ func TestExampleFilesWithQueries(t *testing.T) {
 
 				// Verify result is valid GSL
 				content, _ := os.ReadFile(outputFile.Name())
-				_, _, err = gsl.Parse(bytes.NewReader(content))
-				if err != nil {
-					t.Fatalf("result failed to parse as GSL: %v", err)
+				_, pErr := gsl.Parse(bytes.NewReader(content))
+				if pErr != nil && pErr.HasError() {
+					t.Fatalf("result failed to parse as GSL: %v", pErr)
 				}
 			})
 		}
@@ -317,17 +317,17 @@ DB -> Cache
 
 	// Parse both original and result
 	originalInput, _ := os.ReadFile(inputFile.Name())
-	originalGraph, _, _ := gsl.Parse(bytes.NewReader(originalInput))
+	originalGraph, _ := gsl.Parse(bytes.NewReader(originalInput))
 
 	resultOutput, _ := os.ReadFile(outputFile.Name())
-	resultGraph, _, _ := gsl.Parse(bytes.NewReader(resultOutput))
+	resultGraph, _ := gsl.Parse(bytes.NewReader(resultOutput))
 
 	// Should have same number of nodes and edges
-	if len(originalGraph.Nodes) != len(resultGraph.Nodes) {
-		t.Errorf("node count mismatch: original=%d, result=%d", len(originalGraph.Nodes), len(resultGraph.Nodes))
+	if len(originalGraph.GetNodes()) != len(resultGraph.GetNodes()) {
+		t.Errorf("node count mismatch: original=%d, result=%d", len(originalGraph.GetNodes()), len(resultGraph.GetNodes()))
 	}
 
-	if len(originalGraph.Edges) != len(resultGraph.Edges) {
-		t.Errorf("edge count mismatch: original=%d, result=%d", len(originalGraph.Edges), len(resultGraph.Edges))
+	if len(originalGraph.GetEdges()) != len(resultGraph.GetEdges()) {
+		t.Errorf("edge count mismatch: original=%d, result=%d", len(originalGraph.GetEdges()), len(resultGraph.GetEdges()))
 	}
 }
