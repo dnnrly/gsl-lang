@@ -474,6 +474,38 @@ func TestExampleFilesWithPlantUML(t *testing.T) {
 	}
 }
 
+func TestVersionCommand(t *testing.T) {
+	// Build binary
+	cmd := exec.Command("go", "build", "-o", "/tmp/gsl-diagram-test", "./")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("failed to build gsl-diagram: %v\nOutput: %s", err, string(output))
+	}
+	defer os.Remove("/tmp/gsl-diagram-test")
+
+	// Run version command
+	cmd = exec.Command("/tmp/gsl-diagram-test", "version")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("version command failed: %v\nOutput: %s", err, string(output))
+	}
+
+	outputStr := string(output)
+
+	// Verify expected fields in output
+	expectedStrings := []string{
+		"gsl-diagram version",
+		"Commit:",
+		"Build Date:",
+		"Go:",
+	}
+
+	for _, expected := range expectedStrings {
+		if !contains(outputStr, expected) {
+			t.Errorf("missing expected output: %q", expected)
+		}
+	}
+}
+
 func contains(s, substr string) bool {
 	for i := 0; i < len(s)-len(substr)+1; i++ {
 		if s[i:i+len(substr)] == substr {
