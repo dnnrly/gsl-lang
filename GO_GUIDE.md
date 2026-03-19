@@ -139,6 +139,34 @@ graph2, _, _ := gsl.Parse(bytes.NewReader([]byte(canonical)))
 // graph and graph2 are semantically equivalent
 ```
 
+#### Clone (Deep Copy)
+
+```go
+// Create an independent copy of the graph
+original := gsl.NewGraph()
+original.AddNode("A", nil)
+original.AddNode("B", nil)
+original.AddEdge("A", "B", nil)
+
+cloned := original.Clone()
+
+// Mutations to the clone do NOT affect the original
+cloned.AddNode("C", nil)
+
+len(original.GetNodes()) // 2
+len(cloned.GetNodes())   // 3
+
+// All attributes and set memberships are preserved
+clonedNodeA := cloned.GetNode("A")
+// clonedNodeA.Attributes is a deep copy of original's attributes
+```
+
+**Use cases:**
+- Safe mutations for query transformations (e.g., remove nodes, add edges)
+- Experimental graph modifications without side effects
+- Creating multiple variations of a base graph
+- Testing graph operations in isolation
+
 ## Algorithm Patterns
 
 ### Topological Sort (Kahn's Algorithm)

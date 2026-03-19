@@ -527,3 +527,166 @@ func TestBuildForwardDeclaredNodes(t *testing.T) {
 		t.Error("expected empty attributes for forward-declared node")
 	}
 }
+
+func TestGraphCloneIndependence(t *testing.T) {
+	// Build original graph
+	g := NewGraph()
+	_, err := g.AddNode("A", map[string]interface{}{"label": "Node A", "weight": 5})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	_, err = g.AddNode("B", map[string]interface{}{"label": "Node B"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	_, err = g.AddEdge("A", "B", map[string]interface{}{"color": "red"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	_, err = g.AddSet("set1", map[string]interface{}{"description": "Test set"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Clone it
+	cloned := g.Clone()
+
+	// Verify initial state matches
+	origNodes := g.GetNodes()
+	clonedNodes := cloned.GetNodes()
+	if len(origNodes) != len(clonedNodes) {
+		t.Errorf("expected %d nodes in clone, got %d", len(origNodes), len(clonedNodes))
+	}
+
+	origEdges := g.GetEdges()
+	clonedEdges := cloned.GetEdges()
+	if len(origEdges) != len(clonedEdges) {
+		t.Errorf("expected %d edges in clone, got %d", len(origEdges), len(clonedEdges))
+	}
+
+	// Mutate clone and verify original is unchanged
+	_, err = cloned.AddNode("C", map[string]interface{}{"label": "Node C"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	origNodes = g.GetNodes()
+	clonedNodes = cloned.GetNodes()
+	if len(origNodes) == len(clonedNodes) {
+		t.Error("expected clone mutation to not affect original")
+	}
+	if len(origNodes) != 2 || len(clonedNodes) != 3 {
+		t.Errorf("expected original to have 2 nodes and clone to have 3, got %d and %d", len(origNodes), len(clonedNodes))
+	}
+
+	// Mutate clone node attributes and verify original is unchanged
+	clonedNodeA := clonedNodes["A"]
+	clonedNodeA.Attributes["label"] = "Modified A"
+	origNodeA := origNodes["A"]
+	if origNodeA.Attributes["label"] == "Modified A" {
+		t.Error("expected original node attribute to be unchanged")
+	}
+}
+
+func TestGraphCloneDeepCopy(t *testing.T) {
+	// Build original graph with complex attributes
+	g := NewGraph()
+	_, err := g.AddNode("A", map[string]interface{}{
+		"label": "Node A",
+		"weight": 42,
+		"enabled": true,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	_, err = g.AddNode("B", nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	_, err = g.AddEdge("A", "B", map[string]interface{}{
+		"color": "blue",
+		"thickness": 2.5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	_, err = g.AddSet("S1", map[string]interface{}{"priority": 1})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Clone
+	cloned := g.Clone()
+
+	// Verify all attributes are copied
+	clonedNodeA := cloned.GetNode("A")
+
+	if clonedNodeA.Attributes["label"] != "Node A" {
+		t.Error("expected label to be copied")
+	}
+	if clonedNodeA.Attributes["weight"] != 42 {
+		t.Error("expected weight to be copied")
+	}
+	if clonedNodeA.Attributes["enabled"] != true {
+		t.Error("expected enabled to be copied")
+	}
+
+	// Verify edge attributes
+	clonedEdges := cloned.GetEdges()
+	if clonedEdges[0].Attributes["color"] != "blue" {
+		t.Error("expected edge color to be copied")
+	}
+	if clonedEdges[0].Attributes["thickness"] != 2.5 {
+		t.Error("expected edge thickness to be copied")
+	}
+
+	// Verify set attributes
+	clonedSet := cloned.GetSets()["S1"]
+	if clonedSet.Attributes["priority"] != 1 {
+		t.Error("expected set priority to be copied")
+	}
+}
+
+func TestGraphCloneRoundTrip(t *testing.T) {
+	// Parse original GSL
+	gsl := "A -> B"
+	g, pErr := Parse(strings.NewReader(gsl))
+	if pErr != nil {
+		t.Fatalf("unexpected error: %v", pErr)
+	}
+
+	// Clone, serialize, parse, serialize again
+	cloned := g.Clone()
+	s1 := Serialize(g)
+	s2 := Serialize(cloned)
+
+	// Serializations should be identical
+	if s1 != s2 {
+		t.Errorf("expected same serialization, got:\nOriginal: %s\nClone: %s", s1, s2)
+	}
+
+	// Parse both and verify they have same structure
+	g1, pErr := Parse(strings.NewReader(s1))
+	if pErr != nil {
+		t.Fatalf("failed to parse serialized original: %v", pErr)
+	}
+	g2, pErr := Parse(strings.NewReader(s2))
+	if pErr != nil {
+		t.Fatalf("failed to parse serialized clone: %v", pErr)
+	}
+
+	// Verify structure matches
+	if len(g1.GetNodes()) != len(g2.GetNodes()) {
+		t.Error("node counts differ after round-trip")
+	}
+	if len(g1.GetEdges()) != len(g2.GetEdges()) {
+		t.Error("edge counts differ after round-trip")
+	}
+}
+
+func TestGraphCloneNilGraph(t *testing.T) {
+	var g *Graph
+	cloned := g.Clone()
+	if cloned != nil {
+		t.Error("expected Clone of nil graph to be nil")
+	}
+}
