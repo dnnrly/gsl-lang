@@ -9,11 +9,19 @@ builds:
     binary: gsl-diagram
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64, 386]
+    ldflags:
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.BuildDate={{.CommitDate}}
   - id: gsl-query
     main: ./cmd/gsl-query
     binary: gsl-query
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64, 386]
+    ldflags:
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.BuildDate={{.CommitDate}}
 
 archives:
   - format: tar.gz

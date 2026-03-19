@@ -4,9 +4,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
+)
+
+// Build information injected by goreleaser
+var (
+	Version   = "dev"
+	Commit    = "unknown"
+	BuildDate = "unknown"
 )
 
 // extractFrontmatter extracts YAML frontmatter from markdown
@@ -126,6 +135,14 @@ func main() {
 		},
 	}
 
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print version information",
+		Run: func(cmd *cobra.Command, args []string) {
+			printVersion()
+		},
+	}
+
 	// Load guides
 	_, gslDesc, gslContent, gslErr := loadGuide("LLM_GUIDE.md")
 	_, queryDesc, queryContent, queryErr := loadGuide("query/QUERY_AI_GUIDE.md")
@@ -173,7 +190,7 @@ func main() {
 	}
 
 	helpCmd.AddCommand(helpAICmd)
-	rootCmd.AddCommand(helpCmd)
+	rootCmd.AddCommand(helpCmd, versionCmd)
 
 	// ai command - synonym for help ai
 	aiCmd := &cobra.Command{
@@ -222,5 +239,26 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+}
+
+func printVersion() {
+	fmt.Printf("gsl-query version %s\n", Version)
+	fmt.Printf("Commit: %s\n", Commit)
+	
+	// Parse BuildDate if it's in a standard format
+	if BuildDate != "unknown" {
+		if t, err := time.Parse(time.RFC3339, BuildDate); err == nil {
+			fmt.Printf("Build Date: %s\n", t.Format("2006-01-02 15:04:05 MST"))
+		} else {
+			fmt.Printf("Build Date: %s\n", BuildDate)
+		}
+	} else {
+		fmt.Printf("Build Date: %s\n", BuildDate)
+	}
+	
+	// Include Go version info
+	if info, ok := debug.ReadBuildInfo(); ok {
+		fmt.Printf("Go: %s\n", info.GoVersion)
 	}
 }

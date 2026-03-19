@@ -276,6 +276,38 @@ func TestCLIIntegrationErrorHandling(t *testing.T) {
 	}
 }
 
+func TestVersionCommand(t *testing.T) {
+	// Build binary
+	cmd := exec.Command("go", "build", "-o", "/tmp/gsl-query-test", "./")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("failed to build gsl-query: %v\nOutput: %s", err, string(output))
+	}
+	defer os.Remove("/tmp/gsl-query-test")
+
+	// Run version command
+	cmd = exec.Command("/tmp/gsl-query-test", "version")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("version command failed: %v\nOutput: %s", err, string(output))
+	}
+
+	outputStr := string(output)
+
+	// Verify expected fields in output
+	expectedStrings := []string{
+		"gsl-query version",
+		"Commit:",
+		"Build Date:",
+		"Go:",
+	}
+
+	for _, expected := range expectedStrings {
+		if !contains(outputStr, expected) {
+			t.Errorf("missing expected output: %q", expected)
+		}
+	}
+}
+
 func TestCLIIntegrationRoundTrip(t *testing.T) {
 	// Test that parse -> query -> parse -> serialize -> parse is consistent
 	gslInput := `set critical [priority=1]
