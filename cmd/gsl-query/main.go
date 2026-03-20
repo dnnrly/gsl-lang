@@ -1,19 +1,15 @@
 package main
 
 import (
-	"embed"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime/debug"
 	"strings"
 	"time"
 
+	gsl "github.com/dnnrly/gsl-lang"
 	"github.com/spf13/cobra"
 )
-
-//go:embed LLM_GUIDE.md QUERY_AI_GUIDE.md
-var guides embed.FS
 
 // Build information injected by goreleaser
 var (
@@ -54,38 +50,14 @@ func extractFrontmatter(md string) (name, description, content string) {
 
 // loadGuide loads a guide file and extracts its metadata
 func loadGuide(filename string) (name, description, content string, err error) {
-	// First try embedded files (works with go install)
-	data, err := guides.ReadFile(filename)
+	// Load from embedded files in the main gsl package
+	data, err := gsl.Guides.ReadFile(filename)
 	if err == nil {
 		name, description, content = extractFrontmatter(string(data))
 		return name, description, content, nil
 	}
 
-	// Fallback to filesystem for development (when running from source)
-	execPath, _ := os.Executable()
-	cwd, _ := os.Getwd()
-
-	searchPaths := []string{
-		// Try relative to executable (for installed binaries)
-		filepath.Join(filepath.Dir(execPath), "..", "..", filename),
-		filepath.Join(filepath.Dir(execPath), filename),
-		// Try current working directory
-		filepath.Join(cwd, filename),
-		// Try repo structure from cwd
-		filename,
-	}
-
-	var lastErr error
-	for _, path := range searchPaths {
-		data, err = os.ReadFile(path)
-		if err == nil {
-			name, description, content = extractFrontmatter(string(data))
-			return name, description, content, nil
-		}
-		lastErr = err
-	}
-
-	return "", "", "", fmt.Errorf("could not find %s: %w", filename, lastErr)
+	return "", "", "", fmt.Errorf("could not find %s: %w", filename, err)
 }
 
 func main() {
