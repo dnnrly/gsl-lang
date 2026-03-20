@@ -7,6 +7,25 @@ import (
 	"github.com/dnnrly/gsl-lang"
 )
 
+// extractGraph extracts a graph from a Value, returning an error if the value is not a GraphValue.
+func extractGraph(input Value, opName string) (*gsl.Graph, error) {
+	graphValue, ok := input.(GraphValue)
+	if !ok {
+		return nil, fmt.Errorf("%s requires a graph input", opName)
+	}
+	return graphValue.Graph, nil
+}
+
+// validatePredTargetType checks if a predicate targets a single type (node or edge).
+// Returns the target type ("node" or "edge") or an error if mixed targets are detected.
+func validatePredTargetType(pred Predicate) (string, error) {
+	targetType := pred.TargetType()
+	if targetType == "error" {
+		return "", fmt.Errorf("predicate mixes node and edge targets")
+	}
+	return targetType, nil
+}
+
 // FromExpr selects a graph from context
 type FromExpr struct {
 	IsWildcard bool   // true if "*", false if named graph
@@ -78,17 +97,15 @@ type SubgraphExpr struct {
 // Apply filters graph to subgraph matching predicate, then optionally traverses
 func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	// Extract graph
-	graphValue, ok := input.(GraphValue)
-	if !ok {
-		return nil, fmt.Errorf("subgraph requires a graph input")
+	graph, err := extractGraph(input, "subgraph")
+	if err != nil {
+		return nil, err
 	}
 
-	graph := graphValue.Graph
-	targetType := e.Pred.TargetType()
-
 	// Detect mixed targets
-	if targetType == "error" {
-		return nil, fmt.Errorf("predicate mixes node and edge targets")
+	targetType, err := validatePredTargetType(e.Pred)
+	if err != nil {
+		return nil, err
 	}
 
 	// Build base subgraph (returns nodes and edges)
@@ -289,17 +306,15 @@ type RemoveEdgeExpr struct {
 // Apply removes edges matching the predicate
 func (e *RemoveEdgeExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	// Extract graph
-	graphValue, ok := input.(GraphValue)
-	if !ok {
-		return nil, fmt.Errorf("remove edge requires a graph input")
+	graph, err := extractGraph(input, "remove edge")
+	if err != nil {
+		return nil, err
 	}
 
-	graph := graphValue.Graph
-
 	// Detect target type
-	targetType := e.Pred.TargetType()
-	if targetType == "error" {
-		return nil, fmt.Errorf("predicate mixes node and edge targets")
+	targetType, err := validatePredTargetType(e.Pred)
+	if err != nil {
+		return nil, err
 	}
 
 	// Filter edges: keep those that don't match the predicate
@@ -309,7 +324,7 @@ func (e *RemoveEdgeExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	graphNodes := graph.GetNodes()
 	graphEdges := graph.GetEdges()
 	graphSets := graph.GetSets()
-	
+
 	for _, node := range graphNodes {
 		result.addNode(node.ID, node)
 	}
@@ -350,17 +365,15 @@ type RemoveAttributeExpr struct {
 // Apply removes attributes from matching nodes or edges
 func (e *RemoveAttributeExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	// Extract graph
-	graphValue, ok := input.(GraphValue)
-	if !ok {
-		return nil, fmt.Errorf("remove attribute requires a graph input")
+	graph, err := extractGraph(input, "remove attribute")
+	if err != nil {
+		return nil, err
 	}
 
-	graph := graphValue.Graph
-
 	// Detect mixed targets
-	targetType := e.Pred.TargetType()
-	if targetType == "error" {
-		return nil, fmt.Errorf("predicate mixes node and edge targets")
+	targetType, err := validatePredTargetType(e.Pred)
+	if err != nil {
+		return nil, err
 	}
 
 	// Create result graph
@@ -424,12 +437,10 @@ type RemoveOrphansExpr struct{}
 // Apply removes isolated nodes
 func (e *RemoveOrphansExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	// Extract graph
-	graphValue, ok := input.(GraphValue)
-	if !ok {
-		return nil, fmt.Errorf("remove orphans requires a graph input")
+	graph, err := extractGraph(input, "remove orphans")
+	if err != nil {
+		return nil, err
 	}
-
-	graph := graphValue.Graph
 
 	// Identify nodes with at least one incident edge
 	graphEdges := graph.GetEdges()
@@ -467,24 +478,22 @@ func (e *RemoveOrphansExpr) Apply(ctx *QueryContext, input Value) (Value, error)
 // CollapseExpr merges multiple nodes matching a predicate into a single node
 // Edge rewriting and attribute merging follows the spec
 type CollapseExpr struct {
-	NodeID  string    // target node ID for collapsed nodes
-	Pred    Predicate // predicate to select nodes to collapse
+	NodeID string    // target node ID for collapsed nodes
+	Pred   Predicate // predicate to select nodes to collapse
 }
 
 // Apply merges nodes matching the predicate into a single node
 func (e *CollapseExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	// Extract graph
-	graphValue, ok := input.(GraphValue)
-	if !ok {
-		return nil, fmt.Errorf("collapse requires a graph input")
+	graph, err := extractGraph(input, "collapse")
+	if err != nil {
+		return nil, err
 	}
 
-	graph := graphValue.Graph
-
 	// Detect target type - collapse only works on nodes
-	targetType := e.Pred.TargetType()
-	if targetType == "error" {
-		return nil, fmt.Errorf("predicate mixes node and edge targets")
+	targetType, err := validatePredTargetType(e.Pred)
+	if err != nil {
+		return nil, err
 	}
 	if targetType == "edge" {
 		return nil, fmt.Errorf("collapse only works with node predicates")
@@ -609,7 +618,7 @@ func (e *CollapseExpr) edgeKey(edge *gsl.Edge) string {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	
+
 	var attrs string
 	for _, k := range keys {
 		if attrs != "" {
@@ -631,17 +640,15 @@ type MakeExpr struct {
 // Apply assigns attributes to matching nodes or edges
 func (e *MakeExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	// Extract graph
-	graphValue, ok := input.(GraphValue)
-	if !ok {
-		return nil, fmt.Errorf("make requires a graph input")
+	graph, err := extractGraph(input, "make")
+	if err != nil {
+		return nil, err
 	}
 
-	graph := graphValue.Graph
-
 	// Detect mixed targets
-	targetType := e.Pred.TargetType()
-	if targetType == "error" {
-		return nil, fmt.Errorf("predicate mixes node and edge targets")
+	targetType, err := validatePredTargetType(e.Pred)
+	if err != nil {
+		return nil, err
 	}
 
 	// Create result graph
@@ -1138,21 +1145,21 @@ func (gb *graphBuilder) addSet(id string, set *gsl.Set) {
 // This preserves all node/edge/set state including set memberships
 func (gb *graphBuilder) finalize() *gsl.Graph {
 	result := gsl.NewGraph()
-	
+
 	// Add all nodes with full state preservation
 	for _, node := range gb.nodes {
 		_ = result.AddExistingNode(node)
 	}
-	
+
 	// Add all edges with full state preservation
 	for _, edge := range gb.edges {
 		_ = result.AddExistingEdge(edge)
 	}
-	
+
 	// Add all sets with full state preservation
 	for _, set := range gb.sets {
 		_ = result.AddExistingSet(set)
 	}
-	
+
 	return result
 }
