@@ -39,7 +39,7 @@ func (b *builder) ensureNode(name string) *Node {
 	}
 	n := &Node{
 		ID:         name,
-		Attributes: make(map[string]interface{}),
+		Attributes: make(AttributeMap),
 		Sets:       make(map[string]struct{}),
 	}
 	b.graph.nodes[name] = n
@@ -52,7 +52,7 @@ func (b *builder) ensureSet(name string, implicit bool) *Set {
 	}
 	s := &Set{
 		ID:         name,
-		Attributes: make(map[string]interface{}),
+		Attributes: make(AttributeMap),
 	}
 	b.graph.sets[name] = s
 	if implicit {
@@ -121,7 +121,7 @@ func (b *builder) processEdgeDecl(ed *edgeDecl) {
 			edge := &Edge{
 				From:       from,
 				To:         to,
-				Attributes: make(map[string]interface{}),
+				Attributes: make(AttributeMap),
 				Sets:       make(map[string]struct{}),
 			}
 

@@ -10,7 +10,7 @@ type Graph struct {
 // Node represents a node in the graph.
 type Node struct {
 	ID         string
-	Attributes map[string]interface{}
+	Attributes AttributeMap
 	Sets       map[string]struct{}
 	Parent     *string // cached from Attributes["parent"] if it's a NodeRef
 }
@@ -19,13 +19,13 @@ type Node struct {
 type Edge struct {
 	From       string
 	To         string
-	Attributes map[string]interface{}
+	Attributes AttributeMap
 	Sets       map[string]struct{}
 }
 
 // Set represents a named set/grouping.
 type Set struct {
 	ID         string
-	Attributes map[string]interface{}
+	Attributes AttributeMap
 	declared   bool // true if explicitly declared via `set`
 }

@@ -72,16 +72,12 @@ func (g *Graph) AddNode(id string, attrs map[string]interface{}) (*Node, error) 
 		return n, nil
 	}
 
-	// Create new node
+	// Create new node with copied attributes
+	attrsCopy := copyAttrs(AttributeMap(attrs))
 	n := &Node{
 		ID:         id,
-		Attributes: make(map[string]interface{}),
+		Attributes: attrsCopy,
 		Sets:       make(map[string]struct{}),
-	}
-
-	// Copy attributes if provided
-	for k, v := range attrs {
-		n.Attributes[k] = v
 	}
 
 	// Cache parent field if present
@@ -118,17 +114,13 @@ func (g *Graph) AddEdge(from, to string, attrs map[string]interface{}) (*Edge, e
 		return nil, fmt.Errorf("edge to node %q does not exist", to)
 	}
 
-	// Create new edge
+	// Create new edge with copied attributes
+	attrsCopy := copyAttrs(AttributeMap(attrs))
 	e := &Edge{
 		From:       from,
 		To:         to,
-		Attributes: make(map[string]interface{}),
+		Attributes: attrsCopy,
 		Sets:       make(map[string]struct{}),
-	}
-
-	// Copy attributes if provided
-	for k, v := range attrs {
-		e.Attributes[k] = v
 	}
 
 	g.edges = append(g.edges, e)
@@ -219,15 +211,11 @@ func (g *Graph) AddSet(id string, attrs map[string]interface{}) (*Set, error) {
 		return s, nil
 	}
 
-	// Create new set
+	// Create new set with copied attributes
+	attrsCopy := copyAttrs(AttributeMap(attrs))
 	s := &Set{
 		ID:         id,
-		Attributes: make(map[string]interface{}),
-	}
-
-	// Copy attributes if provided
-	for k, v := range attrs {
-		s.Attributes[k] = v
+		Attributes: attrsCopy,
 	}
 
 	g.sets[id] = s
@@ -276,6 +264,30 @@ func (g *Graph) AddExistingSet(set *Set) error {
 // Clone creates a deep copy of the graph.
 // All nodes, edges, and sets are copied with their attributes and set memberships.
 // The cloned graph is independent: mutations to the clone do not affect the original.
+// copyAttrs creates a deep copy of an attribute map.
+func copyAttrs(src AttributeMap) AttributeMap {
+	if src == nil {
+		return nil
+	}
+	dst := make(AttributeMap, len(src))
+	for k, v := range src {
+		dst[k] = v
+	}
+	return dst
+}
+
+// copySets creates a deep copy of a set membership map.
+func copySets(src map[string]struct{}) map[string]struct{} {
+	if src == nil {
+		return nil
+	}
+	dst := make(map[string]struct{}, len(src))
+	for k := range src {
+		dst[k] = struct{}{}
+	}
+	return dst
+}
+
 func (g *Graph) Clone() *Graph {
 	if g == nil {
 		return nil
@@ -287,16 +299,8 @@ func (g *Graph) Clone() *Graph {
 	for id, node := range g.nodes {
 		newNode := &Node{
 			ID:         node.ID,
-			Attributes: make(map[string]interface{}),
-			Sets:       make(map[string]struct{}),
-		}
-		// Copy attributes
-		for k, v := range node.Attributes {
-			newNode.Attributes[k] = v
-		}
-		// Copy set memberships
-		for setID := range node.Sets {
-			newNode.Sets[setID] = struct{}{}
+			Attributes: copyAttrs(node.Attributes),
+			Sets:       copySets(node.Sets),
 		}
 		// Copy parent reference if present
 		if node.Parent != nil {
@@ -311,16 +315,8 @@ func (g *Graph) Clone() *Graph {
 		newEdge := &Edge{
 			From:       edge.From,
 			To:         edge.To,
-			Attributes: make(map[string]interface{}),
-			Sets:       make(map[string]struct{}),
-		}
-		// Copy attributes
-		for k, v := range edge.Attributes {
-			newEdge.Attributes[k] = v
-		}
-		// Copy set memberships
-		for setID := range edge.Sets {
-			newEdge.Sets[setID] = struct{}{}
+			Attributes: copyAttrs(edge.Attributes),
+			Sets:       copySets(edge.Sets),
 		}
 		cloned.edges = append(cloned.edges, newEdge)
 	}
@@ -329,11 +325,7 @@ func (g *Graph) Clone() *Graph {
 	for id, set := range g.sets {
 		newSet := &Set{
 			ID:         set.ID,
-			Attributes: make(map[string]interface{}),
-		}
-		// Copy attributes
-		for k, v := range set.Attributes {
-			newSet.Attributes[k] = v
+			Attributes: copyAttrs(set.Attributes),
 		}
 		cloned.sets[id] = newSet
 	}
