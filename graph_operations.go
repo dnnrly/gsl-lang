@@ -72,16 +72,12 @@ func (g *Graph) AddNode(id string, attrs map[string]interface{}) (*Node, error) 
 		return n, nil
 	}
 
-	// Create new node
+	// Create new node with copied attributes
+	attrsCopy := copyAttrs(AttributeMap(attrs))
 	n := &Node{
 		ID:         id,
-		Attributes: make(AttributeMap),
+		Attributes: attrsCopy,
 		Sets:       make(map[string]struct{}),
-	}
-
-	// Copy attributes if provided
-	for k, v := range attrs {
-		n.Attributes[k] = v
 	}
 
 	// Cache parent field if present
@@ -118,17 +114,13 @@ func (g *Graph) AddEdge(from, to string, attrs map[string]interface{}) (*Edge, e
 		return nil, fmt.Errorf("edge to node %q does not exist", to)
 	}
 
-	// Create new edge
+	// Create new edge with copied attributes
+	attrsCopy := copyAttrs(AttributeMap(attrs))
 	e := &Edge{
 		From:       from,
 		To:         to,
-		Attributes: make(AttributeMap),
+		Attributes: attrsCopy,
 		Sets:       make(map[string]struct{}),
-	}
-
-	// Copy attributes if provided
-	for k, v := range attrs {
-		e.Attributes[k] = v
 	}
 
 	g.edges = append(g.edges, e)
@@ -219,15 +211,11 @@ func (g *Graph) AddSet(id string, attrs map[string]interface{}) (*Set, error) {
 		return s, nil
 	}
 
-	// Create new set
+	// Create new set with copied attributes
+	attrsCopy := copyAttrs(AttributeMap(attrs))
 	s := &Set{
 		ID:         id,
-		Attributes: make(AttributeMap),
-	}
-
-	// Copy attributes if provided
-	for k, v := range attrs {
-		s.Attributes[k] = v
+		Attributes: attrsCopy,
 	}
 
 	g.sets[id] = s
