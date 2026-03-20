@@ -8,7 +8,7 @@ import "testing"
 
 func TestNodeGetString(t *testing.T) {
 	n := &Node{
-		Attributes: map[string]interface{}{
+		Attributes: AttributeMap{
 			"text":   "hello",
 			"number": 42,
 			"flag":   true,
@@ -43,7 +43,7 @@ func TestNodeGetString(t *testing.T) {
 
 func TestNodeGetInt(t *testing.T) {
 	n := &Node{
-		Attributes: map[string]interface{}{
+		Attributes: AttributeMap{
 			"count":  42.0,
 			"text":   "hello",
 			"intVal": int64(100),
@@ -71,7 +71,7 @@ func TestNodeGetInt(t *testing.T) {
 
 func TestNodeGetBool(t *testing.T) {
 	n := &Node{
-		Attributes: map[string]interface{}{
+		Attributes: AttributeMap{
 			"enabled":  true,
 			"disabled": false,
 			"number":   42,
@@ -100,7 +100,7 @@ func TestNodeGetBool(t *testing.T) {
 func TestNodeGetRef(t *testing.T) {
 	parent := NodeRef("Parent")
 	n := &Node{
-		Attributes: map[string]interface{}{
+		Attributes: AttributeMap{
 			"parent":  parent,
 			"sibling": "text",
 		},
@@ -128,7 +128,7 @@ func TestNodeGetRef(t *testing.T) {
 func TestNodeSetAttribute(t *testing.T) {
 	n := &Node{
 		ID:         "A",
-		Attributes: make(map[string]interface{}),
+		Attributes: make(AttributeMap),
 	}
 
 	// Set string
@@ -174,7 +174,7 @@ func TestEdgeGetString(t *testing.T) {
 	e := &Edge{
 		From: "A",
 		To:   "B",
-		Attributes: map[string]interface{}{
+		Attributes: AttributeMap{
 			"label": "connection",
 			"weight": 3.14,
 		},
@@ -195,7 +195,7 @@ func TestEdgeGetInt(t *testing.T) {
 	e := &Edge{
 		From: "A",
 		To:   "B",
-		Attributes: map[string]interface{}{
+		Attributes: AttributeMap{
 			"weight": 5.0,
 		},
 	}
@@ -210,7 +210,7 @@ func TestEdgeGetBool(t *testing.T) {
 	e := &Edge{
 		From: "A",
 		To:   "B",
-		Attributes: map[string]interface{}{
+		Attributes: AttributeMap{
 			"active": true,
 		},
 	}
@@ -225,7 +225,7 @@ func TestEdgeSetAttribute(t *testing.T) {
 	e := &Edge{
 		From:       "A",
 		To:         "B",
-		Attributes: make(map[string]interface{}),
+		Attributes: make(AttributeMap),
 	}
 
 	err := e.SetAttribute("label", "test")
@@ -252,7 +252,7 @@ func TestEdgeSetAttribute(t *testing.T) {
 func TestSetGetString(t *testing.T) {
 	s := &Set{
 		ID: "critical",
-		Attributes: map[string]interface{}{
+		Attributes: AttributeMap{
 			"description": "critical services",
 			"priority":    1,
 		},
@@ -272,7 +272,7 @@ func TestSetGetString(t *testing.T) {
 func TestSetGetInt(t *testing.T) {
 	s := &Set{
 		ID: "services",
-		Attributes: map[string]interface{}{
+		Attributes: AttributeMap{
 			"priority": 1.0,
 		},
 	}
@@ -286,7 +286,7 @@ func TestSetGetInt(t *testing.T) {
 func TestSetGetBool(t *testing.T) {
 	s := &Set{
 		ID: "prod",
-		Attributes: map[string]interface{}{
+		Attributes: AttributeMap{
 			"critical": true,
 		},
 	}
@@ -300,7 +300,7 @@ func TestSetGetBool(t *testing.T) {
 func TestSetSetAttribute(t *testing.T) {
 	s := &Set{
 		ID:         "test",
-		Attributes: make(map[string]interface{}),
+		Attributes: make(AttributeMap),
 	}
 
 	err := s.SetAttribute("label", "test set")

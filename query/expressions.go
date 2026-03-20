@@ -376,7 +376,7 @@ func (e *RemoveAttributeExpr) Apply(ctx *QueryContext, input Value) (Value, erro
 	graphNodes := graph.GetNodes()
 	for id, node := range graphNodes {
 		nodeCopy := *node
-		nodeCopy.Attributes = make(map[string]interface{})
+		nodeCopy.Attributes = make(gsl.AttributeMap)
 
 		// Copy attributes from original
 		for k, v := range node.Attributes {
@@ -397,7 +397,7 @@ func (e *RemoveAttributeExpr) Apply(ctx *QueryContext, input Value) (Value, erro
 	graphEdges := graph.GetEdges()
 	for _, edge := range graphEdges {
 		edgeCopy := *edge
-		edgeCopy.Attributes = make(map[string]interface{})
+		edgeCopy.Attributes = make(gsl.AttributeMap)
 
 		// Copy attributes from original
 		for k, v := range edge.Attributes {
@@ -521,7 +521,7 @@ func (e *CollapseExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	}
 
 	// Create the collapsed node with merged attributes
-	mergedAttrs := make(map[string]interface{})
+	mergedAttrs := make(gsl.AttributeMap)
 	for _, id := range e.sortedNodeIDs(graph, collapsedSet) {
 		// Apply attributes in order (last-write-wins)
 		node := graphNodes[id]
@@ -657,7 +657,7 @@ func (e *MakeExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	graphNodes := graph.GetNodes()
 	for id, node := range graphNodes {
 		nodeCopy := *node
-		nodeCopy.Attributes = make(map[string]interface{})
+		nodeCopy.Attributes = make(gsl.AttributeMap)
 
 		// Copy attributes from original
 		for k, v := range node.Attributes {
@@ -678,7 +678,7 @@ func (e *MakeExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	graphEdges := graph.GetEdges()
 	for _, edge := range graphEdges {
 		edgeCopy := *edge
-		edgeCopy.Attributes = make(map[string]interface{})
+		edgeCopy.Attributes = make(gsl.AttributeMap)
 
 		// Copy attributes from original
 		for k, v := range edge.Attributes {
@@ -765,7 +765,7 @@ func (e *GraphAlgebraExpr) union(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
 	resultNodes := make(map[string]*gsl.Node)
 	for id, node := range leftNodes {
 		nodeCopy := *node
-		nodeCopy.Attributes = make(map[string]interface{})
+		nodeCopy.Attributes = make(gsl.AttributeMap)
 		for k, v := range node.Attributes {
 			nodeCopy.Attributes[k] = v
 		}
@@ -785,7 +785,7 @@ func (e *GraphAlgebraExpr) union(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
 	// Copy left sets
 	for id, set := range leftSets {
 		setCopy := *set
-		setCopy.Attributes = make(map[string]interface{})
+		setCopy.Attributes = make(gsl.AttributeMap)
 		for k, v := range set.Attributes {
 			setCopy.Attributes[k] = v
 		}
@@ -806,7 +806,7 @@ func (e *GraphAlgebraExpr) union(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
 		} else {
 			// New node from right
 			nodeCopy := *node
-			nodeCopy.Attributes = make(map[string]interface{})
+			nodeCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range node.Attributes {
 				nodeCopy.Attributes[k] = v
 			}
@@ -834,7 +834,7 @@ func (e *GraphAlgebraExpr) union(left *gsl.Graph, right *gsl.Graph) *gsl.Graph {
 		} else {
 			// New set from right
 			setCopy := *set
-			setCopy.Attributes = make(map[string]interface{})
+			setCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range set.Attributes {
 				setCopy.Attributes[k] = v
 			}
@@ -864,7 +864,7 @@ func (e *GraphAlgebraExpr) intersection(left *gsl.Graph, right *gsl.Graph) *gsl.
 		if _, exists := rightNodes[id]; exists {
 			// Node exists in both
 			nodeCopy := *node
-			nodeCopy.Attributes = make(map[string]interface{})
+			nodeCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range node.Attributes {
 				nodeCopy.Attributes[k] = v
 			}
@@ -888,7 +888,7 @@ func (e *GraphAlgebraExpr) intersection(left *gsl.Graph, right *gsl.Graph) *gsl.
 		key := edge.From + "|" + edge.To
 		if rightEdgeSet[key] && resultNodes[edge.From] != nil && resultNodes[edge.To] != nil {
 			edgeCopy := *edge
-			edgeCopy.Attributes = make(map[string]interface{})
+			edgeCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range edge.Attributes {
 				edgeCopy.Attributes[k] = v
 			}
@@ -904,7 +904,7 @@ func (e *GraphAlgebraExpr) intersection(left *gsl.Graph, right *gsl.Graph) *gsl.
 	for id, set := range leftSets {
 		if _, exists := rightSets[id]; exists {
 			setCopy := *set
-			setCopy.Attributes = make(map[string]interface{})
+			setCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range set.Attributes {
 				setCopy.Attributes[k] = v
 			}
@@ -933,7 +933,7 @@ func (e *GraphAlgebraExpr) difference(left *gsl.Graph, right *gsl.Graph) *gsl.Gr
 	for id, node := range leftNodes {
 		if _, exists := rightNodes[id]; !exists {
 			nodeCopy := *node
-			nodeCopy.Attributes = make(map[string]interface{})
+			nodeCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range node.Attributes {
 				nodeCopy.Attributes[k] = v
 			}
@@ -957,7 +957,7 @@ func (e *GraphAlgebraExpr) difference(left *gsl.Graph, right *gsl.Graph) *gsl.Gr
 		key := edge.From + "|" + edge.To
 		if !rightEdgeSet[key] && resultNodes[edge.From] != nil && resultNodes[edge.To] != nil {
 			edgeCopy := *edge
-			edgeCopy.Attributes = make(map[string]interface{})
+			edgeCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range edge.Attributes {
 				edgeCopy.Attributes[k] = v
 			}
@@ -973,7 +973,7 @@ func (e *GraphAlgebraExpr) difference(left *gsl.Graph, right *gsl.Graph) *gsl.Gr
 	for id, set := range leftSets {
 		if _, exists := rightSets[id]; !exists {
 			setCopy := *set
-			setCopy.Attributes = make(map[string]interface{})
+			setCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range set.Attributes {
 				setCopy.Attributes[k] = v
 			}
@@ -1002,7 +1002,7 @@ func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph
 	for id, node := range leftNodes {
 		if _, exists := rightNodes[id]; !exists {
 			nodeCopy := *node
-			nodeCopy.Attributes = make(map[string]interface{})
+			nodeCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range node.Attributes {
 				nodeCopy.Attributes[k] = v
 			}
@@ -1019,7 +1019,7 @@ func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph
 	for id, node := range rightNodes {
 		if _, exists := leftNodes[id]; !exists {
 			nodeCopy := *node
-			nodeCopy.Attributes = make(map[string]interface{})
+			nodeCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range node.Attributes {
 				nodeCopy.Attributes[k] = v
 			}
@@ -1047,7 +1047,7 @@ func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph
 		key := edge.From + "|" + edge.To
 		if !rightEdgeSet[key] && resultNodes[edge.From] != nil && resultNodes[edge.To] != nil {
 			edgeCopy := *edge
-			edgeCopy.Attributes = make(map[string]interface{})
+			edgeCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range edge.Attributes {
 				edgeCopy.Attributes[k] = v
 			}
@@ -1064,7 +1064,7 @@ func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph
 		key := edge.From + "|" + edge.To
 		if !leftEdgeSet[key] && resultNodes[edge.From] != nil && resultNodes[edge.To] != nil {
 			edgeCopy := *edge
-			edgeCopy.Attributes = make(map[string]interface{})
+			edgeCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range edge.Attributes {
 				edgeCopy.Attributes[k] = v
 			}
@@ -1080,7 +1080,7 @@ func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph
 	for id, set := range leftSets {
 		if _, exists := rightSets[id]; !exists {
 			setCopy := *set
-			setCopy.Attributes = make(map[string]interface{})
+			setCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range set.Attributes {
 				setCopy.Attributes[k] = v
 			}
@@ -1092,7 +1092,7 @@ func (e *GraphAlgebraExpr) symmetricDifference(left *gsl.Graph, right *gsl.Graph
 	for id, set := range rightSets {
 		if _, exists := leftSets[id]; !exists {
 			setCopy := *set
-			setCopy.Attributes = make(map[string]interface{})
+			setCopy.Attributes = make(gsl.AttributeMap)
 			for k, v := range set.Attributes {
 				setCopy.Attributes[k] = v
 			}

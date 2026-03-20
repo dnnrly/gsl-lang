@@ -75,7 +75,7 @@ func (g *Graph) AddNode(id string, attrs map[string]interface{}) (*Node, error) 
 	// Create new node
 	n := &Node{
 		ID:         id,
-		Attributes: make(map[string]interface{}),
+		Attributes: make(AttributeMap),
 		Sets:       make(map[string]struct{}),
 	}
 
@@ -122,7 +122,7 @@ func (g *Graph) AddEdge(from, to string, attrs map[string]interface{}) (*Edge, e
 	e := &Edge{
 		From:       from,
 		To:         to,
-		Attributes: make(map[string]interface{}),
+		Attributes: make(AttributeMap),
 		Sets:       make(map[string]struct{}),
 	}
 
@@ -222,7 +222,7 @@ func (g *Graph) AddSet(id string, attrs map[string]interface{}) (*Set, error) {
 	// Create new set
 	s := &Set{
 		ID:         id,
-		Attributes: make(map[string]interface{}),
+		Attributes: make(AttributeMap),
 	}
 
 	// Copy attributes if provided
@@ -287,7 +287,7 @@ func (g *Graph) Clone() *Graph {
 	for id, node := range g.nodes {
 		newNode := &Node{
 			ID:         node.ID,
-			Attributes: make(map[string]interface{}),
+			Attributes: make(AttributeMap),
 			Sets:       make(map[string]struct{}),
 		}
 		// Copy attributes
@@ -311,7 +311,7 @@ func (g *Graph) Clone() *Graph {
 		newEdge := &Edge{
 			From:       edge.From,
 			To:         edge.To,
-			Attributes: make(map[string]interface{}),
+			Attributes: make(AttributeMap),
 			Sets:       make(map[string]struct{}),
 		}
 		// Copy attributes
@@ -329,7 +329,7 @@ func (g *Graph) Clone() *Graph {
 	for id, set := range g.sets {
 		newSet := &Set{
 			ID:         set.ID,
-			Attributes: make(map[string]interface{}),
+			Attributes: make(AttributeMap),
 		}
 		// Copy attributes
 		for k, v := range set.Attributes {
