@@ -81,17 +81,7 @@ func serializeNode(n *Node) string {
 		b.WriteString(" ")
 		b.WriteString(serializeAttrs(n.Attributes))
 	}
-	if len(n.Sets) > 0 {
-		setNames := make([]string, 0, len(n.Sets))
-		for name := range n.Sets {
-			setNames = append(setNames, name)
-		}
-		sort.Strings(setNames)
-		for _, name := range setNames {
-			b.WriteString(" @")
-			b.WriteString(name)
-		}
-	}
+	b.WriteString(serializeSetMemberships(n.Sets))
 	return b.String()
 }
 
@@ -104,16 +94,23 @@ func serializeEdge(e *Edge) string {
 		b.WriteString(" ")
 		b.WriteString(serializeAttrs(e.Attributes))
 	}
-	if len(e.Sets) > 0 {
-		setNames := make([]string, 0, len(e.Sets))
-		for name := range e.Sets {
-			setNames = append(setNames, name)
-		}
-		sort.Strings(setNames)
-		for _, name := range setNames {
-			b.WriteString(" @")
-			b.WriteString(name)
-		}
+	b.WriteString(serializeSetMemberships(e.Sets))
+	return b.String()
+}
+
+func serializeSetMemberships(sets map[string]struct{}) string {
+	if len(sets) == 0 {
+		return ""
+	}
+	setNames := make([]string, 0, len(sets))
+	for name := range sets {
+		setNames = append(setNames, name)
+	}
+	sort.Strings(setNames)
+	var b strings.Builder
+	for _, name := range setNames {
+		b.WriteString(" @")
+		b.WriteString(name)
 	}
 	return b.String()
 }
