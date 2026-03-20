@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime/debug"
 	"strings"
 	"time"
 
+	gsl "github.com/dnnrly/gsl-lang"
 	"github.com/spf13/cobra"
 )
 
@@ -50,36 +50,14 @@ func extractFrontmatter(md string) (name, description, content string) {
 
 // loadGuide loads a guide file and extracts its metadata
 func loadGuide(filename string) (name, description, content string, err error) {
-	// Try to find the file
-	execPath, _ := os.Executable()
-	cwd, _ := os.Getwd()
-
-	searchPaths := []string{
-		// Try relative to executable (for installed binaries)
-		filepath.Join(filepath.Dir(execPath), "..", "..", filename),
-		filepath.Join(filepath.Dir(execPath), filename),
-		// Try current working directory
-		filepath.Join(cwd, filename),
-		// Try repo structure from cwd
-		filename,
+	// Load from embedded files in the main gsl package
+	data, err := gsl.Guides.ReadFile(filename)
+	if err == nil {
+		name, description, content = extractFrontmatter(string(data))
+		return name, description, content, nil
 	}
 
-	var data []byte
-	var lastErr error
-	for _, path := range searchPaths {
-		data, err = os.ReadFile(path)
-		if err == nil {
-			break
-		}
-		lastErr = err
-	}
-
-	if err != nil {
-		return "", "", "", fmt.Errorf("could not find %s: %w", filename, lastErr)
-	}
-
-	name, description, content = extractFrontmatter(string(data))
-	return name, description, content, nil
+	return "", "", "", fmt.Errorf("could not find %s: %w", filename, err)
 }
 
 func main() {
