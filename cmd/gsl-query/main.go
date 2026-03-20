@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,9 @@ import (
 
 	"github.com/spf13/cobra"
 )
+
+//go:embed LLM_GUIDE.md QUERY_AI_GUIDE.md
+var guides embed.FS
 
 // Build information injected by goreleaser
 var (
@@ -50,7 +54,14 @@ func extractFrontmatter(md string) (name, description, content string) {
 
 // loadGuide loads a guide file and extracts its metadata
 func loadGuide(filename string) (name, description, content string, err error) {
-	// Try to find the file
+	// First try embedded files (works with go install)
+	data, err := guides.ReadFile(filename)
+	if err == nil {
+		name, description, content = extractFrontmatter(string(data))
+		return name, description, content, nil
+	}
+
+	// Fallback to filesystem for development (when running from source)
 	execPath, _ := os.Executable()
 	cwd, _ := os.Getwd()
 
@@ -64,22 +75,17 @@ func loadGuide(filename string) (name, description, content string, err error) {
 		filename,
 	}
 
-	var data []byte
 	var lastErr error
 	for _, path := range searchPaths {
 		data, err = os.ReadFile(path)
 		if err == nil {
-			break
+			name, description, content = extractFrontmatter(string(data))
+			return name, description, content, nil
 		}
 		lastErr = err
 	}
 
-	if err != nil {
-		return "", "", "", fmt.Errorf("could not find %s: %w", filename, lastErr)
-	}
-
-	name, description, content = extractFrontmatter(string(data))
-	return name, description, content, nil
+	return "", "", "", fmt.Errorf("could not find %s: %w", filename, lastErr)
 }
 
 func main() {

@@ -3,6 +3,10 @@ tmp/
 gsl-diagram
 gsl-query
 
+# Embedded guide files in cmd/gsl-query (copies for go:embed, regenerated from source)
+cmd/gsl-query/LLM_GUIDE.md
+cmd/gsl-query/QUERY_AI_GUIDE.md
+
 # Ignore plan and progress files
 *.plan
 *.progress
