@@ -14,18 +14,20 @@ If any conflict exists between this document and other documentation (including 
 
 ## Table of Contents
 
-1. [Scope](#1-scope)
-2. [Lexical Structure](#2-lexical-structure)
-3. [Core Model](#3-core-model)
-4. [Nodes](#4-nodes)
-5. [Edges](#5-edges)
-6. [Sets](#6-sets)
-7. [Attribute Semantics](#7-attribute-semantics)
-8. [Multiple Declarations](#8-multiple-declarations)
-9. [Canonicalisation](#9-canonicalisation)
-10. [Errors](#10-errors)
-11. [Linter Warnings](#11-linter-warnings-non-normative)
-12. [Conformance](#12-conformance)
+1. Scope
+2. Lexical Structure
+3. Core Model
+4. Core Invariants
+5. Nodes
+6. Edges
+7. Edge Scoping
+8. Sets
+9. Attribute Semantics
+10. Multiple Declarations
+11. Canonicalisation
+12. Errors
+13. Linter Warnings (Non-Normative)
+14. Conformance
 
 ---
 
@@ -60,18 +62,16 @@ This specification does NOT define:
 
 An identifier:
 
-* MUST match the pattern:
-
 ```
 [A-Za-z_][A-Za-z0-9_]*
 ```
 
-* MUST be case-sensitive.
-* MUST NOT match a reserved keyword.
+* MUST be case-sensitive
+* MUST NOT match a reserved keyword
 
 ## 2.2 Reserved Keywords
 
-The following identifiers are reserved and MUST NOT be used as identifiers:
+The following identifiers are reserved and MUST NOT be used:
 
 * `node`
 * `set`
@@ -139,9 +139,65 @@ Node identifiers and set identifiers:
 
 ---
 
-# 4. Nodes
+# 4. Core Invariants
 
-## 4.1 Declaration
+### 4.1 Edge Instance Independence
+
+Edges are distinct instances.
+
+Multiple edges may exist with identical:
+
+* source
+* target
+* attributes
+
+They MUST NOT be merged or deduplicated.
+
+---
+
+### 4.2 Identity Opacity
+
+Edge identity is not observable.
+
+* Implicit identities MUST NOT be referenced
+* Programs MUST NOT depend on identity
+* Implementations MAY assign identities arbitrarily
+
+---
+
+### 4.3 Lexical Dependency Only
+
+Dependencies between edges are introduced only via:
+
+* explicit labels
+* lexical scoping
+
+No other mechanism is allowed.
+
+---
+
+### 4.4 Parent Existence Guarantee
+
+If an edge depends on another edge:
+
+* The parent edge MUST exist
+
+This includes edges introduced via scoped blocks.
+
+---
+
+### 4.5 Non-Observability of Unlabeled Dependencies
+
+Dependencies targeting unlabeled edges:
+
+* Are not directly observable
+* Cannot be referenced
+
+---
+
+# 5. Nodes
+
+## 5.1 Declaration
 
 A node MUST be declared using:
 
@@ -157,7 +213,7 @@ If a node is declared multiple times:
 
 ---
 
-## 4.2 Attributes
+## 5.2 Attributes
 
 Node attributes:
 
@@ -172,7 +228,7 @@ Node attributes:
     * NodeRef (identifier)
     * Empty
 
-An attribute without a value:
+Empty attribute:
 
 ```
 flag
@@ -183,7 +239,7 @@ flag
 
 ---
 
-## 4.3 Text Shorthand
+## 5.3 Text Shorthand
 
 ```
 node A: "text"
@@ -205,7 +261,7 @@ node A [text="Hello", flag]
 
 ---
 
-## 4.4 Parent Attribute
+## 5.4 Parent Attribute
 
 `parent`:
 
@@ -215,7 +271,7 @@ node A [text="Hello", flag]
 
 ---
 
-## 4.5 Block Syntax
+## 5.5 Block Syntax
 
 ```
 node C {
@@ -238,11 +294,9 @@ Blocks MAY be nested.
 
 ---
 
-# 5. Edges
+# 6. Edges
 
-## 5.1 Declaration
-
-An edge MUST use:
+## 6.1 Declaration
 
 ```
 <node_list> -> <node_list>
@@ -252,9 +306,7 @@ Nodes MAY be forward-declared.
 
 ---
 
-## 5.2 Grouped Edges
-
-A node list MAY contain multiple identifiers separated by commas.
+## 6.2 Grouped Edges
 
 Implementations MUST:
 
@@ -272,17 +324,15 @@ If both left and right node lists contain more than one identifier:
 
 ---
 
-## 5.3 Attributes
+## 6.3 Attributes
 
-Edge attributes:
-
-* MUST follow the same syntax as node attributes.
-* MUST NOT contain NodeRef values.
-* MUST NOT contain duplicate keys within a single declaration.
+* Same syntax as nodes
+* MUST NOT contain NodeRef
+* MUST NOT duplicate keys
 
 ---
 
-## 5.4 Text Shorthand
+## 6.4 Text Shorthand
 
 ```
 A->B: "Next"
@@ -302,19 +352,15 @@ A->B [text="Next", weight=1.2]
 
 ---
 
-## 5.5 Duplicate Edges
+## 6.5 Duplicate Edges
 
-Edges:
-
-* MUST be preserved exactly as declared.
-* MUST allow duplicates.
+* MUST be preserved
+* MUST allow duplicates
 * MUST be treated as a multiset.
-
-Edges MUST NOT have intrinsic identity.
 
 ---
 
-## 5.6 Edge Membership
+## 6.6 Edge Membership
 
 Edges MAY declare set membership via:
 
@@ -329,9 +375,133 @@ Membership:
 
 ---
 
-# 6. Sets
+## 6.7 Labels
 
-## 6.1 Declaration
+Edges MAY be labeled:
+
+```
+E1: A -> B
+```
+
+Labels:
+
+* MUST uniquely identify an edge within scope
+* MAY be used as dependency targets
+
+---
+
+# 7. Edge Scoping
+
+## 7.1 Overview
+
+```
+A -> B {
+  B -> C
+}
+```
+
+or:
+
+```
+E1: A -> B {
+  B -> C
+}
+```
+
+---
+
+## 7.2 Semantics
+
+1. Parent edge is constructed
+2. Child edges are constructed
+3. Each child depends on parent
+
+Equivalent to:
+
+```
+E1: A -> B
+B -> C [depends_on = E1]
+```
+
+---
+
+## 7.3 Dependency Scope Rule
+
+Each edge depends on exactly one parent:
+
+* nearest enclosing edge
+
+---
+
+## 7.4 Nested Scopes
+
+```
+A: a -> b {
+  B: b -> c {
+    c -> d
+  }
+}
+```
+
+* B depends on A
+* c->d depends on B
+
+---
+
+## 7.5 Scope and Labels
+
+Labels become dependency targets.
+
+Unlabeled edges:
+
+* still act as parents
+* cannot be referenced
+
+---
+
+## 7.6 Constraints
+
+Invalid:
+
+```
+e = A -> B
+e { ... }
+```
+
+Invalid:
+
+```
+A -> B {
+  C -> D [depends_on = X]
+}
+```
+
+Rules:
+
+* Scoped edges MUST depend on exactly one parent
+* Dependencies MUST NOT be transitive
+
+---
+
+## 7.7 Observability
+
+* Unlabeled edges cannot be referenced
+* Dependencies on them are not inspectable
+
+---
+
+## 7.8 Non-Expression Semantics
+
+Scoped edges:
+
+* Are not values
+* Cannot be assigned or reused
+
+---
+
+# 8. Sets
+
+## 8.1 Declaration
 
 A set MUST be declared using:
 
@@ -346,7 +516,7 @@ Multiple declarations:
 
 ---
 
-## 6.2 Attributes
+## 8.2 Attributes
 
 Set attributes:
 
@@ -356,7 +526,7 @@ Set attributes:
 
 ---
 
-## 6.3 Membership
+## 8.3 Membership
 
 Sets:
 
@@ -365,7 +535,7 @@ Sets:
 
 ---
 
-## 6.4 Implicit Sets
+## 8.4 Implicit Sets
 
 If a set is referenced via `@` but not declared:
 
@@ -375,7 +545,7 @@ If a set is referenced via `@` but not declared:
 
 ---
 
-# 7. Attribute Semantics
+# 9. Attribute Semantics
 
 Attribute values are dynamically typed.
 
@@ -393,7 +563,30 @@ If a NodeRef appears in an edge or set attribute:
 
 ---
 
-# 8. Multiple Declarations
+## 9.1 Reserved Attributes
+
+Reserved:
+
+* `depends_on`
+
+---
+
+## 9.2 depends_on
+
+Defines edge dependency.
+
+* MUST resolve to exactly one edge
+
+* MUST be:
+
+  * labeled edge OR
+  * lexical parent
+
+* Multiple dependencies NOT supported
+
+---
+
+# 10. Multiple Declarations
 
 Nodes and sets:
 
@@ -404,7 +597,7 @@ Nodes and sets:
 
 ---
 
-# 9. Canonicalisation
+# 11. Canonicalisation
 
 A conforming implementation MUST ensure:
 
@@ -423,12 +616,24 @@ Canonicalisation MUST:
 
 Ordering:
 
-* Ordering of nodes, edges, and sets in serialisation MAY be implementation-defined.
+* Ordering of nodes and sets in serialisation MAY be implementation-defined.
 * Canonical form MUST parse into an identical internal representation.
 
 ---
 
-# 10. Errors
+## 11.1 Scoped Evaluation
+
+When evaluating scoped edges:
+
+1. Construct parent
+2. Evaluate body with parent context
+3. Attach dependency to each child
+
+Order-independent except for parent-child relation.
+
+---
+
+# 12. Errors
 
 The following conditions MUST produce a syntax error:
 
@@ -437,10 +642,11 @@ The following conditions MUST produce a syntax error:
 * NodeRef values in edge attributes.
 * NodeRef values in set attributes.
 * Use of reserved keywords as identifiers.
+* Explicit `depends_on` inside scoped edges.
 
-## 10.1 Example Invalid Syntax
+---
 
-The following are examples of syntax errors that MUST be rejected:
+## 12.1 Examples
 
 ```invalid-gsl
 node A [color="red", color="blue"]
@@ -474,7 +680,7 @@ Reserved keyword `node` used as identifier (invalid).
 
 ---
 
-# 11. Linter Warnings (Non-Normative)
+# 13. Linter Warnings (Non-Normative)
 
 Implementations SHOULD provide warnings for:
 
@@ -487,10 +693,10 @@ Warnings MUST NOT prevent parsing.
 
 ---
 
-# 12. Conformance
+# 14. Conformance
 
-An implementation conforms to GSL-Lang v1.0 if it:
+An implementation conforms if it:
 
-* Accepts all valid input defined by this specification.
-* Rejects all invalid input defined by this specification.
-* Produces canonical output meeting Section 9 requirements.
+* Accepts all valid input
+* Rejects all invalid input
+* Produces canonical output
