@@ -24,6 +24,7 @@ It is a textual graph representation designed for tooling, transformation, and p
   - [Edges](#edges)
   - [Sets and Membership](#sets-and-membership)
   - [Parent Relationships](#parent-relationships)
+  - [Edge Labels and Scoping](#edge-labels-and-scoping)
 - [Design Goals](#design-goals)
 - [Canonical Behaviour](#canonical-behaviour)
 - [Tools](#tools)
@@ -126,6 +127,53 @@ node D [parent=C]
 ```
 
 `parent` is treated as a normal attribute.
+
+---
+
+### Edge Labels and Scoping
+
+GSL supports **edge labels** and **scoped edges** for expressing explicit dependencies between edges.
+
+**Edge labels** assign a name to an edge:
+
+```gsl
+E1: A -> B
+E2: B -> C [weight=2]
+```
+
+Labels are unique within a scope and enable explicit dependency references.
+
+**Edge scoping** allows nesting edges to express implicit dependencies:
+
+```gsl
+# B -> C implicitly depends on A -> B
+A -> B {
+    B -> C
+}
+```
+
+This is syntactic sugar for:
+
+```gsl
+E1: A -> B
+B -> C [depends_on=E1]
+```
+
+Scoped edges flatten to explicit `depends_on` attributes during canonicalization.
+
+**Explicit `depends_on`** references any labeled edge:
+
+```gsl
+E1: A -> B
+C -> D [depends_on=E1]
+```
+
+Scoped edges automatically get implicit `depends_on` on their parent edge. You cannot use explicit `depends_on` inside a scoped edge - use labels on the parent edge instead:
+
+Use cases:
+- Dependency graphs where edges represent tasks
+- Data pipelines with explicit stage ordering
+- Workflow orchestration with explicit prerequisites
 
 ---
 
@@ -623,6 +671,8 @@ type Node struct {
 type Edge struct {
 	From       string                 // Source node ID
 	To         string                 // Target node ID
+	Label      string                 // Optional edge label for dependency targeting
+	DependsOn  string                 // Optional reference to parent edge label
 	Attributes map[string]interface{} // Key-value attributes
 	Sets       map[string]struct{}    // Set membership
 }

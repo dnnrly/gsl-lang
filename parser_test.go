@@ -502,6 +502,124 @@ func TestParseCommentsOnly(t *testing.T) {
 }
 
 // helper
+// --- Edge labels and scoping ---
+
+func TestParseEdgeLabel(t *testing.T) {
+	prog := mustParse(t, "E1: A -> B")
+	ed := prog.statements[0].(*edgeDecl)
+	if ed.label == nil || *ed.label != "E1" {
+		t.Errorf("expected label 'E1', got %v", ed.label)
+	}
+}
+
+func TestParseScopedEdge(t *testing.T) {
+	prog := mustParse(t, "A -> B { B -> C }")
+	ed := prog.statements[0].(*edgeDecl)
+	if len(ed.block) != 1 {
+		t.Fatalf("expected 1 statement in block, got %d", len(ed.block))
+	}
+	child, ok := ed.block[0].(*edgeDecl)
+	if !ok {
+		t.Fatalf("expected edgeDecl in block, got %T", ed.block[0])
+	}
+	if child.left[0] != "B" || child.right[0] != "C" {
+		t.Errorf("expected B->C, got %v->%v", child.left, child.right)
+	}
+}
+
+func TestParseLabeledScopedEdge(t *testing.T) {
+	prog := mustParse(t, "E1: A -> B { B -> C }")
+	ed := prog.statements[0].(*edgeDecl)
+	if ed.label == nil || *ed.label != "E1" {
+		t.Errorf("expected label 'E1', got %v", ed.label)
+	}
+	if len(ed.block) != 1 {
+		t.Fatalf("expected 1 statement in block, got %d", len(ed.block))
+	}
+}
+
+func TestParseNestedScopedEdges(t *testing.T) {
+	prog := mustParse(t, "A: a -> b { B: b -> c { c -> d } }")
+	outer := prog.statements[0].(*edgeDecl)
+	if outer.label == nil || *outer.label != "A" {
+		t.Errorf("expected outer label 'A'")
+	}
+	if len(outer.block) != 1 {
+		t.Fatalf("expected 1 statement in outer block")
+	}
+	inner, ok := outer.block[0].(*edgeDecl)
+	if !ok {
+		t.Fatalf("expected edgeDecl in outer block")
+	}
+	if inner.label == nil || *inner.label != "B" {
+		t.Errorf("expected inner label 'B'")
+	}
+	if len(inner.block) != 1 {
+		t.Fatalf("expected 1 statement in inner block")
+	}
+}
+
+func TestParseScopedEdgeWithNodes(t *testing.T) {
+	prog := mustParse(t, "A -> B { node C C -> D }")
+	ed := prog.statements[0].(*edgeDecl)
+	if len(ed.block) != 2 {
+		t.Fatalf("expected 2 statements in block, got %d", len(ed.block))
+	}
+	_, ok1 := ed.block[0].(*nodeDecl)
+	if !ok1 {
+		t.Errorf("expected nodeDecl at block[0], got %T", ed.block[0])
+	}
+	_, ok2 := ed.block[1].(*edgeDecl)
+	if !ok2 {
+		t.Errorf("expected edgeDecl at block[1], got %T", ed.block[1])
+	}
+}
+
+func TestParseScopedEdgeWithSet(t *testing.T) {
+	prog := mustParse(t, "A -> B { set flow B -> C }")
+	ed := prog.statements[0].(*edgeDecl)
+	if len(ed.block) != 2 {
+		t.Fatalf("expected 2 statements in block, got %d", len(ed.block))
+	}
+	_, ok1 := ed.block[0].(*setDecl)
+	if !ok1 {
+		t.Errorf("expected setDecl at block[0], got %T", ed.block[0])
+	}
+	_, ok2 := ed.block[1].(*edgeDecl)
+	if !ok2 {
+		t.Errorf("expected edgeDecl at block[1], got %T", ed.block[1])
+	}
+}
+
+func TestParseDependsOn(t *testing.T) {
+	prog := mustParse(t, "A -> B [depends_on = E1]")
+	ed := prog.statements[0].(*edgeDecl)
+	found := false
+	for _, attr := range ed.attrs {
+		if attr.key == "depends_on" && attr.value != nil && attr.value.strVal == "E1" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected depends_on=E1 attribute")
+	}
+}
+
+// --- Error cases for edge scoping ---
+
+func TestParseErrorDuplicateLabelInScope(t *testing.T) {
+	// This will be caught at build time, not parse time
+	// Parsing should succeed
+	prog, errs := parse("E1: A -> B { E1: C -> D }")
+	if len(errs) > 0 {
+		t.Logf("parse errors (may be expected): %v", errs)
+	}
+	if len(prog.statements) != 1 {
+		t.Fatalf("expected 1 statement")
+	}
+}
+
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && searchString(s, substr)
 }

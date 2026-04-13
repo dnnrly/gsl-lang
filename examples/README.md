@@ -66,7 +66,19 @@ A build system with task dependencies showing the execution flow of a CI/CD pipe
 
 **Use case:** Build systems, CI/CD pipelines, task scheduling, dependency resolution.
 
-### 6. Circular Dependencies (`circular_dependencies.gsl`)
+### 6. Task Dependencies (`task_dependencies.gsl`)
+
+A demonstration of edge labels and scoping for task dependency graphs.
+
+**Demonstrates:**
+- Edge labels for dependency targeting (`E1: Setup -> UnitTests`)
+- Scoped edges for implicit dependencies
+- Explicit `depends_on` attributes
+- Cross-branch dependencies between different pipeline stages
+
+**Use case:** Build systems, workflow orchestration, dependency graphs, task scheduling.
+
+### 7. Circular Dependencies (`circular_dependencies.gsl`)
 
 A graph with circular dependencies between services.
 

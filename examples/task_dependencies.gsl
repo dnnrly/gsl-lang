@@ -1,0 +1,55 @@
+# Task dependencies with edge scoping
+# Shows how to use edge labels and depends_on for explicit dependency graphs.
+# This is useful for build systems, workflow orchestration, and task scheduling.
+
+# Tasks in a build pipeline
+node Setup [text="Setup Environment"]
+node UnitTests [text="Run Unit Tests"]
+node Integration [text="Integration Tests"]
+node Build [text="Build Binary"]
+node Package [text="Create Package"]
+node Deploy [text="Deploy to Prod"]
+node Smoke [text="Smoke Tests"]
+
+# Method 1: Edge scoping (implicit dependencies)
+# Tasks inside a scoped edge implicitly depend on the parent edge
+
+Setup -> UnitTests {
+    UnitTests -> Integration
+}
+
+Setup -> Build {
+    Build -> Package {
+        Package -> Deploy {
+            Deploy -> Smoke
+        }
+    }
+}
+
+# Method 2: Edge labels with explicit depends_on
+# Use this when you need to reference dependencies across different branches
+
+E1: Setup -> UnitTests
+E2: Setup -> Build
+UnitTests -> Integration [depends_on=E1]
+Build -> Package [depends_on=E2]
+Package -> Deploy
+Deploy -> Smoke
+Integration -> Smoke
+
+# Method 3: Nested scopes with cross-branch dependencies
+# Combines scoping for clarity with explicit references where needed
+
+Compile: Setup -> Build {
+    Build -> Package {
+        Package -> Deploy
+    }
+}
+
+Test: Setup -> UnitTests {
+    UnitTests -> Integration
+}
+
+# Explicit dependency: Smoke tests need both Deploy AND Integration
+SmokeTest: Smoke
+Integration -> SmokeTest [depends_on=Deploy]

@@ -138,6 +138,16 @@ func (p *parser) parseEdgeDecl() *edgeDecl {
 	firstTok := p.peek()
 	ed := &edgeDecl{line: firstTok.Line, col: firstTok.Column}
 
+	// Check for edge label: "Label: A -> B"
+	// Lookahead: if we see IDENT followed by COLON, it's a label
+	if firstTok.Type == TOKEN_IDENT && p.peekNext().Type == TOKEN_COLON {
+		labelTok := p.advance() // consume label
+		label := labelTok.Literal
+		ed.label = &label
+		p.advance()         // consume ':'
+		firstTok = p.peek() // update for error reporting
+	}
+
 	left := p.parseNodeList()
 	ed.left = left
 
@@ -154,6 +164,14 @@ func (p *parser) parseEdgeDecl() *edgeDecl {
 	switch p.peek().Type {
 	case TOKEN_LBRACKET:
 		ed.attrs = p.parseAttributeList(false)
+		// After attribute list, check for text shorthand with colon
+		if p.peek().Type == TOKEN_COLON {
+			p.advance() // consume ':'
+			strTok := p.expect(TOKEN_STRING)
+			if strTok.Type == TOKEN_STRING {
+				ed.textValue = &strTok.Literal
+			}
+		}
 	case TOKEN_COLON:
 		p.advance() // consume ':'
 		strTok := p.expect(TOKEN_STRING)
@@ -163,7 +181,21 @@ func (p *parser) parseEdgeDecl() *edgeDecl {
 	}
 
 	ed.memberships = p.parseMemberships()
+
+	// Check for scoped edge block: A -> B { ... }
+	if p.peek().Type == TOKEN_LBRACE {
+		ed.block = p.parseScopedBlock()
+	}
+
 	return ed
+}
+
+// peekNext returns the token after the current one (without consuming)
+func (p *parser) peekNext() Token {
+	if p.pos+1 >= len(p.tokens) {
+		return Token{Type: TOKEN_EOF}
+	}
+	return p.tokens[p.pos+1]
 }
 
 func (p *parser) parseSetDecl() *setDecl {
@@ -233,6 +265,25 @@ func (p *parser) parseAttribute(inNodeContext bool) attribute {
 		key:  tok.Literal,
 		line: tok.Line,
 		col:  tok.Column,
+	}
+
+	// Check for reserved attribute names
+	if attr.key == "depends_on" {
+		// depends_on is a reserved attribute for edge dependencies
+		// The value must be an identifier (edge label reference)
+		if p.peek().Type == TOKEN_EQUALS {
+			p.advance() // consume '='
+			refTok := p.expect(TOKEN_IDENT)
+			if refTok.Type == TOKEN_IDENT {
+				attr.value = &attrValue{
+					kind:   valueString,
+					strVal: refTok.Literal,
+				}
+			}
+		} else {
+			p.addError("depends_on requires a value (edge label reference) at %d:%d", tok.Line, tok.Column)
+		}
+		return attr
 	}
 
 	if p.peek().Type == TOKEN_EQUALS {
@@ -306,4 +357,35 @@ func (p *parser) parseBlock(parentName string) []nodeDecl {
 	}
 	p.expect(TOKEN_RBRACE)
 	return children
+}
+
+func (p *parser) parseScopedBlock() []statement {
+	p.advance() // consume '{'
+	var stmts []statement
+	for p.peek().Type != TOKEN_RBRACE && p.peek().Type != TOKEN_EOF {
+		tok := p.peek()
+		switch tok.Type {
+		case TOKEN_NODE:
+			nd := p.parseNodeDecl()
+			if nd != nil {
+				stmts = append(stmts, nd)
+			}
+		case TOKEN_SET:
+			sd := p.parseSetDecl()
+			if sd != nil {
+				stmts = append(stmts, sd)
+			}
+		case TOKEN_IDENT:
+			// Check if this is a labeled edge: "Label: ..." or just an edge
+			ed := p.parseEdgeDecl()
+			if ed != nil {
+				stmts = append(stmts, ed)
+			}
+		default:
+			p.addError("unexpected token %s (%q) inside edge scope at %d:%d", tok.Type, tok.Literal, tok.Line, tok.Column)
+			p.advance()
+		}
+	}
+	p.expect(TOKEN_RBRACE)
+	return stmts
 }
