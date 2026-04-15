@@ -42,6 +42,21 @@ D->E,F
 A->B [weight=1.5, color="blue"]
 A->B: "label"
 A->B [weight=1.5] @setname
+
+# Labeled edges (can be referenced as dependencies)
+L1: A -> B
+L2: A,B -> C
+
+# Scoped edges (children implicitly depend on parent)
+A -> B {
+  B -> C
+  C -> D [weight=2]
+}
+
+# Labeled scoped edges
+L3: API -> Database {
+  Database -> Cache
+}
 ```
 
 **Rules:**
@@ -51,6 +66,9 @@ A->B [weight=1.5] @setname
 - Text shorthand supported
 - Duplicate edges are allowed and preserved
 - Edges can have text shorthand and attributes but not both in same declaration
+- **Labels**: `Label: A -> B` creates a named edge that can be referenced
+- **Scoped blocks**: Edges inside `{...}` implicitly depend on the parent edge
+- Scoped edges create implicit `depends_on` relationships (see Reserved Attributes)
 
 ### Sets (Groupings)
 
@@ -90,6 +108,23 @@ node Child2 [parent=Parent]
 - Explicit parent in block overrides implicit (generates warning)
 - `parent` attribute uses NodeRef type (can reference any node ID)
 - Blocks can be nested
+
+### Reserved Attributes
+
+The following attribute names have special meaning:
+
+- **`depends_on`**: Defines edge dependency relationships. Used implicitly in scoped edge blocks.
+
+```gsl
+# Explicit dependency example
+ParentEdge: X -> Y
+Z -> W [depends_on=ParentEdge]
+
+# Scoped edges create implicit depends_on:
+L4: A -> B {
+  B -> C    # implicitly has depends_on=L4
+}
+```
 
 ### Attribute Types and Values
 
@@ -158,6 +193,13 @@ Database -> Cache
 
 # Complex edge declaration
 AuthModule -> Database, Cache
+
+# Request flow with scoped dependencies
+Req1: Client -> API {
+  AuthModule -> Database
+  DataModule -> Cache
+  API -> ResponseQueue
+}
 ```
 
 ## Language Design Notes
@@ -175,6 +217,9 @@ AuthModule -> Database, Cache
 - **Set membership is separate**: Nodes and edges have set membership tracked independently
 - **Parent is just an attribute**: The `parent` attribute is normal except that it has semantic meaning in parent-child relationships
 - **Attributes are untyped**: Values are stored without type information; interpretation is up to the consumer
+- **Edge scoping creates dependencies**: Edges inside scoped blocks implicitly depend on their parent edge
+- **Edge identity is opaque**: Edges don't have observable identity; labels are used for referencing
+- **Edge instance independence**: Multiple identical edges are distinct instances and are never merged
 
 ### Serialization
 
@@ -202,6 +247,9 @@ Warnings are informational only—parsing continues.
 5. **No set-of-sets**: Sets can't contain other sets, only nodes and edges can be in sets
 6. **Parent is attribute**: Setting parent doesn't create hierarchical structure—it's just an attribute
 7. **NodeRef only in nodes**: Can't put `parent=SomeNode` in edge or set attributes
+8. **No explicit depends_on in scoped edges**: `A->B { C->D [depends_on=X] }` is invalid—dependencies are implicit
+9. **Scoped edges are not values**: Can't assign or reuse scoped blocks like `e = A->B { ... }`
+10. **Unlabeled edges cannot be referenced**: Only edges with labels like `E1: A->B` can be dependency targets
 
 ## Quick Reference
 
