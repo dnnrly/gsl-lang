@@ -169,6 +169,15 @@ subgraph edge depends on edge.protocol == "http"
 
 Selects edges whose **parent** satisfies the inner predicate. Here `E2` and `E3` both match because their parent `E1` uses `protocol="http"`.
 
+**Putting it together:**
+
+```
+subgraph edge depends on edge.protocol == "http" scope
+| make edge.status = "reviewed"
+```
+
+This selects edges whose parent uses HTTP, expands to all descendants via `scope`, then marks all matched edges as `reviewed`.
+
 ### Questions to consider
 
 - *Is the distinction between node predicates and edge predicates clear?*
