@@ -68,7 +68,7 @@ L3: API -> Database {
 - Edges can have text shorthand and attributes but not both in same declaration
 - **Labels**: `Label: A -> B` creates a named edge that can be referenced
 - **Scoped blocks**: Edges inside `{...}` implicitly depend on the parent edge
-- Scoped edges create implicit `depends_on` relationships (see Reserved Attributes)
+- Scoped edges create implicit `parent` relationships (see Reserved Attributes)
 
 ### Sets (Groupings)
 
@@ -113,16 +113,16 @@ node Child2 [parent=Parent]
 
 The following attribute names have special meaning:
 
-- **`depends_on`**: Defines edge dependency relationships. Used implicitly in scoped edge blocks.
+- **`parent`**: Defines edge dependency relationships. Used implicitly in scoped edge blocks.
 
 ```gsl
 # Explicit dependency example
 ParentEdge: X -> Y
-Z -> W [depends_on=ParentEdge]
+Z -> W [parent=ParentEdge]
 
-# Scoped edges create implicit depends_on:
+# Scoped edges create implicit parent:
 L4: A -> B {
-  B -> C    # implicitly has depends_on=L4
+  B -> C    # implicitly has parent=L4
 }
 ```
 
@@ -247,7 +247,7 @@ Warnings are informational only—parsing continues.
 5. **No set-of-sets**: Sets can't contain other sets, only nodes and edges can be in sets
 6. **Parent is attribute**: Setting parent doesn't create hierarchical structure—it's just an attribute
 7. **NodeRef only in nodes**: Can't put `parent=SomeNode` in edge or set attributes
-8. **No explicit depends_on in scoped edges**: `A->B { C->D [depends_on=X] }` is invalid—dependencies are implicit
+8. **No explicit parent in scoped edges**: `A->B { C->D [parent=X] }` is invalid—dependencies are implicit
 9. **Scoped edges are not values**: Can't assign or reuse scoped blocks like `e = A->B { ... }`
 10. **Unlabeled edges cannot be referenced**: Only edges with labels like `E1: A->B` can be dependency targets
 

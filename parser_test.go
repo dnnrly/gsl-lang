@@ -591,18 +591,17 @@ func TestParseScopedEdgeWithSet(t *testing.T) {
 	}
 }
 
-func TestParseDependsOn(t *testing.T) {
-	prog := mustParse(t, "A -> B [depends_on = E1]")
-	ed := prog.statements[0].(*edgeDecl)
-	found := false
-	for _, attr := range ed.attrs {
-		if attr.key == "depends_on" && attr.value != nil && attr.value.strVal == "E1" {
-			found = true
-			break
+func TestParseParentAttribute(t *testing.T) {
+	prog := mustParse(t, "A -> B [parent = E1]")
+	for _, stmt := range prog.statements {
+		if ed, ok := stmt.(*edgeDecl); ok {
+			for _, attr := range ed.attrs {
+				if attr.key == "parent" && attr.value != nil && attr.value.strVal == "E1" {
+					return
+				}
+			}
+			t.Errorf("expected parent=E1 attribute")
 		}
-	}
-	if !found {
-		t.Errorf("expected depends_on=E1 attribute")
 	}
 }
 

@@ -156,19 +156,19 @@ This is syntactic sugar for:
 
 ```gsl
 E1: A -> B
-B -> C [depends_on=E1]
+B -> C [parent=E1]
 ```
 
-Scoped edges flatten to explicit `depends_on` attributes during canonicalization.
+Scoped edges flatten to explicit `parent` attributes during canonicalization.
 
-**Explicit `depends_on`** references any labeled edge:
+**Explicit `parent`** references any labeled edge:
 
 ```gsl
 E1: A -> B
-C -> D [depends_on=E1]
+C -> D [parent=E1]
 ```
 
-Scoped edges automatically get implicit `depends_on` on their parent edge. You cannot use explicit `depends_on` inside a scoped edge - use labels on the parent edge instead:
+Scoped edges automatically get implicit `parent` on their parent edge. You cannot use explicit `parent` inside a scoped edge - use labels on the parent edge instead:
 
 Use cases:
 - Dependency graphs where edges represent tasks
@@ -672,7 +672,8 @@ type Edge struct {
 	From       string                 // Source node ID
 	To         string                 // Target node ID
 	Label      string                 // Optional edge label for dependency targeting
-	DependsOn  string                 // Optional reference to parent edge label
+	Parent     string                 // Optional reference to parent edge label
+	Children   []*Edge                // Child edges (populated from Parent references)
 	Attributes map[string]interface{} // Key-value attributes
 	Sets       map[string]struct{}    // Set membership
 }

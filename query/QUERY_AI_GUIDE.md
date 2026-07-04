@@ -115,7 +115,7 @@ traverse <direction> <depth>
 - `in` — follow incoming edges
 - `out` — follow outgoing edges
 - `both` — follow edges in both directions
-- `up` — follow `depends_on` chain to parent edges
+- `up` — follow `parent` chain to parent edges
 - `down` — follow `Children` chain to dependent edges
 
 Directions can be combined: `traverse out up 1` follows graph edges outward AND dependency chain upward.
@@ -556,7 +556,7 @@ edge parent exists
 edge parent not exists
 ```
 
-True if the edge has a `depends_on` reference (parent exists) or does not (parent not exists / root edge).
+True if the edge has a `parent` reference (parent exists) or does not (parent not exists / root edge).
 
 Examples:
 ```
@@ -571,7 +571,7 @@ edge.depth == <int>
 edge.depth != <int>
 ```
 
-Depth is computed by walking the `depends_on` chain. Root edges have depth `0`.
+Depth is computed by walking the `parent` chain. Root edges have depth `0`.
 
 Examples:
 ```
@@ -882,11 +882,11 @@ When implementing a query parser/evaluator:
 - [ ] `in @missing_set` is false; `not in @missing_set` is true
 - [ ] Edges with all attributes matching are equal
 - [ ] Self-loops are incident edges (not orphaned)
-- [ ] Dependency depth computed by walking `depends_on` chain
-- [ ] `traverse up` follows `depends_on` to parent edges
+- [ ] Dependency depth computed by walking `parent` chain
+- [ ] `traverse up` follows `parent` to parent edges
 - [ ] `traverse down` follows `Children` to dependent edges
 - [ ] Combined directions: `traverse out up 2` runs both graph and dependency expansion
-- [ ] Global label index set before predicate evaluation for `depth`/`depends_on` predicates
+- [ ] Global label index set before predicate evaluation for `depth`/`parent` predicates
 - [ ] `scope` ≡ `traverse down all`
 
 ---

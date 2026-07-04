@@ -172,7 +172,7 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	return GraphValue{result.finalize()}, nil
 }
 
-// buildGlobalLabelIndex builds a label→edge index for DepthPredicate and DependsOnPredicate
+// buildGlobalLabelIndex builds a label→edge index for DepthPredicate and ParentPredicate
 func buildGlobalLabelIndex(graph *gsl.Graph) {
 	globalLabelIndex = make(map[string]*gsl.Edge)
 	for _, edge := range graph.GetEdges() {
@@ -182,9 +182,9 @@ func buildGlobalLabelIndex(graph *gsl.Graph) {
 	}
 }
 
-// injectEdgesForDependsOn sets the edge list on DependsOnPredicate for parent resolution
-func (e *SubgraphExpr) injectEdgesForDependsOn(graphEdges []*gsl.Edge) {
-	if depPred, ok := e.Pred.(*DependsOnPredicate); ok {
+// injectEdgesForParentPredicate sets the edge list on ParentPredicate for parent resolution
+func (e *SubgraphExpr) injectEdgesForParentPredicate(graphEdges []*gsl.Edge) {
+	if depPred, ok := e.Pred.(*ParentPredicate); ok {
 		depPred.allEdges = graphEdges
 	}
 }
@@ -209,8 +209,8 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[s
 
 	case "edge":
 		// Edge predicate: include endpoints of matching edges
-		// Set up edge list on DependsOnPredicate for parent resolution
-		e.injectEdgesForDependsOn(graphEdges)
+		// Set up edge list on ParentPredicate for parent resolution
+		e.injectEdgesForParentPredicate(graphEdges)
 		for i, edge := range graphEdges {
 			if e.Pred.EvaluateEdge(edge) {
 				nodes[edge.From] = true
@@ -229,8 +229,8 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[s
 
 		if len(nodes) == 0 {
 			// No matching nodes, try edges
-			// Set up edge list on DependsOnPredicate for parent resolution
-			e.injectEdgesForDependsOn(graphEdges)
+			// Set up edge list on ParentPredicate for parent resolution
+			e.injectEdgesForParentPredicate(graphEdges)
 			for i, edge := range graphEdges {
 				if e.Pred.EvaluateEdge(edge) {
 					nodes[edge.From] = true
@@ -306,7 +306,7 @@ func hasDependencyDirection(dirs []string) bool {
 }
 
 // traverseDependencies follows dependency edges (up/down) and adds resulting nodes
-// up   = follow DependsOn chain (add parent edges' nodes)
+// up   = follow Parent chain (add parent edges' nodes)
 // down = follow Children chain (add child edges' nodes)
 func (e *SubgraphExpr) traverseDependencies(graph *gsl.Graph, startNodes map[string]bool, cfg *TraversalConfig, result map[string]bool) {
 	graphEdges := graph.GetEdges()
@@ -318,12 +318,12 @@ func (e *SubgraphExpr) traverseDependencies(graph *gsl.Graph, startNodes map[str
 		if edge.Label != "" {
 			labelIndex[edge.Label] = edge
 		}
-		if edge.DependsOn != "" {
-			childIndex[edge.DependsOn] = append(childIndex[edge.DependsOn], edge)
+		if edge.Parent != "" {
+			childIndex[edge.Parent] = append(childIndex[edge.Parent], edge)
 		}
 	}
 
-	// Set global label index for DepthPredicate/DependsOnPredicate
+	// Set global label index for DepthPredicate/ParentPredicate
 	globalLabelIndex = labelIndex
 
 	// Collect all edges whose nodes are in the result set
@@ -347,8 +347,8 @@ func (e *SubgraphExpr) traverseDependencies(graph *gsl.Graph, startNodes map[str
 			for depth := 0; depth < cfg.Depth && len(edgeQueue) > 0; depth++ {
 				var nextQueue []*gsl.Edge
 				for _, edge := range edgeQueue {
-					if edge.DependsOn != "" {
-						if parent, ok := labelIndex[edge.DependsOn]; ok && parent != nil {
+					if edge.Parent != "" {
+						if parent, ok := labelIndex[edge.Parent]; ok && parent != nil {
 							result[parent.From] = true
 							result[parent.To] = true
 							if !edgeVisited[parent] {

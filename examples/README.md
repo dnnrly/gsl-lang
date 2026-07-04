@@ -83,7 +83,7 @@ A demonstration of edge labels and scoping for task dependency graphs.
 **Demonstrates:**
 - Edge labels for dependency targeting (`E1: Setup -> UnitTests`)
 - Scoped edges for implicit dependencies
-- Explicit `depends_on` attributes
+- Explicit `parent` attributes
 - Cross-branch dependencies between different pipeline stages
 
 **Use case:** Build systems, workflow orchestration, dependency graphs, task scheduling.

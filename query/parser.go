@@ -468,7 +468,7 @@ func convertParentExists(ast *ParentExistsAST) (Predicate, error) {
 	return &ParentExistsPredicate{Target: ast.Element}, nil
 }
 
-// convertDependsOn converts DependsOnAST to DependsOnPredicate
+// convertDependsOn converts DependsOnAST to ParentPredicate
 func convertDependsOn(ast *DependsOnAST) (Predicate, error) {
 	if ast == nil {
 		return nil, fmt.Errorf("depends on AST is nil")
@@ -477,7 +477,7 @@ func convertDependsOn(ast *DependsOnAST) (Predicate, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DependsOnPredicate{
+	return &ParentPredicate{
 		Target: ast.Element,
 		Inner:  inner,
 	}, nil

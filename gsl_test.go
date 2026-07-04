@@ -162,7 +162,7 @@ func TestRoundTripLabeledEdge(t *testing.T) {
 }
 
 func TestRoundTripScopedEdge(t *testing.T) {
-	// Scoped edges should flatten to depends_on in canonical form
+	// Scoped edges should flatten to parent in canonical form
 	input := "E1: A -> B { B -> C }"
 	g1, parseErr := Parse(strings.NewReader(input))
 	if parseErr != nil && parseErr.HasError() {
@@ -175,14 +175,14 @@ func TestRoundTripScopedEdge(t *testing.T) {
 		t.Fatalf("expected 2 edges, got %d", len(edges))
 	}
 	// Child edge should depend on parent
-	if edges[1].DependsOn != "E1" {
-		t.Errorf("expected child edge to depend_on E1, got %q", edges[1].DependsOn)
+	if edges[1].Parent != "E1" {
+		t.Errorf("expected child edge to have parent E1, got %q", edges[1].Parent)
 	}
 
-	// Serialize and verify canonical form has depends_on
+	// Serialize and verify canonical form has parent
 	canonical := Serialize(g1)
-	if !strings.Contains(canonical, "depends_on=E1") {
-		t.Errorf("canonical form should contain depends_on=E1, got: %s", canonical)
+	if !strings.Contains(canonical, "parent=E1") {
+		t.Errorf("canonical form should contain parent=E1, got: %s", canonical)
 	}
 
 	// Re-parse and verify
@@ -193,10 +193,10 @@ func TestRoundTripScopedEdge(t *testing.T) {
 	assertGraphsEqual(t, g1, g2)
 }
 
-func TestRoundTripExplicitDependsOn(t *testing.T) {
-	// Explicit depends_on should round-trip
+func TestRoundTripExplicitParent(t *testing.T) {
+	// Explicit parent should round-trip
 	input := `E1: A -> B
-B -> C [depends_on = E1]`
+B -> C [parent = E1]`
 	assertRoundTrip(t, input)
 }
 

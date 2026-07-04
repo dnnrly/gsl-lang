@@ -520,12 +520,12 @@ func contains(nodes map[string]*gsl.Node, ids ...string) bool {
 	return true
 }
 
-// TestTraverseUpDirection tests up traversal (follow DependsOn chain)
+// TestTraverseUpDirection tests up traversal (follow Parent chain)
 func TestTraverseUpDirection(t *testing.T) {
 	// Graph: A → B (depends on E1: C → D)
 	// Up from A or B should find C and D (parent edge's endpoints)
 	parent := &gsl.Edge{From: "C", To: "D", Label: "E1"}
-	child := &gsl.Edge{From: "A", To: "B", DependsOn: "E1"}
+	child := &gsl.Edge{From: "A", To: "B", Parent: "E1"}
 	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
@@ -565,7 +565,7 @@ func TestTraverseDownDirection(t *testing.T) {
 	// Graph: A → B (label E1), B → C (depends on E1)
 	// Down from A or B should find C
 	parent := &gsl.Edge{From: "A", To: "B", Label: "E1"}
-	child := &gsl.Edge{From: "B", To: "C", DependsOn: "E1"}
+	child := &gsl.Edge{From: "B", To: "C", Parent: "E1"}
 	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
@@ -603,9 +603,9 @@ func TestTraverseDownDirection(t *testing.T) {
 func TestTraverseDownAll(t *testing.T) {
 	// Chain: A → B (E1) → C (depends E1) → D (E2) → E (depends E2)
 	e1 := &gsl.Edge{From: "A", To: "B", Label: "E1"}
-	c1 := &gsl.Edge{From: "B", To: "C", DependsOn: "E1", Label: "E2"}
-	c2 := &gsl.Edge{From: "C", To: "D", DependsOn: "E2", Label: "E3"}
-	c3 := &gsl.Edge{From: "D", To: "E", DependsOn: "E3"}
+	c1 := &gsl.Edge{From: "B", To: "C", Parent: "E1", Label: "E2"}
+	c2 := &gsl.Edge{From: "C", To: "D", Parent: "E2", Label: "E3"}
+	c3 := &gsl.Edge{From: "D", To: "E", Parent: "E3"}
 	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
@@ -645,7 +645,7 @@ func TestTraverseCombinedOutUp(t *testing.T) {
 	// Graph: A → B (E1), C → D (depends E1)
 	// Out from A reaches B; Up from B reaches C, D
 	parent := &gsl.Edge{From: "C", To: "D", Label: "E1"}
-	child := &gsl.Edge{From: "A", To: "B", DependsOn: "E1", Label: "E2"}
+	child := &gsl.Edge{From: "A", To: "B", Parent: "E1", Label: "E2"}
 	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
@@ -684,8 +684,8 @@ func TestTraverseCombinedOutUp(t *testing.T) {
 func TestSubgraphScope(t *testing.T) {
 	// Chain: A → B (E1) → C (depends E1) → D (depends... labeled, no further)
 	e1 := &gsl.Edge{From: "A", To: "B", Label: "E1"}
-	c1 := &gsl.Edge{From: "B", To: "C", DependsOn: "E1", Label: "E2"}
-	c2 := &gsl.Edge{From: "C", To: "D", DependsOn: "E2"}
+	c1 := &gsl.Edge{From: "B", To: "C", Parent: "E1", Label: "E2"}
+	c2 := &gsl.Edge{From: "C", To: "D", Parent: "E2"}
 	graph := newTestGraph(testGraphInput{
 		Nodes: map[string]*gsl.Node{
 			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},

@@ -129,12 +129,12 @@ node.team == "payments" AND edge.protocol == "http"
 
 ### Edge Dependency Predicates
 
-Edges can have parent-child relationships through the `depends_on` attribute:
+Edges can have parent-child relationships through the `parent` attribute:
 
 ```gsl
 E1: api -> users [protocol="http"]
-E2: payments -> fraud [protocol="grpc", depends_on=E1]
-E3: payments -> db [protocol="tcp", depends_on=E1]
+E2: payments -> fraud [protocol="grpc", parent=E1]
+E3: payments -> db [protocol="tcp", parent=E1]
 ```
 
 Here `E2` and `E3` both depend on `E1`.
@@ -247,7 +247,7 @@ Starting from `payments` and `fraud` (the matched nodes), this follows outgoing 
 | `out`     | Follow outgoing edges |
 | `in`      | Follow incoming edges |
 | `both`    | Follow edges in both directions |
-| `up`      | Follow parent dependency chain (`depends_on`) |
+| `up`      | Follow parent dependency chain (`parent`) |
 | `down`    | Follow child dependency chain (`Children`) |
 
 Directions can be combined: `traverse out up 2` follows both graph edges and dependency chains.

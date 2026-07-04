@@ -3,4 +3,4 @@ node b
 node c
 
 E1: a->b
-b->c [depends_on=E1]
+b->c [parent=E1]

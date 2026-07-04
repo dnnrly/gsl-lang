@@ -2,6 +2,6 @@ node a
 node b
 node c
 
-E1: a->b [depends_on=E3]
-E2: b->c [depends_on=E1]
-E3: c->a [depends_on=E2]
+E1: a->b [parent=E3]
+E2: b->c [parent=E1]
+E3: c->a [parent=E2]

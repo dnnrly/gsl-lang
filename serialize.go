@@ -98,13 +98,13 @@ func serializeEdge(e *Edge) string {
 	b.WriteString("->")
 	b.WriteString(e.To)
 
-	// Build attributes including depends_on
+	// Build attributes including parent
 	attrs := make(map[string]interface{})
 	for k, v := range e.Attributes {
 		attrs[k] = v
 	}
-	if e.DependsOn != "" {
-		attrs["depends_on"] = e.DependsOn
+	if e.Parent != "" {
+		attrs["parent"] = e.Parent
 	}
 
 	if len(attrs) > 0 {
@@ -152,8 +152,8 @@ func serializeAttr(key string, value interface{}) string {
 	}
 	switch v := value.(type) {
 	case string:
-		// Special case: depends_on outputs as identifier (no quotes)
-		if key == "depends_on" {
+		// Special case: parent outputs as identifier (no quotes)
+		if key == "parent" {
 			return key + "=" + v
 		}
 		return key + "=" + `"` + escapeString(v) + `"`

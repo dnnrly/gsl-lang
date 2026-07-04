@@ -4,5 +4,5 @@ node c
 node d
 
 E1: a -> b
-E2: b -> c [depends_on = E1]
-c -> d [depends_on = E2]
+E2: b -> c [parent = E1]
+c -> d [parent = E2]

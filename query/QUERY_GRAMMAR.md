@@ -60,7 +60,7 @@ depth
 
 `scope` is syntactic sugar for `traverse down all`.
 
-Directions may be combined (e.g., `traverse out up 1`). Graph-structure directions (`in`/`out`/`both`) follow node adjacency; dependency directions (`up`/`down`) follow the `depends_on` parent/child chain.
+Directions may be combined (e.g., `traverse out up 1`). Graph-structure directions (`in`/`out`/`both`) follow node adjacency; dependency directions (`up`/`down`) follow the `parent` parent/child chain.
 
 Examples:
 
@@ -88,7 +88,7 @@ predicate_term
     | set_membership_predicate
     | set_non_membership_predicate
     | parent_exists_predicate
-    | depends_on_predicate
+    | parent_predicate
     | depth_predicate ;
 ```
 
@@ -198,7 +198,7 @@ parent_exists_predicate
 | `edge parent exists`        | edge has a parent edge     |
 | `edge parent not exists`    | edge has no parent (root)  |
 
-A "parent" edge is one referenced by the edge's `depends_on` field.
+A "parent" edge is one referenced by the edge's `parent` field.
 
 Examples:
 
@@ -212,11 +212,11 @@ subgraph edge parent not exists
 # 11. Depends On Predicate
 
 ```ebnf
-depends_on_predicate
+parent_predicate
     = element_type , "depends" , "on" , predicate ;
 ```
 
-Evaluates the inner predicate against the parent edge. Only edges with a parent (`depends_on` set) can match.
+Evaluates the inner predicate against the parent edge. Only edges with a parent (`parent` set) can match.
 
 Examples:
 
@@ -234,7 +234,7 @@ depth_predicate
     = "edge" , "." , "depth" , ( "==" | "!=" ) , INTEGER ;
 ```
 
-`depth` is a derived attribute (not stored on the model) computed by walking the `depends_on` chain:
+`depth` is a derived attribute (not stored on the model) computed by walking the `parent` chain:
 - `depth == 0` for edges with no parent
 - `depth == N` for edges N levels deep
 

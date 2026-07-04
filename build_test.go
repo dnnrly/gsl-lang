@@ -708,7 +708,7 @@ func TestGraphCloneEdgeLabelsAndChildren(t *testing.T) {
 				left:  []string{"B"},
 				right: []string{"C"},
 				attrs: []attribute{
-					{key: "depends_on", value: &attrValue{kind: valueString, strVal: "E1"}, line: 2, col: 10},
+					{key: "parent", value: &attrValue{kind: valueString, strVal: "E1"}, line: 2, col: 10},
 				},
 				line: 2, col: 1,
 			},
@@ -722,20 +722,20 @@ func TestGraphCloneEdgeLabelsAndChildren(t *testing.T) {
 	// Clone
 	cloned := g.Clone()
 
-	// Verify edges are deep-copied with label and DependsOn
+	// Verify edges are deep-copied with label and Parent
 	origEdges := g.GetEdges()
 	clonedEdges := cloned.GetEdges()
 	if len(origEdges) != len(clonedEdges) {
 		t.Fatalf("expected %d edges in clone, got %d", len(origEdges), len(clonedEdges))
 	}
 
-	// Verify label and DependsOn are preserved in clone
+	// Verify label and Parent are preserved in clone
 	for i := range origEdges {
 		if origEdges[i].Label != clonedEdges[i].Label {
 			t.Errorf("edge %d: expected Label %q, got %q", i, origEdges[i].Label, clonedEdges[i].Label)
 		}
-		if origEdges[i].DependsOn != clonedEdges[i].DependsOn {
-			t.Errorf("edge %d: expected DependsOn %q, got %q", i, origEdges[i].DependsOn, clonedEdges[i].DependsOn)
+		if origEdges[i].Parent != clonedEdges[i].Parent {
+			t.Errorf("edge %d: expected Parent %q, got %q", i, origEdges[i].Parent, clonedEdges[i].Parent)
 		}
 	}
 
@@ -776,8 +776,8 @@ func TestGraphCloneScopedEdgeChildren(t *testing.T) {
 	if len(origEdges[0].Children) != 1 {
 		t.Fatalf("expected parent to have 1 child, got %d", len(origEdges[0].Children))
 	}
-	if origEdges[0].Children[0].DependsOn != "E1" {
-		t.Errorf("expected child DependsOn E1, got %q", origEdges[0].Children[0].DependsOn)
+	if origEdges[0].Children[0].Parent != "E1" {
+		t.Errorf("expected child Parent E1, got %q", origEdges[0].Children[0].Parent)
 	}
 
 	// Clone and verify
@@ -789,8 +789,8 @@ func TestGraphCloneScopedEdgeChildren(t *testing.T) {
 	if clonedEdges[0].Label != "E1" {
 		t.Errorf("expected clone parent label E1, got %q", clonedEdges[0].Label)
 	}
-	if clonedEdges[1].DependsOn != "E1" {
-		t.Errorf("expected clone child DependsOn E1, got %q", clonedEdges[1].DependsOn)
+	if clonedEdges[1].Parent != "E1" {
+		t.Errorf("expected clone child Parent E1, got %q", clonedEdges[1].Parent)
 	}
 }
 
@@ -823,7 +823,7 @@ func TestBuildEdgeLabel(t *testing.T) {
 
 func TestBuildScopedEdge(t *testing.T) {
 	// A -> B { B -> C }
-	// Child edge should have depends_on set to parent edge
+	// Child edge should have parent set to parent edge
 	label := "E1"
 	child := &edgeDecl{
 		left:  []string{"B"},
@@ -850,12 +850,12 @@ func TestBuildScopedEdge(t *testing.T) {
 		t.Fatalf("expected 2 edges, got %d", len(edges))
 	}
 	// Parent edge should have no dependency
-	if edges[0].DependsOn != "" {
-		t.Errorf("expected parent edge to have no dependency, got %q", edges[0].DependsOn)
+	if edges[0].Parent != "" {
+		t.Errorf("expected parent edge to have no dependency, got %q", edges[0].Parent)
 	}
 	// Child edge should depend on parent
-	if edges[1].DependsOn != "E1" {
-		t.Errorf("expected child edge to depend_on E1, got %q", edges[1].DependsOn)
+	if edges[1].Parent != "E1" {
+		t.Errorf("expected child edge to have parent E1, got %q", edges[1].Parent)
 	}
 }
 
@@ -894,22 +894,22 @@ func TestBuildNestedScopedEdges(t *testing.T) {
 		t.Fatalf("expected 3 edges, got %d", len(edges))
 	}
 	// Outer (a->b): no dependency
-	if edges[0].DependsOn != "" {
-		t.Errorf("expected outer edge no dependency, got %q", edges[0].DependsOn)
+	if edges[0].Parent != "" {
+		t.Errorf("expected outer edge no dependency, got %q", edges[0].Parent)
 	}
 	// Inner (b->c): depends on A
-	if edges[1].DependsOn != "A" {
-		t.Errorf("expected inner edge depends_on A, got %q", edges[1].DependsOn)
+	if edges[1].Parent != "A" {
+		t.Errorf("expected inner edge has parent A, got %q", edges[1].Parent)
 	}
 	// Innermost (c->d): depends on B
-	if edges[2].DependsOn != "B" {
-		t.Errorf("expected innermost edge depends_on B, got %q", edges[2].DependsOn)
+	if edges[2].Parent != "B" {
+		t.Errorf("expected innermost edge has parent B, got %q", edges[2].Parent)
 	}
 }
 
-func TestBuildExplicitDependsOn(t *testing.T) {
+func TestBuildExplicitParent(t *testing.T) {
 	// E1: A -> B
-	// B -> C [depends_on = E1]
+	// B -> C [parent = E1]
 	label := "E1"
 	prog := &program{
 		statements: []statement{
@@ -923,7 +923,7 @@ func TestBuildExplicitDependsOn(t *testing.T) {
 				left:  []string{"B"},
 				right: []string{"C"},
 				attrs: []attribute{
-					{key: "depends_on", value: &attrValue{kind: valueString, strVal: "E1"}, line: 2, col: 10},
+					{key: "parent", value: &attrValue{kind: valueString, strVal: "E1"}, line: 2, col: 10},
 				},
 				line: 2, col: 1,
 			},
@@ -937,9 +937,9 @@ func TestBuildExplicitDependsOn(t *testing.T) {
 	if len(edges) != 2 {
 		t.Fatalf("expected 2 edges, got %d", len(edges))
 	}
-	// Second edge should have depends_on = E1
-	if edges[1].DependsOn != "E1" {
-		t.Errorf("expected depends_on E1, got %q", edges[1].DependsOn)
+	// Second edge should have parent = E1
+	if edges[1].Parent != "E1" {
+		t.Errorf("expected parent E1, got %q", edges[1].Parent)
 	}
 	// Parent edge should have child in Children
 	if len(edges[0].Children) != 1 {
@@ -980,9 +980,9 @@ func TestBuildScopedEdgeWithUnlabeledParent(t *testing.T) {
 	if edges[0].Label != "" {
 		t.Errorf("expected parent edge to have no label")
 	}
-	// Child edge should have depends_on even though parent is unlabeled
+	// Child edge should have parent even though parent is unlabeled
 	// The dependency is tracked internally but since parent has no label,
-	// the child edge should have empty DependsOn in the current implementation
+	// the child edge should have empty parent in the current implementation
 }
 
 func TestBuildChildrenPopulated(t *testing.T) {
@@ -1111,12 +1111,12 @@ func TestBuildNestedScopeLabelShadowing(t *testing.T) {
 		if e.Label == "E1" {
 			if e.From == "A" && e.To == "B" {
 				outerFound = true
-				if e.DependsOn != "" {
+				if e.Parent != "" {
 					t.Errorf("outer edge should have no dependency")
 				}
 			} else if e.From == "E" && e.To == "F" {
 				innerFound = true
-				if e.DependsOn != "E1" {
+				if e.Parent != "E1" {
 					t.Errorf("inner edge should depend on outer E1")
 				}
 			}
@@ -1130,15 +1130,15 @@ func TestBuildNestedScopeLabelShadowing(t *testing.T) {
 	}
 }
 
-func TestBuildExplicitDependsOnInScopeError(t *testing.T) {
-	// E1: A -> B { C -> D [depends_on = X] }
-	// Explicit depends_on inside scoped edge is invalid per spec
+func TestBuildExplicitParentInScopeError(t *testing.T) {
+	// E1: A -> B { C -> D [parent = X] }
+	// Explicit parent inside scoped edge is invalid per spec
 	label := "E1"
 	child := &edgeDecl{
 		left:  []string{"C"},
 		right: []string{"D"},
 		attrs: []attribute{
-			{key: "depends_on", value: &attrValue{kind: valueString, strVal: "X"}, line: 2, col: 15},
+			{key: "parent", value: &attrValue{kind: valueString, strVal: "X"}, line: 2, col: 15},
 		},
 		line: 2, col: 5,
 	}
@@ -1155,22 +1155,22 @@ func TestBuildExplicitDependsOnInScopeError(t *testing.T) {
 	}
 	_, _, err := buildGraph(prog)
 	if err == nil {
-		t.Fatal("expected error for explicit depends_on inside scoped edge")
+		t.Fatal("expected error for explicit parent inside scoped edge")
 	}
-	if !strings.Contains(err.Error(), "depends_on not allowed inside scoped edge") {
-		t.Errorf("expected 'depends_on not allowed' error, got: %v", err)
+	if !strings.Contains(err.Error(), "parent not allowed inside scoped edge") {
+		t.Errorf("expected 'parent not allowed' error, got: %v", err)
 	}
 }
 
-func TestBuildUnknownDependsOnError(t *testing.T) {
-	// A -> B [depends_on = NonExistent]
+func TestBuildUnknownParentError(t *testing.T) {
+	// A -> B [parent = NonExistent]
 	prog := &program{
 		statements: []statement{
 			&edgeDecl{
 				left:  []string{"A"},
 				right: []string{"B"},
 				attrs: []attribute{
-					{key: "depends_on", value: &attrValue{kind: valueString, strVal: "NonExistent"}, line: 1, col: 10},
+					{key: "parent", value: &attrValue{kind: valueString, strVal: "NonExistent"}, line: 1, col: 10},
 				},
 				line: 1, col: 1,
 			},
@@ -1178,7 +1178,7 @@ func TestBuildUnknownDependsOnError(t *testing.T) {
 	}
 	_, _, err := buildGraph(prog)
 	if err == nil {
-		t.Fatal("expected error for unknown depends_on reference")
+		t.Fatal("expected error for unknown parent reference")
 	}
 	if !strings.Contains(err.Error(), "unknown label") {
 		t.Errorf("expected 'unknown label' error, got: %v", err)

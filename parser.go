@@ -267,9 +267,9 @@ func (p *parser) parseAttribute(inNodeContext bool) attribute {
 		col:  tok.Column,
 	}
 
-	// Check for reserved attribute names
-	if attr.key == "depends_on" {
-		// depends_on is a reserved attribute for edge dependencies
+	// Check for reserved attribute names (edge context only)
+	if attr.key == "parent" && !inNodeContext {
+		// parent is a reserved attribute for edge dependencies
 		// The value must be an identifier (edge label reference)
 		if p.peek().Type == TOKEN_EQUALS {
 			p.advance() // consume '='
@@ -281,7 +281,7 @@ func (p *parser) parseAttribute(inNodeContext bool) attribute {
 				}
 			}
 		} else {
-			p.addError("depends_on requires a value (edge label reference) at %d:%d", tok.Line, tok.Column)
+			p.addError("parent requires a value (edge label reference) at %d:%d", tok.Line, tok.Column)
 		}
 		return attr
 	}

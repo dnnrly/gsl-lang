@@ -1,5 +1,5 @@
 # Task dependencies with edge scoping
-# Shows how to use edge labels and depends_on for explicit dependency graphs.
+# Shows how to use edge labels and parent for explicit dependency graphs.
 # This is useful for build systems, workflow orchestration, and task scheduling.
 
 # Tasks in a build pipeline
@@ -26,13 +26,13 @@ Setup -> Build {
     }
 }
 
-# Method 2: Edge labels with explicit depends_on
+# Method 2: Edge labels with explicit parent
 # Use this when you need to reference dependencies across different branches
 
 E1: Setup -> UnitTests
 E2: Setup -> Build
-UnitTests -> Integration [depends_on=E1]
-Build -> Package [depends_on=E2]
+UnitTests -> Integration [parent=E1]
+Build -> Package [parent=E2]
 Package -> Deploy
 Deploy -> Smoke
 Integration -> Smoke
@@ -51,4 +51,4 @@ Test: Setup -> UnitTests {
 }
 
 # Explicit dependency: declare the dependency previously defined
-Integration -> Smoke [depends_on=Test]
+Integration -> Smoke [parent=Test]

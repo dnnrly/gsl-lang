@@ -420,7 +420,7 @@ Equivalent to:
 
 ```
 E1: A -> B
-B -> C [depends_on = E1]
+B -> C [parent = E1]
 ```
 
 ---
@@ -472,7 +472,7 @@ Invalid:
 
 ```
 A -> B {
-  C -> D [depends_on = X]
+  C -> D [parent = X]
 }
 ```
 
@@ -567,11 +567,11 @@ If a NodeRef appears in an edge or set attribute:
 
 Reserved:
 
-* `depends_on`
+* `parent`
 
 ---
 
-## 9.2 depends_on
+## 9.2 parent
 
 Defines edge dependency.
 
@@ -642,7 +642,7 @@ The following conditions MUST produce a syntax error:
 * NodeRef values in edge attributes.
 * NodeRef values in set attributes.
 * Use of reserved keywords as identifiers.
-* Explicit `depends_on` inside scoped edges.
+* Explicit `parent` inside scoped edges.
 
 ---
 

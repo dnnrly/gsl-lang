@@ -316,7 +316,7 @@ func (g *Graph) Clone() *Graph {
 			From:       edge.From,
 			To:         edge.To,
 			Label:      edge.Label,
-			DependsOn:  edge.DependsOn,
+			Parent:     edge.Parent,
 			Attributes: copyAttrs(edge.Attributes),
 			Sets:       copySets(edge.Sets),
 		}

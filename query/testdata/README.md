@@ -17,7 +17,7 @@ testdata/
   03-make/                → attribute assignment
   04-remove/              → deletion operations
   05-traversal/           → graph structure traversal (out, in, both)
-  06-edge-dependencies/   → edge hierarchy (parent, depth, depends_on)
+   06-edge-dependencies/   → edge hierarchy (parent, depth, parent chain)
   07-collapse/            → node merging
   08-named-graphs/        → saving and reusing pipeline results
   09-pipelines/           → multi-stage query composition
@@ -140,7 +140,7 @@ Follow edges from a start node up to a depth limit (`out`, `in`, `both`).
 
 ## 06-edge-dependencies — Edge Hierarchy
 
-Query and traverse edges based on their position in the dependency tree (`depends_on`).
+Query and traverse edges based on their position in the dependency tree (`parent`).
 
 ### Predicates
 
@@ -154,7 +154,7 @@ Query and traverse edges based on their position in the dependency tree (`depend
 
 | Fixture | Tests |
 |---------|-------|
-| `04_traverse_up` | `traverse up 1` follows DependsOn chain upward |
+| `04_traverse_up` | `traverse up 1` follows Parent chain upward |
 | `05_traverse_down` | `traverse down 1` follows Children chain downward |
 | `06_traverse_out_up` | `traverse out up 1` combines graph and dependency directions |
 | `07_subgraph_scope` | `scope` sugar for `traverse down all` on edge predicates |
@@ -170,9 +170,9 @@ Query and traverse edges based on their position in the dependency tree (`depend
 | `12_traverse_down_no_children` | `traverse down 1` from leaf node → no-op (same result) |
 
 **Key Semantic Notes:**
-- `parent exists` = edge has `depends_on` set
-- `parent not exists` = edge is a root (no `depends_on`)
-- `depth` is computed by walking the `depends_on` chain
+- `parent exists` = edge has `parent` set
+- `parent not exists` = edge is a root (no `parent`)
+- `depth` is computed by walking the `parent` chain
 - `depth == 0` are root edges with no parent
 - `scope` ≡ `traverse down all`
 - Directions can be combined: `traverse out up 2`

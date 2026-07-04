@@ -40,7 +40,7 @@ func buildGraph(prog *program) (*Graph, []error, error) {
 		}
 	}
 
-	// Populate Children pointers from DependsOn references
+	// Populate Children pointers from Parent references
 	b.populateChildren()
 
 	// Validate all edge dependencies (labels must exist)
@@ -148,11 +148,11 @@ func (b *builder) processEdgeDeclWithScope(ed *edgeDecl, insideScope bool) {
 		}
 	}
 
-	// Check for explicit depends_on inside scoped block (invalid per spec)
+	// Check for explicit parent inside scoped block (invalid per spec)
 	if insideScope {
 		for _, attr := range ed.attrs {
-			if attr.key == "depends_on" {
-				b.errors = append(b.errors, fmt.Errorf("%d:%d: explicit depends_on not allowed inside scoped edge", attr.line, attr.col))
+			if attr.key == "parent" {
+				b.errors = append(b.errors, fmt.Errorf("%d:%d: explicit parent not allowed inside scoped edge", attr.line, attr.col))
 				return
 			}
 		}
@@ -178,12 +178,12 @@ func (b *builder) processEdgeDeclWithScope(ed *edgeDecl, insideScope bool) {
 				edge.Attributes["text"] = *ed.textValue
 			}
 
-			// Attributes (excluding depends_on which is handled separately)
+			// Attributes (excluding parent which is handled separately)
 			for _, attr := range ed.attrs {
-				if attr.key == "depends_on" {
+				if attr.key == "parent" {
 					// Store the dependency reference
 					if attr.value != nil {
-						edge.DependsOn = attr.value.strVal
+						edge.Parent = attr.value.strVal
 					}
 					continue
 				}
@@ -197,7 +197,7 @@ func (b *builder) processEdgeDeclWithScope(ed *edgeDecl, insideScope bool) {
 
 			// If inside a scope, set implicit dependency on parent
 			if insideScope && b.edgeScope != nil && b.edgeScope.parent != "" {
-				edge.DependsOn = b.edgeScope.parent
+				edge.Parent = b.edgeScope.parent
 			}
 
 			// Memberships
@@ -257,8 +257,8 @@ func (b *builder) processScopedBlock(stmts []statement, parentLabel string) {
 	b.edgeScope = oldScope
 }
 
-// populateChildren populates Children pointers on each edge from DependsOn references.
-// For each edge with DependsOn set, the parent edge (matched by label) gets this edge
+// populateChildren populates Children pointers on each edge from Parent references.
+// For each edge with Parent set, the parent edge (matched by label) gets this edge
 // appended to its Children slice.
 func (b *builder) populateChildren() {
 	labelIndex := make(map[string]*Edge)
@@ -268,15 +268,15 @@ func (b *builder) populateChildren() {
 		}
 	}
 	for _, edge := range b.graph.edges {
-		if edge.DependsOn != "" {
-			if parent, ok := labelIndex[edge.DependsOn]; ok {
+		if edge.Parent != "" {
+			if parent, ok := labelIndex[edge.Parent]; ok {
 				parent.Children = append(parent.Children, edge)
 			}
 		}
 	}
 }
 
-// validateEdgeDependencies checks that all depends_on references resolve to valid labels
+// validateEdgeDependencies checks that all parent references resolve to valid labels
 func (b *builder) validateEdgeDependencies() {
 	// Collect all edge labels in the graph
 	allLabels := make(map[string]bool)
@@ -288,11 +288,11 @@ func (b *builder) validateEdgeDependencies() {
 
 	// Validate dependencies
 	for _, edge := range b.graph.edges {
-		if edge.DependsOn != "" {
-			if !allLabels[edge.DependsOn] {
+		if edge.Parent != "" {
+			if !allLabels[edge.Parent] {
 				// Find the edge's position for error reporting
 				// We report on the edge that has the bad dependency
-				b.errors = append(b.errors, fmt.Errorf("edge depends_on references unknown label %q", edge.DependsOn))
+				b.errors = append(b.errors, fmt.Errorf("edge parent references unknown label %q", edge.Parent))
 			}
 		}
 	}

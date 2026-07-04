@@ -40,7 +40,7 @@ membership   ::= "@" IDENT
 attribute_list ::= "[" (attribute ("," attribute)*)? "]"
 
 attribute    ::= IDENT ("=" value)?
-               | "depends_on" "=" IDENT
+               | "parent" "=" IDENT
 
 value        ::= STRING
                | NUMBER
