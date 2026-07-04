@@ -335,6 +335,9 @@ func (e *SubgraphExpr) traverseDependencies(graph *gsl.Graph, startNodes map[str
 				edgeVisited[edge] = true
 				edgeQueue = append(edgeQueue, edge)
 			}
+			// Ensure both endpoints of incident edges are included
+			result[edge.From] = true
+			result[edge.To] = true
 		}
 	}
 

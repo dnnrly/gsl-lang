@@ -544,3 +544,161 @@ func TestParseEdgePredicateNotEqual(t *testing.T) {
 		t.Fatalf("expected HTTP value, got %v", notEqualPred.Value)
 	}
 }
+
+// TestParentExistsPredicate tests edge parent exists
+func TestParentExistsPredicate(t *testing.T) {
+	t.Run("edge with parent", func(t *testing.T) {
+		pred := &ParentExistsPredicate{Target: "edge"}
+		edge := &gsl.Edge{From: "A", To: "B", DependsOn: "E1"}
+		if !pred.EvaluateEdge(edge) {
+			t.Fatal("edge with DependsOn should match")
+		}
+	})
+
+	t.Run("edge without parent", func(t *testing.T) {
+		pred := &ParentExistsPredicate{Target: "edge"}
+		edge := &gsl.Edge{From: "A", To: "B"}
+		if pred.EvaluateEdge(edge) {
+			t.Fatal("edge without DependsOn should not match")
+		}
+	})
+
+	t.Run("node always false", func(t *testing.T) {
+		pred := &ParentExistsPredicate{Target: "edge"}
+		node := &gsl.Node{ID: "A"}
+		if pred.EvaluateNode(node) {
+			t.Fatal("parent exists predicate on node should be false")
+		}
+	})
+}
+
+// TestParentNotExistsPredicate tests edge parent not exists
+func TestParentNotExistsPredicate(t *testing.T) {
+	t.Run("root edge", func(t *testing.T) {
+		pred := &ParentNotExistsPredicate{Target: "edge"}
+		edge := &gsl.Edge{From: "A", To: "B", DependsOn: ""}
+		if !pred.EvaluateEdge(edge) {
+			t.Fatal("root edge should match parent not exists")
+		}
+	})
+
+	t.Run("edge with parent", func(t *testing.T) {
+		pred := &ParentNotExistsPredicate{Target: "edge"}
+		edge := &gsl.Edge{From: "A", To: "B", DependsOn: "E1"}
+		if pred.EvaluateEdge(edge) {
+			t.Fatal("edge with DependsOn should not match parent not exists")
+		}
+	})
+}
+
+// TestDepthPredicate tests edge.depth predicate
+func TestDepthPredicate(t *testing.T) {
+	// Set up global label index for depth computation
+	parent := &gsl.Edge{From: "A", To: "B", Label: "E1"}
+	child := &gsl.Edge{From: "B", To: "C", DependsOn: "E1"}
+	globalLabelIndex = map[string]*gsl.Edge{"E1": parent}
+	defer func() { globalLabelIndex = nil }()
+
+	t.Run("depth == 0 (root)", func(t *testing.T) {
+		pred := &DepthPredicate{Target: "edge", Operator: "==", Value: 0}
+		if !pred.EvaluateEdge(parent) {
+			t.Fatal("root edge should have depth 0")
+		}
+	})
+
+	t.Run("depth == 1 (child)", func(t *testing.T) {
+		pred := &DepthPredicate{Target: "edge", Operator: "==", Value: 1}
+		if !pred.EvaluateEdge(child) {
+			t.Fatal("child edge should have depth 1")
+		}
+	})
+
+	t.Run("depth != 0", func(t *testing.T) {
+		pred := &DepthPredicate{Target: "edge", Operator: "!=", Value: 0}
+		if !pred.EvaluateEdge(child) {
+			t.Fatal("child edge should have depth != 0")
+		}
+		if pred.EvaluateEdge(parent) {
+			t.Fatal("root edge should not have depth != 0")
+		}
+	})
+
+	t.Run("depth == 2 on child returns false", func(t *testing.T) {
+		pred := &DepthPredicate{Target: "edge", Operator: "==", Value: 2}
+		if pred.EvaluateEdge(child) {
+			t.Fatal("child edge should not have depth 2")
+		}
+	})
+
+	t.Run("nil edge returns false", func(t *testing.T) {
+		pred := &DepthPredicate{Target: "edge", Operator: "==", Value: 0}
+		if pred.EvaluateEdge(nil) {
+			t.Fatal("nil edge should not match")
+		}
+	})
+}
+
+// TestDependsOnPredicate tests edge depends on <predicate>
+func TestDependsOnPredicate(t *testing.T) {
+	// Create a parent edge
+	parent := &gsl.Edge{From: "X", To: "Y", Label: "E1", Attributes: map[string]interface{}{"protocol": "http"}}
+	// Create a child edge referencing the parent
+	child := &gsl.Edge{From: "A", To: "B", DependsOn: "E1"}
+	allEdges := []*gsl.Edge{parent, child}
+
+	t.Run("parent matches inner predicate", func(t *testing.T) {
+		inner := &AttributeEqualsPredicate{Target: "edge", Name: "protocol", Value: "http"}
+		pred := &DependsOnPredicate{Target: "edge", Inner: inner, allEdges: allEdges}
+		if !pred.EvaluateEdge(child) {
+			t.Fatal("child edge's parent has protocol=http, should match")
+		}
+	})
+
+	t.Run("parent does not match inner predicate", func(t *testing.T) {
+		inner := &AttributeEqualsPredicate{Target: "edge", Name: "protocol", Value: "grpc"}
+		pred := &DependsOnPredicate{Target: "edge", Inner: inner, allEdges: allEdges}
+		if pred.EvaluateEdge(child) {
+			t.Fatal("child edge's parent has protocol=http, should not match grpc")
+		}
+	})
+
+	t.Run("edge without parent returns false", func(t *testing.T) {
+		inner := &ExistsPredicate{}
+		pred := &DependsOnPredicate{Target: "edge", Inner: inner, allEdges: allEdges}
+		orphan := &gsl.Edge{From: "C", To: "D"}
+		if pred.EvaluateEdge(orphan) {
+			t.Fatal("edge without DependsOn should not match")
+		}
+	})
+
+	t.Run("node always false", func(t *testing.T) {
+		inner := &ExistsPredicate{}
+		pred := &DependsOnPredicate{Target: "edge", Inner: inner, allEdges: allEdges}
+		node := &gsl.Node{ID: "A"}
+		if pred.EvaluateNode(node) {
+			t.Fatal("depends on predicate on node should be false")
+		}
+	})
+}
+
+// TestPredicateTargetTypeNew tests TargetType for new predicates
+func TestPredicateTargetTypeNew(t *testing.T) {
+	tests := []struct {
+		name   string
+		pred   Predicate
+		expect string
+	}{
+		{"ParentExists", &ParentExistsPredicate{Target: "edge"}, "edge"},
+		{"ParentNotExists", &ParentNotExistsPredicate{Target: "edge"}, "edge"},
+		{"Depth", &DepthPredicate{Target: "edge", Operator: "==", Value: 0}, "edge"},
+		{"DependsOn", &DependsOnPredicate{Target: "edge", Inner: &ExistsPredicate{}}, "edge"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.pred.TargetType() != tt.expect {
+				t.Fatalf("Expected %s, got %s", tt.expect, tt.pred.TargetType())
+			}
+		})
+	}
+}

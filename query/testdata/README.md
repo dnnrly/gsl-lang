@@ -4,7 +4,7 @@ description: Query language fixture test catalog. Quick reference for LLMs and d
 
 # Query Language Test Fixtures
 
-This directory contains **59 fixture-based integration tests** for the GSL Query Language. Each fixture is a directory containing:
+This directory contains **71 fixture-based integration tests** for the GSL Query Language. Each fixture is a directory containing:
 - `graph.gsl` — input graph
 - `query.gql` — query to execute
 - `result.gsl` — expected output
@@ -22,11 +22,12 @@ Tests are loaded and executed by `fixtures_test.go`.
 | [Make (Assign)](#make-assign) | 5 | Add/update node/edge attributes |
 | [Remove](#remove) | 7 | Delete edges, attributes, orphan nodes |
 | [Collapse](#collapse) | 7 | Merge nodes with predicate matching |
-| [Traversal](#traversal) | 7 | Follow edges in/out/both with depth control |
+| [Traversal](#traversal) | 11 | Follow edges in/out/both/up/down with depth control |
+| [Edge Dependency Predicates](#edge-dependency-predicates) | 3 | Parent existence, depth, depends-on predicates |
 | [Predicates](#predicates) | 4 | Type-sensitive equality, existence checks |
 | [Named Graphs](#named-graphs) | 6 | Binding, from clause, algebra chains |
 | [Pipelines](#pipelines) | 3 | Multi-stage query composition |
-| [Edge Cases](#edge-cases) | 5 | Empty graphs, self-loops, orphans |
+| [Edge Cases](#edge-cases) | 10 | Empty graphs, self-loops, orphans, negative edge tests |
 
 ---
 
@@ -156,12 +157,19 @@ Follow edges from a start node up to a depth limit.
 | `subgraph_traverse_all_depth` | `traverse out` (unbounded, handles cycles) |
 | `cyclic_graph_traversal` | Cycles don't infinite loop (visited set) |
 | `wide_fanout` | High fan-out correctly traversed |
+| `traverse_up` | `traverse up 1` follows DependsOn chain upward |
+| `traverse_down` | `traverse down 1` follows Children chain downward |
+| `traverse_out_up` | `traverse out up 1` combines graph and dependency directions |
+| `subgraph_scope` | `scope` sugar for `traverse down all` on edge predicates |
 
 **Key Semantic Notes:**
 - `traverse` requires matching predicate first
 - Visited set prevents cycles from infinite loops
-- `out`, `in`, `both` control direction
-- Unbounded traversal (`traverse out`) safe on cyclic graphs
+- `out`, `in`, `both` control graph-structure direction
+- `up`, `down` control dependency direction (follows `depends_on` and `Children`)
+- Directions can be combined: `traverse out up 2`
+- `scope` is syntactic sugar for `traverse down all`
+- Unbounded traversal (`traverse out`, `scope`) safe on cyclic graphs
 
 ---
 
@@ -181,6 +189,39 @@ Type-sensitive comparisons and existence checks.
 - Equality is `==` (double equals) or ` = ` (space-equals-space)
 - Inequality `!=` returns false for missing attributes
 - No implicit string→int conversion
+
+---
+
+## Edge Dependency Predicates
+
+Query edges based on their position in the dependency tree.
+
+| Fixture | Tests |
+|---------|-------|
+| `edge_parent_exists` | `subgraph edge parent exists` matches edges with a parent |
+| `edge_parent_not_exists` | `subgraph edge parent not exists` matches root edges |
+| `edge_depth` | `subgraph edge.depth == 0` matches edges by dependency depth |
+
+**Key Semantic Notes:**
+- `parent exists` = edge has `depends_on` set
+- Querying `edge parent exists` on a graph with only root edges returns an empty result
+- `edge.depth` on a graph with no edges returns an empty result (no crash)
+
+### Negative Tests (Edge Cases)
+
+These verify the query engine handles boundary conditions gracefully:
+
+| Fixture | Tests |
+|---------|-------|
+| `edge_parent_exists_no_parents` | `edge parent exists` on graph with only root edges → empty |
+| `edge_depth_no_edges` | `edge.depth == 0` on graph with no edges → empty |
+| `scope_no_matching_edges` | `scope` on edge predicate with no matches → empty |
+| `traverse_up_from_root` | `traverse up 1` from root edge → no-op (same result) |
+| `traverse_down_no_children` | `traverse down 1` from leaf node → no-op (same result) |
+- `parent not exists` = edge is a root (no `depends_on`)
+- `depth` is computed by walking the `depends_on` chain
+- `depth == 0` are root edges with no parent
+- The `edge depends on <predicate>` feature is tested via unit tests only (`TestDependsOnPredicate`)
 
 ---
 
@@ -234,12 +275,19 @@ Minimal/boundary graph structures.
 | `self_loop_only` | Node with only self-loop, no other edges |
 | `disconnected_components` | Multiple disconnected subgraphs |
 | `duplicate_edges_preserved` | Multiple edges between same nodes |
+| `edge_parent_exists_no_parents` | `edge parent exists` on root-only graph → empty |
+| `edge_depth_no_edges` | `edge.depth == 0` on graph with no edges → empty |
+| `scope_no_matching_edges` | `scope` on edge predicate with no matches → empty |
+| `traverse_up_from_root` | `traverse up 1` from root edge → no-op |
+| `traverse_down_no_children` | `traverse down 1` from leaf node → no-op |
 
 **Key Semantic Notes:**
 - Empty graph is valid result
 - Self-loop counts as incident edge
 - Duplicate edges preserved except during collapse
 - Disconnected components behave independently
+- `edge parent exists` on root-only graphs returns empty (no error)
+- `traverse up` from root edge and `traverse down` from leaf are no-ops (no crash)
 
 ---
 
@@ -258,7 +306,7 @@ Minimal/boundary graph structures.
 **Maintaining context efficiency:**
 
 This README is designed so LLMs can:
-1. Quickly understand test coverage without scanning 59 directories
+1. Quickly understand test coverage without scanning 71 directories
 2. Find relevant fixtures by category (15 categories, 1-12 entries each)
 3. Reference semantic notes for correct behavior
 4. Know when to update this file (checklist above)

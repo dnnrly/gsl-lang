@@ -416,7 +416,7 @@ Both predicates MUST target the same element type.
 Traversal expands a subgraph structurally.
 
 ```
-subgraph <predicate> traverse <direction> <depth>
+subgraph <predicate> traverse <direction>+ <depth>
 ```
 
 Traversal operates **after the subgraph is constructed**.
@@ -441,6 +441,14 @@ both
 up     — follow parent edges
 down   — follow child edges
 ```
+
+Multiple directions MAY be specified together:
+
+```
+subgraph node.team == "payments" traverse out up 2
+```
+
+Graph-structure directions (`in`/`out`/`both`) and dependency directions (`up`/`down`) are expanded independently from the same start set.
 
 ---
 
@@ -687,7 +695,13 @@ expression :=
 
 subgraph_expr :=
     'subgraph' predicate
-    ('traverse' direction depth)?
+    (scope_clause | traverse_clause)?
+
+scope_clause := 'scope'
+
+traverse_clause := 'traverse' direction+ depth
+
+direction := 'in' | 'out' | 'both' | 'up' | 'down'
 
 make_expr :=
     'make' target '=' value 'where' predicate
@@ -810,11 +824,15 @@ Traversal directions are extended for edge dependencies (see Section 8.1.2).
 subgraph <edge-predicate> scope
 ```
 
+Scope expands the subgraph by following child edges.
+
 Equivalent to:
 
 ```
 subgraph <predicate> traverse down all
 ```
+
+After the subgraph extracts matching edges and their endpoints, `scope` follows the `Children` chain from each edge to include all descendant edges and their endpoints. This is useful for finding the full impact zone of a matching edge dependency tree.
 
 ---
 

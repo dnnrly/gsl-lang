@@ -1,0 +1,7 @@
+node a
+node b
+node c
+
+E1: a -> b [depends_on = E3]
+E2: b -> c [depends_on = E1]
+E3: c -> a [depends_on = E2]
