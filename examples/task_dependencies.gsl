@@ -50,6 +50,5 @@ Test: Setup -> UnitTests {
     UnitTests -> Integration
 }
 
-# Explicit dependency: Smoke tests need both Deploy AND Integration
-SmokeTest: Smoke
-Integration -> SmokeTest [depends_on=Deploy]
+# Explicit dependency: declare the dependency previously defined
+Integration -> Smoke [depends_on=Test]
