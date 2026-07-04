@@ -2,6 +2,9 @@
 tmp/
 gsl-diagram
 gsl-query
+bin/
+/gsl-lsp
+vscode-gsl/
 
 # Ignore plan and progress files
 *.plan
