@@ -110,6 +110,13 @@ func convertSubgraph(ast *SubgraphAST) (*SubgraphExpr, error) {
 	}
 
 	var traversal *TraversalConfig
+	if ast.Scope {
+		// scope ≡ traverse down all
+		traversal = &TraversalConfig{
+			Directions: []string{"down"},
+			Depth:      999999,
+		}
+	}
 	if ast.Traverse != nil {
 		depth := 999999
 		if ast.Traverse.Depth != "all" {
@@ -117,15 +124,14 @@ func convertSubgraph(ast *SubgraphAST) (*SubgraphExpr, error) {
 			if err != nil {
 				return nil, fmt.Errorf("invalid traversal depth: %s", ast.Traverse.Depth)
 			}
-			// Validate depth is positive
 			if d <= 0 {
 				return nil, fmt.Errorf("traversal depth must be positive, got %d", d)
 			}
 			depth = d
 		}
 		traversal = &TraversalConfig{
-			Direction: ast.Traverse.Direction,
-			Depth:     depth,
+			Directions: ast.Traverse.Directions,
+			Depth:      depth,
 		}
 	}
 
@@ -314,6 +320,12 @@ func convertPredicateTerm(ast *PredicateTermAST) (Predicate, error) {
 	if ast.SetPredicate != nil {
 		return convertSetPredicate(ast.SetPredicate)
 	}
+	if ast.DependsOn != nil {
+		return convertDependsOn(ast.DependsOn)
+	}
+	if ast.ParentExists != nil {
+		return convertParentExists(ast.ParentExists)
+	}
 	if ast.AttrPredicate != nil {
 		return convertAttrPredicate(ast.AttrPredicate)
 	}
@@ -329,6 +341,38 @@ func convertAttrPredicate(ast *AttrPredicateAST) (Predicate, error) {
 
 	element := ast.Path.Element
 	attr := ast.Path.Attr
+
+	// Handle edge.depth as special case (derived attribute, not stored on model)
+	if element == "edge" && attr == "depth" {
+		if ast.Operator != "" {
+			value := convertValue(ast.Value)
+			s, ok := value.(string)
+			if !ok {
+				return nil, fmt.Errorf("depth must be a numeric value")
+			}
+			depth, err := strconv.Atoi(s)
+			if err != nil {
+				return nil, fmt.Errorf("invalid depth value: %s", s)
+			}
+			operator := ast.Operator
+			if operator == "=" {
+				operator = "=="
+			}
+			return &DepthPredicate{
+				Target:   "edge",
+				Operator: operator,
+				Value:    depth,
+			}, nil
+		}
+		// edge.depth exists is always true, not exists always false
+		if ast.Exists {
+			return &ExistsPredicate{}, nil
+		}
+		if ast.NotExists {
+			return &NotPredicate{Inner: &ExistsPredicate{}}, nil
+		}
+		return nil, fmt.Errorf("invalid depth predicate")
+	}
 
 	// Handle exists / not exists
 	if ast.Exists {
@@ -413,6 +457,32 @@ func convertValue(v *ValueAST) interface{} {
 	return ""
 }
 
+// convertParentExists converts ParentExistsAST to ParentExistsPredicate or ParentNotExistsPredicate
+func convertParentExists(ast *ParentExistsAST) (Predicate, error) {
+	if ast == nil {
+		return nil, fmt.Errorf("parent exists AST is nil")
+	}
+	if ast.Not {
+		return &ParentNotExistsPredicate{Target: ast.Element}, nil
+	}
+	return &ParentExistsPredicate{Target: ast.Element}, nil
+}
+
+// convertDependsOn converts DependsOnAST to DependsOnPredicate
+func convertDependsOn(ast *DependsOnAST) (Predicate, error) {
+	if ast == nil {
+		return nil, fmt.Errorf("depends on AST is nil")
+	}
+	inner, err := convertPredicate(ast.Predicate)
+	if err != nil {
+		return nil, err
+	}
+	return &DependsOnPredicate{
+		Target: ast.Element,
+		Inner:  inner,
+	}, nil
+}
+
 // isValidGraphName validates graph names: [A-Z][A-Z0-9_]*
 func isValidGraphName(name string) bool {
 	if len(name) == 0 {
@@ -438,4 +508,3 @@ func isValidGraphRef(ref string) bool {
 	// Must match named graph naming: [A-Z][A-Z0-9_]*
 	return isValidGraphName(ref)
 }
-

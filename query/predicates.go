@@ -213,6 +213,116 @@ func (p *AttributeNotExistsPredicate) EvaluateEdge(edge *gsl.Edge) bool {
 
 func (p *AttributeNotExistsPredicate) TargetType() string { return p.Target }
 
+// ParentExistsPredicate matches edges that have a parent (DependsOn != "")
+type ParentExistsPredicate struct {
+	Target string // "node" or "edge"
+}
+
+func (p *ParentExistsPredicate) EvaluateNode(node *gsl.Node) bool { return false }
+func (p *ParentExistsPredicate) EvaluateEdge(edge *gsl.Edge) bool {
+	return edge != nil && edge.DependsOn != ""
+}
+func (p *ParentExistsPredicate) TargetType() string { return p.Target }
+
+// ParentNotExistsPredicate matches edges with no parent (top-level)
+type ParentNotExistsPredicate struct {
+	Target string // "node" or "edge"
+}
+
+func (p *ParentNotExistsPredicate) EvaluateNode(node *gsl.Node) bool { return false }
+func (p *ParentNotExistsPredicate) EvaluateEdge(edge *gsl.Edge) bool {
+	return edge != nil && edge.DependsOn == ""
+}
+func (p *ParentNotExistsPredicate) TargetType() string { return p.Target }
+
+// DepthPredicate matches edges by their depth in the dependency tree.
+// Depth is computed by walking the DependsOn chain:
+//
+//	depth == 0 if DependsOn == ""
+//	depth == depth(parent) + 1
+type DepthPredicate struct {
+	Target   string // "node" or "edge"
+	Operator string // "==" or "!="
+	Value    int    // expected depth
+}
+
+func (p *DepthPredicate) EvaluateNode(node *gsl.Node) bool { return false }
+
+func (p *DepthPredicate) EvaluateEdge(edge *gsl.Edge) bool {
+	if edge == nil {
+		return false
+	}
+	depth := p.computeDepth(edge)
+	switch p.Operator {
+	case "==":
+		return depth == p.Value
+	case "!=":
+		return depth != p.Value
+	default:
+		return false
+	}
+}
+
+func (p *DepthPredicate) computeDepth(edge *gsl.Edge) int {
+	if edge.DependsOn == "" {
+		return 0
+	}
+	if globalLabelIndex != nil {
+		return p.walkDepth(edge, 0)
+	}
+	return 1
+}
+
+func (p *DepthPredicate) walkDepth(edge *gsl.Edge, depth int) int {
+	if edge.DependsOn == "" {
+		return depth
+	}
+	parent, ok := globalLabelIndex[edge.DependsOn]
+	if !ok || parent == nil {
+		return depth + 1 // can't walk further, estimate
+	}
+	return p.walkDepth(parent, depth+1)
+}
+
+func (p *DepthPredicate) TargetType() string { return p.Target }
+
+// DependsOnPredicate matches edges whose parent satisfies the inner predicate.
+type DependsOnPredicate struct {
+	Target   string      // "node" or "edge"
+	Inner    Predicate   // inner predicate evaluated on parent edge
+	allEdges []*gsl.Edge // set by SubgraphExpr for parent resolution
+}
+
+func (p *DependsOnPredicate) EvaluateNode(node *gsl.Node) bool { return false }
+
+func (p *DependsOnPredicate) EvaluateEdge(edge *gsl.Edge) bool {
+	if edge == nil || edge.DependsOn == "" {
+		return false
+	}
+	parent := p.findParent(edge)
+	if parent == nil {
+		return false
+	}
+	return p.Inner.EvaluateEdge(parent)
+}
+
+func (p *DependsOnPredicate) findParent(edge *gsl.Edge) *gsl.Edge {
+	if p.allEdges == nil {
+		return nil
+	}
+	for _, e := range p.allEdges {
+		if e.Label == edge.DependsOn {
+			return e
+		}
+	}
+	return nil
+}
+
+func (p *DependsOnPredicate) TargetType() string { return p.Target }
+
+// globalLabelIndex is used by DepthPredicate when the label index is available
+var globalLabelIndex map[string]*gsl.Edge
+
 // AndPredicate combines predicates with AND (both must be true)
 type AndPredicate struct {
 	Left  Predicate

@@ -46,19 +46,20 @@ type BindingAST struct {
 	Name     string    `"as" @Ident`
 }
 
-// SubgraphAST: "subgraph" predicate ["traverse" direction depth]
+// SubgraphAST: "subgraph" predicate ["scope"] ["traverse" direction depth]
 type SubgraphAST struct {
 	Predicate *PredicateAST `"subgraph" @@`
+	Scope     bool          `( @"scope" )?`
 	Traverse  *TraverseAST  `( @@ )?`
 }
 
 // Ensure SubgraphAST is recognized as starting with "subgraph" keyword
 var _ = "subgraph"
 
-// TraverseAST: "traverse" direction depth
+// TraverseAST: "traverse" direction+ depth
 type TraverseAST struct {
-	Direction string `"traverse" @( "in" | "out" | "both" )`
-	Depth     string `@( "all" | Number )`
+	Directions []string `"traverse" @( "in" | "out" | "both" | "up" | "down" )+`
+	Depth      string   `@( "all" | Number )`
 }
 
 // MakeAST: "make" attr_path "=" value "where" predicate
@@ -107,7 +108,22 @@ type PredicateTermAST struct {
 	BareNotSetName string            `| "not" "in" @Ident`
 	BareNot        *PredicateAST     `| "not" @@`
 	SetPredicate   *SetPredicateAST  `| @@`
+	DependsOn      *DependsOnAST     `| @@`
+	ParentExists   *ParentExistsAST  `| @@`
 	AttrPredicate  *AttrPredicateAST `| @@`
+}
+
+// ParentExistsAST: ("node"|"edge") "parent" ["not"] "exists"
+type ParentExistsAST struct {
+	Element string `@( "node" | "edge" )`
+	Not     bool   `"parent" @"not"?`
+	Exists  bool   `@"exists"`
+}
+
+// DependsOnAST: ("node"|"edge") "depends" "on" predicate
+type DependsOnAST struct {
+	Element   string        `@( "node" | "edge" )`
+	Predicate *PredicateAST `"depends" "on" @@`
 }
 
 // SetPredicateAST: ("node"|"edge") ["not"] "in" "@" ident

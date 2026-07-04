@@ -81,10 +81,10 @@ func (e *BindExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	return input, nil
 }
 
-// TraversalConfig specifies traversal direction and depth
+// TraversalConfig specifies traversal direction(s) and depth
 type TraversalConfig struct {
-	Direction string // "in", "out", or "both"
-	Depth     int    // number of hops; 0 means no traversal
+	Directions []string // "in", "out", "both", "up", "down" (may combine)
+	Depth      int      // number of hops; 0 means no traversal
 }
 
 // SubgraphExpr extracts a subgraph matching a predicate, with optional traversal
@@ -108,6 +108,9 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 		return nil, err
 	}
 
+	// Build label index for dependency predicates
+	buildGlobalLabelIndex(graph)
+
 	// Build base subgraph (returns nodes and edges)
 	baseNodes, baseEdges := e.buildSubgraph(graph, targetType)
 
@@ -123,6 +126,9 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 			}
 		}
 	}
+
+	// Reset global label index after use
+	globalLabelIndex = nil
 
 	// Construct result graph
 	result := buildGraph()
@@ -166,6 +172,23 @@ func (e *SubgraphExpr) Apply(ctx *QueryContext, input Value) (Value, error) {
 	return GraphValue{result.finalize()}, nil
 }
 
+// buildGlobalLabelIndex builds a label→edge index for DepthPredicate and DependsOnPredicate
+func buildGlobalLabelIndex(graph *gsl.Graph) {
+	globalLabelIndex = make(map[string]*gsl.Edge)
+	for _, edge := range graph.GetEdges() {
+		if edge.Label != "" {
+			globalLabelIndex[edge.Label] = edge
+		}
+	}
+}
+
+// injectEdgesForDependsOn sets the edge list on DependsOnPredicate for parent resolution
+func (e *SubgraphExpr) injectEdgesForDependsOn(graphEdges []*gsl.Edge) {
+	if depPred, ok := e.Pred.(*DependsOnPredicate); ok {
+		depPred.allEdges = graphEdges
+	}
+}
+
 // buildSubgraph constructs the initial subgraph matching the predicate
 // Returns a set of node IDs and a set of edge indices included in the subgraph
 func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[string]bool, map[int]bool) {
@@ -186,6 +209,8 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[s
 
 	case "edge":
 		// Edge predicate: include endpoints of matching edges
+		// Set up edge list on DependsOnPredicate for parent resolution
+		e.injectEdgesForDependsOn(graphEdges)
 		for i, edge := range graphEdges {
 			if e.Pred.EvaluateEdge(edge) {
 				nodes[edge.From] = true
@@ -204,6 +229,8 @@ func (e *SubgraphExpr) buildSubgraph(graph *gsl.Graph, targetType string) (map[s
 
 		if len(nodes) == 0 {
 			// No matching nodes, try edges
+			// Set up edge list on DependsOnPredicate for parent resolution
+			e.injectEdgesForDependsOn(graphEdges)
 			for i, edge := range graphEdges {
 				if e.Pred.EvaluateEdge(edge) {
 					nodes[edge.From] = true
@@ -236,17 +263,18 @@ func (e *SubgraphExpr) traverse(graph *gsl.Graph, startNodes map[string]bool, cf
 		visited[id] = true
 	}
 
-	// Breadth-first traversal
+	// Breadth-first traversal for graph structure directions (in/out/both)
 	frontier := make([]string, 0)
 	for id := range startNodes {
 		frontier = append(frontier, id)
 	}
 
+	graphEdges := graph.GetEdges()
 	for depth := 0; depth < cfg.Depth && len(frontier) > 0; depth++ {
 		nextFrontier := make([]string, 0)
 
 		for _, nodeID := range frontier {
-			neighbors := e.getNeighbors(graph, nodeID, cfg.Direction)
+			neighbors := e.getNeighbors(graphEdges, nodeID, cfg.Directions)
 			for _, neighbor := range neighbors {
 				if !visited[neighbor] {
 					visited[neighbor] = true
@@ -259,33 +287,122 @@ func (e *SubgraphExpr) traverse(graph *gsl.Graph, startNodes map[string]bool, cf
 		frontier = nextFrontier
 	}
 
+	// Dependency tree traversal (up/down) — expands the edge set, not node set
+	if hasDependencyDirection(cfg.Directions) {
+		e.traverseDependencies(graph, startNodes, cfg, result)
+	}
+
 	return result
 }
 
-// getNeighbors returns node IDs reachable from nodeID in the given direction
-func (e *SubgraphExpr) getNeighbors(graph *gsl.Graph, nodeID string, direction string) []string {
+// hasDependencyDirection checks if any direction is up or down
+func hasDependencyDirection(dirs []string) bool {
+	for _, d := range dirs {
+		if d == "up" || d == "down" {
+			return true
+		}
+	}
+	return false
+}
+
+// traverseDependencies follows dependency edges (up/down) and adds resulting nodes
+// up   = follow DependsOn chain (add parent edges' nodes)
+// down = follow Children chain (add child edges' nodes)
+func (e *SubgraphExpr) traverseDependencies(graph *gsl.Graph, startNodes map[string]bool, cfg *TraversalConfig, result map[string]bool) {
+	graphEdges := graph.GetEdges()
+
+	// Build label index for dependency resolution
+	labelIndex := make(map[string]*gsl.Edge)
+	childIndex := make(map[string][]*gsl.Edge)
+	for _, edge := range graphEdges {
+		if edge.Label != "" {
+			labelIndex[edge.Label] = edge
+		}
+		if edge.DependsOn != "" {
+			childIndex[edge.DependsOn] = append(childIndex[edge.DependsOn], edge)
+		}
+	}
+
+	// Set global label index for DepthPredicate/DependsOnPredicate
+	globalLabelIndex = labelIndex
+
+	// Collect all edges whose nodes are in the result set
+	edgeQueue := make([]*gsl.Edge, 0)
+	edgeVisited := make(map[*gsl.Edge]bool)
+	for _, edge := range graphEdges {
+		if result[edge.From] || result[edge.To] {
+			if !edgeVisited[edge] {
+				edgeVisited[edge] = true
+				edgeQueue = append(edgeQueue, edge)
+			}
+		}
+	}
+
+	for _, dir := range cfg.Directions {
+		switch dir {
+		case "up":
+			for depth := 0; depth < cfg.Depth && len(edgeQueue) > 0; depth++ {
+				var nextQueue []*gsl.Edge
+				for _, edge := range edgeQueue {
+					if edge.DependsOn != "" {
+						if parent, ok := labelIndex[edge.DependsOn]; ok && parent != nil {
+							result[parent.From] = true
+							result[parent.To] = true
+							if !edgeVisited[parent] {
+								edgeVisited[parent] = true
+								nextQueue = append(nextQueue, parent)
+							}
+						}
+					}
+				}
+				edgeQueue = nextQueue
+			}
+
+		case "down":
+			for depth := 0; depth < cfg.Depth && len(edgeQueue) > 0; depth++ {
+				var nextQueue []*gsl.Edge
+				for _, edge := range edgeQueue {
+					for _, child := range childIndex[edge.Label] {
+						result[child.From] = true
+						result[child.To] = true
+						if !edgeVisited[child] {
+							edgeVisited[child] = true
+							nextQueue = append(nextQueue, child)
+						}
+					}
+				}
+				edgeQueue = nextQueue
+			}
+		}
+	}
+}
+
+// getNeighbors returns node IDs reachable from nodeID in the given directions
+func (e *SubgraphExpr) getNeighbors(graphEdges []*gsl.Edge, nodeID string, directions []string) []string {
 	neighbors := make(map[string]bool)
 
-	graphEdges := graph.GetEdges()
-	for _, edge := range graphEdges {
+	for _, direction := range directions {
 		switch direction {
 		case "out":
-			// Outgoing edges: from→to
-			if edge.From == nodeID {
-				neighbors[edge.To] = true
+			for _, edge := range graphEdges {
+				if edge.From == nodeID {
+					neighbors[edge.To] = true
+				}
 			}
 		case "in":
-			// Incoming edges: to→from
-			if edge.To == nodeID {
-				neighbors[edge.From] = true
+			for _, edge := range graphEdges {
+				if edge.To == nodeID {
+					neighbors[edge.From] = true
+				}
 			}
 		case "both":
-			// Both directions
-			if edge.From == nodeID {
-				neighbors[edge.To] = true
-			}
-			if edge.To == nodeID {
-				neighbors[edge.From] = true
+			for _, edge := range graphEdges {
+				if edge.From == nodeID {
+					neighbors[edge.To] = true
+				}
+				if edge.To == nodeID {
+					neighbors[edge.From] = true
+				}
 			}
 		}
 	}
