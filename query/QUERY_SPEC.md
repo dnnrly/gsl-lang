@@ -166,6 +166,13 @@ exists
 not
 orphans
 all
+parent
+depth
+depends
+on
+scope
+up
+down
 ```
 
 ---
@@ -420,10 +427,19 @@ Traversal is **structure-based**, not predicate-based.
 
 ## 8.1 Direction
 
+### 8.1.1 Graph Structure Directions
+
 ```
 in
 out
 both
+```
+
+### 8.1.2 Dependency Directions
+
+```
+up     — follow parent edges
+down   — follow child edges
 ```
 
 ---
@@ -711,6 +727,106 @@ The following areas remain intentionally undefined:
 * predicate OR expressions
 * attribute inheritance policies
 * result construction customization
+
+---
+
+# 17. Edge Dependency Semantics
+
+## 17.1 Dependency Relation
+
+Edges form a directed forest defined by:
+
+```
+parent(edge) → edge
+```
+
+Each edge has at most one parent.
+
+---
+
+## 17.2 Derived Properties
+
+### 17.2.1 `edge parent exists`
+
+True if edge has a parent.
+
+```
+subgraph edge parent exists
+```
+
+---
+
+### 17.2.2 `edge parent not exists`
+
+True if edge has no parent (top-level edge).
+
+```
+subgraph edge parent not exists
+```
+
+---
+
+### 17.2.3 `edge.depth`
+
+Integer defined as:
+
+```
+0 if no parent
+parent.depth + 1 otherwise
+```
+
+```
+subgraph edge.depth == 1
+```
+
+---
+
+### 17.2.4 `edge depends on <predicate>`
+
+True if the parent edge satisfies the predicate.
+
+```
+subgraph edge depends on edge.protocol == "http"
+```
+
+Semantics: `parent(edge)` satisfies the inner predicate.
+
+---
+
+## 17.3 Dependency Traversal
+
+Traversal directions are extended for edge dependencies (see Section 8.1.2).
+
+| Direction | Meaning             |
+| --------- | ------------------- |
+| `up`      | follow parent edges |
+| `down`    | follow child edges  |
+
+---
+
+## 17.4 Scope Expansion
+
+```
+subgraph <edge-predicate> scope
+```
+
+Equivalent to:
+
+```
+subgraph <predicate> traverse down all
+```
+
+---
+
+## 17.5 Interaction with Other Operations
+
+### 17.5.1 Collapse
+
+After `collapse`, dependency structure is **removed**. Dependencies are not preserved across collapsed nodes.
+
+### 17.5.2 Graph Algebra
+
+Dependency relations are preserved independently when combining graphs. No merging of dependency trees occurs.
 
 ---
 
