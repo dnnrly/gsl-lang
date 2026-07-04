@@ -127,10 +127,62 @@ When you match edges:
 node.team == "payments" AND edge.protocol == "http"
 ```
 
+### Edge Dependency Predicates
+
+Edges can have parent-child relationships through the `parent` attribute:
+
+```gsl
+E1: api -> users [protocol="http"]
+E2: payments -> fraud [protocol="grpc", parent=E1]
+E3: payments -> db [protocol="tcp", parent=E1]
+```
+
+Here `E2` and `E3` both depend on `E1`.
+
+**Parent existence:**
+
+```
+subgraph edge parent exists
+```
+
+Selects edges with a parent — `E2` and `E3`.
+
+```
+subgraph edge parent not exists
+```
+
+Selects edges with no parent — `E1`.
+
+**Edge depth:**
+
+```
+subgraph edge.depth == 0
+```
+
+Selects root edges (`E1`). Depth is `0` for edges with no parent, and `parent.depth + 1` otherwise. So `E2` and `E3` have depth 1.
+
+**Parent dependency predicate:**
+
+```
+subgraph edge depends on edge.protocol == "http"
+```
+
+Selects edges whose **parent** satisfies the inner predicate. Here `E2` and `E3` both match because their parent `E1` uses `protocol="http"`.
+
+**Putting it together:**
+
+```
+subgraph edge depends on edge.protocol == "http" scope
+| make edge.status = "reviewed"
+```
+
+This selects edges whose parent uses HTTP, expands to all descendants via `scope`, then marks all matched edges as `reviewed`.
+
 ### Questions to consider
 
 - *Is the distinction between node predicates and edge predicates clear?*
 - *Is forbidding mixed predicates too restrictive, or does it keep things simple?*
+- *Do the dependency predicates (`edge parent exists`, `edge.depth`, `edge depends on`) feel intuitive for navigating edge hierarchies?*
 
 ---
 
@@ -195,6 +247,22 @@ Starting from `payments` and `fraud` (the matched nodes), this follows outgoing 
 | `out`     | Follow outgoing edges |
 | `in`      | Follow incoming edges |
 | `both`    | Follow edges in both directions |
+| `up`      | Follow parent dependency chain (`parent`) |
+| `down`    | Follow child dependency chain (`Children`) |
+
+Directions can be combined: `traverse out up 2` follows both graph edges and dependency chains.
+
+**Scope** is shorthand for `traverse down all`:
+
+```
+subgraph edge.protocol == "http" scope
+```
+
+This is equivalent to:
+
+```
+subgraph edge.protocol == "http" traverse down all
+```
 
 ### Depth
 
@@ -383,3 +451,7 @@ Reading left to right:
 | Set membership | `node in @critical` |
 | Set non-membership | `edge not in @deprecated` |
 | Compound | `node.team == "payments" AND node.zone == "B"` |
+| Parent exists | `edge parent exists` |
+| Parent not exists | `edge parent not exists` |
+| Edge depth | `edge.depth == 1` |
+| Parent depends on | `edge depends on edge.protocol == "http"` |

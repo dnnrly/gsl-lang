@@ -155,6 +155,51 @@ A->B [weight=1.2] @flow`
 	assertRoundTrip(t, input)
 }
 
+func TestRoundTripLabeledEdge(t *testing.T) {
+	// Edge labels should round-trip
+	input := "E1: A -> B"
+	assertRoundTrip(t, input)
+}
+
+func TestRoundTripScopedEdge(t *testing.T) {
+	// Scoped edges should flatten to parent in canonical form
+	input := "E1: A -> B { B -> C }"
+	g1, parseErr := Parse(strings.NewReader(input))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("first parse failed: %v", parseErr)
+	}
+
+	// Check that child edge has implicit dependency
+	edges := g1.GetEdges()
+	if len(edges) != 2 {
+		t.Fatalf("expected 2 edges, got %d", len(edges))
+	}
+	// Child edge should depend on parent
+	if edges[1].Parent != "E1" {
+		t.Errorf("expected child edge to have parent E1, got %q", edges[1].Parent)
+	}
+
+	// Serialize and verify canonical form has parent
+	canonical := Serialize(g1)
+	if !strings.Contains(canonical, "parent=E1") {
+		t.Errorf("canonical form should contain parent=E1, got: %s", canonical)
+	}
+
+	// Re-parse and verify
+	g2, parseErr := Parse(strings.NewReader(canonical))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("second parse failed: %v", parseErr)
+	}
+	assertGraphsEqual(t, g1, g2)
+}
+
+func TestRoundTripExplicitParent(t *testing.T) {
+	// Explicit parent should round-trip
+	input := `E1: A -> B
+B -> C [parent = E1]`
+	assertRoundTrip(t, input)
+}
+
 func TestParseWithWarnings(t *testing.T) {
 	input := "node A @undeclared"
 	g, parseErr := Parse(strings.NewReader(input))

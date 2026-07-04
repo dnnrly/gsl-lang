@@ -1,0 +1,8 @@
+node a
+node b
+node c
+node d
+
+E1: a->b [protocol="http"]
+E2: b->c [parent=E1]
+c->d [parent=E2]

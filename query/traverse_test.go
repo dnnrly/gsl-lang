@@ -519,3 +519,230 @@ func contains(nodes map[string]*gsl.Node, ids ...string) bool {
 	}
 	return true
 }
+
+// TestTraverseUpDirection tests up traversal (follow Parent chain)
+func TestTraverseUpDirection(t *testing.T) {
+	// Graph: A → B (depends on E1: C → D)
+	// Up from A or B should find C and D (parent edge's endpoints)
+	parent := &gsl.Edge{From: "C", To: "D", Label: "E1"}
+	child := &gsl.Edge{From: "A", To: "B", Parent: "E1"}
+	graph := newTestGraph(testGraphInput{
+		Nodes: map[string]*gsl.Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"D": {ID: "D", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		Edges: []*gsl.Edge{parent, child},
+		Sets:  map[string]*gsl.Set{},
+	})
+
+	ctx := &QueryContext{
+		InputGraph:  graph,
+		NamedGraphs: map[string]*gsl.Graph{},
+	}
+
+	parser := NewQueryParser("subgraph in START traverse up 1")
+	query, err := parser.Parse()
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	result, err := query.Execute(ctx)
+	if err != nil {
+		t.Fatalf("Failed to execute: %v", err)
+	}
+
+	gv := result.(GraphValue)
+	// Should include A, B, C, D (A from START, parent C-D via up)
+	if !contains(gv.Graph.GetNodes(), "A", "B", "C", "D") {
+		t.Fatal("Should contain A, B, C, D")
+	}
+}
+
+// TestTraverseDownDirection tests down traversal (follow Children chain)
+func TestTraverseDownDirection(t *testing.T) {
+	// Graph: A → B (label E1), B → C (depends on E1)
+	// Down from A or B should find C
+	parent := &gsl.Edge{From: "A", To: "B", Label: "E1"}
+	child := &gsl.Edge{From: "B", To: "C", Parent: "E1"}
+	graph := newTestGraph(testGraphInput{
+		Nodes: map[string]*gsl.Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		Edges: []*gsl.Edge{parent, child},
+		Sets:  map[string]*gsl.Set{},
+	})
+
+	ctx := &QueryContext{
+		InputGraph:  graph,
+		NamedGraphs: map[string]*gsl.Graph{},
+	}
+
+	parser := NewQueryParser("subgraph in START traverse down 1")
+	query, err := parser.Parse()
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	result, err := query.Execute(ctx)
+	if err != nil {
+		t.Fatalf("Failed to execute: %v", err)
+	}
+
+	gv := result.(GraphValue)
+	// Should include A, B, C (A+B from START, C via down)
+	if !contains(gv.Graph.GetNodes(), "A", "B", "C") {
+		t.Fatal("Should contain A, B, C")
+	}
+}
+
+// TestTraverseDownAll tests down traversal to unlimited depth
+func TestTraverseDownAll(t *testing.T) {
+	// Chain: A → B (E1) → C (depends E1) → D (E2) → E (depends E2)
+	e1 := &gsl.Edge{From: "A", To: "B", Label: "E1"}
+	c1 := &gsl.Edge{From: "B", To: "C", Parent: "E1", Label: "E2"}
+	c2 := &gsl.Edge{From: "C", To: "D", Parent: "E2", Label: "E3"}
+	c3 := &gsl.Edge{From: "D", To: "E", Parent: "E3"}
+	graph := newTestGraph(testGraphInput{
+		Nodes: map[string]*gsl.Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"D": {ID: "D", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"E": {ID: "E", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		Edges: []*gsl.Edge{e1, c1, c2, c3},
+		Sets:  map[string]*gsl.Set{},
+	})
+
+	ctx := &QueryContext{
+		InputGraph:  graph,
+		NamedGraphs: map[string]*gsl.Graph{},
+	}
+
+	parser := NewQueryParser("subgraph in START traverse down all")
+	query, err := parser.Parse()
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	result, err := query.Execute(ctx)
+	if err != nil {
+		t.Fatalf("Failed to execute: %v", err)
+	}
+
+	gv := result.(GraphValue)
+	if !contains(gv.Graph.GetNodes(), "A", "B", "C", "D", "E") {
+		t.Fatal("Should contain all nodes in the dependency chain")
+	}
+}
+
+// TestTraverseCombinedOutUp tests combined out and up directions
+func TestTraverseCombinedOutUp(t *testing.T) {
+	// Graph: A → B (E1), C → D (depends E1)
+	// Out from A reaches B; Up from B reaches C, D
+	parent := &gsl.Edge{From: "C", To: "D", Label: "E1"}
+	child := &gsl.Edge{From: "A", To: "B", Parent: "E1", Label: "E2"}
+	graph := newTestGraph(testGraphInput{
+		Nodes: map[string]*gsl.Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"D": {ID: "D", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		Edges: []*gsl.Edge{parent, child},
+		Sets:  map[string]*gsl.Set{},
+	})
+
+	ctx := &QueryContext{
+		InputGraph:  graph,
+		NamedGraphs: map[string]*gsl.Graph{},
+	}
+
+	// Parse with combined directions
+	parser := NewQueryParser("subgraph in START traverse out up 1")
+	query, err := parser.Parse()
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	result, err := query.Execute(ctx)
+	if err != nil {
+		t.Fatalf("Failed to execute: %v", err)
+	}
+
+	gv := result.(GraphValue)
+	if !contains(gv.Graph.GetNodes(), "A", "B", "C", "D") {
+		t.Fatal("Should contain A, B (out from A) and C, D (up from B)")
+	}
+}
+
+// TestSubgraphScope tests the scope keyword (= traverse down all)
+func TestSubgraphScope(t *testing.T) {
+	// Chain: A → B (E1) → C (depends E1) → D (depends... labeled, no further)
+	e1 := &gsl.Edge{From: "A", To: "B", Label: "E1"}
+	c1 := &gsl.Edge{From: "B", To: "C", Parent: "E1", Label: "E2"}
+	c2 := &gsl.Edge{From: "C", To: "D", Parent: "E2"}
+	graph := newTestGraph(testGraphInput{
+		Nodes: map[string]*gsl.Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{"START": {}}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"D": {ID: "D", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		Edges: []*gsl.Edge{e1, c1, c2},
+		Sets:  map[string]*gsl.Set{},
+	})
+
+	ctx := &QueryContext{
+		InputGraph:  graph,
+		NamedGraphs: map[string]*gsl.Graph{},
+	}
+
+	parser := NewQueryParser("subgraph in START scope")
+	query, err := parser.Parse()
+	if err != nil {
+		t.Fatalf("Failed to parse: %v", err)
+	}
+
+	result, err := query.Execute(ctx)
+	if err != nil {
+		t.Fatalf("Failed to execute: %v", err)
+	}
+
+	gv := result.(GraphValue)
+	if !contains(gv.Graph.GetNodes(), "A", "B", "C", "D") {
+		t.Fatal("Scope should expand to all nodes in dependency chain")
+	}
+}
+
+// TestTraverseInvalidDirections tests error handling for invalid direction combinations
+func TestTraverseInvalidDirections(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		wantError bool
+	}{
+		{"invalid direction", "subgraph exists traverse invalid 1", true},
+		{"missing depth", "subgraph exists traverse out up", true},
+		{"valid combined", "subgraph exists traverse out up 2", false},
+		{"valid up only", "subgraph exists traverse up 1", false},
+		{"valid down only", "subgraph exists traverse down 3", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parser := NewQueryParser(tt.input)
+			_, err := parser.Parse()
+			if !tt.wantError && err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			if tt.wantError && err == nil {
+				t.Fatal("Expected error but got none")
+			}
+		})
+	}
+}

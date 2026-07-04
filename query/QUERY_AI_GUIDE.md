@@ -86,6 +86,7 @@ After filtering, reset to the input graph.
 ```
 subgraph <predicate>
 subgraph <predicate> traverse <direction> <depth>
+subgraph <predicate> scope
 ```
 
 **Semantics (Node Predicate):**
@@ -114,6 +115,12 @@ traverse <direction> <depth>
 - `in` — follow incoming edges
 - `out` — follow outgoing edges
 - `both` — follow edges in both directions
+- `up` — follow `parent` chain to parent edges
+- `down` — follow `Children` chain to dependent edges
+
+Directions can be combined: `traverse out up 1` follows graph edges outward AND dependency chain upward.
+
+`scope` is syntactic sugar for `traverse down all`.
 
 **Depth:**
 - `1`, `2`, `N` — exact number of hops
@@ -137,6 +144,24 @@ subgraph node.team == "payments" traverse out all
 
 # Services that depend on the DB, up to 3 hops
 subgraph node.id == "db" traverse in 3
+
+# Root edges (no parent dependency)
+subgraph edge.depth == 0
+
+# Edges with a parent dependency
+subgraph edge parent exists
+
+# Edges whose parent uses HTTP
+subgraph edge depends on edge.protocol == "http"
+
+# Edge and all its dependents (scope)
+subgraph edge.protocol == "http" scope
+
+# Node and its dependency ancestors
+subgraph node.id == "a" traverse up 1
+
+# Combined graph + dependency traversal
+subgraph node.team == "payments" traverse out up 2
 ```
 
 **Important:** Cannot combine node and edge predicates in traverse. The direction applies to the predicate type (node or edge).
@@ -524,6 +549,52 @@ node in @critical
 edge not in @deprecated
 ```
 
+#### Edge Parent Existence
+
+```
+edge parent exists
+edge parent not exists
+```
+
+True if the edge has a `parent` reference (parent exists) or does not (parent not exists / root edge).
+
+Examples:
+```
+subgraph edge parent exists
+subgraph edge parent not exists
+```
+
+#### Edge Depth
+
+```
+edge.depth == <int>
+edge.depth != <int>
+```
+
+Depth is computed by walking the `parent` chain. Root edges have depth `0`.
+
+Examples:
+```
+subgraph edge.depth == 0
+subgraph edge.depth != 0
+```
+
+#### Edge Depends-On Predicate
+
+```
+edge depends on <predicate>
+```
+
+True if the edge has a parent AND the parent edge matches the inner predicate.
+
+Examples:
+```
+subgraph edge depends on edge.protocol == "http"
+subgraph edge depends on edge parent exists
+```
+
+The inner predicate is evaluated against the **parent** edge, not the edge itself.
+
 #### Compound Predicates (AND only)
 
 ```
@@ -554,7 +625,7 @@ edge.protocol == "grpc" AND edge in @critical
 
 Reserved words (case-sensitive):
 ```
-subgraph, from, make, remove, collapse, into, traverse, where, exists, not, in, and, or, all, both, out, as
+subgraph, from, make, remove, collapse, into, traverse, where, exists, not, in, and, or, all, both, out, up, down, scope, parent, depends, on, as
 ```
 
 ### 4.2 Named Graph Identifiers
@@ -742,9 +813,13 @@ expression :=
     | algebra_expr
 
 subgraph_expr :=
-    'subgraph' predicate ('traverse' direction depth)?
+    'subgraph' predicate (scope_clause | traverse_clause)?
 
-direction := 'in' | 'out' | 'both'
+scope_clause := 'scope'
+
+traverse_clause := 'traverse' direction+ depth
+
+direction := 'in' | 'out' | 'both' | 'up' | 'down'
 depth := INTEGER | 'all'
 
 make_expr :=
@@ -776,8 +851,13 @@ condition :=
     | element_ref 'not exists'
     | element_ref 'in' '@' IDENT
     | element_ref 'not in' '@' IDENT
+    | 'edge' 'parent' 'exists'
+    | 'edge' 'parent' 'not' 'exists'
+    | 'edge' '.' 'depth' ('==' | '!=') INTEGER
+    | 'edge' 'depends' 'on' predicate
 
 element_ref := 'node' ('.' IDENT)? | 'edge' ('.' IDENT)?
+depth_edge_ref := 'edge' '.' 'depth'
 
 attr_path := ('node' | 'edge') '.' IDENT
 
@@ -802,6 +882,12 @@ When implementing a query parser/evaluator:
 - [ ] `in @missing_set` is false; `not in @missing_set` is true
 - [ ] Edges with all attributes matching are equal
 - [ ] Self-loops are incident edges (not orphaned)
+- [ ] Dependency depth computed by walking `parent` chain
+- [ ] `traverse up` follows `parent` to parent edges
+- [ ] `traverse down` follows `Children` to dependent edges
+- [ ] Combined directions: `traverse out up 2` runs both graph and dependency expansion
+- [ ] Global label index set before predicate evaluation for `depth`/`parent` predicates
+- [ ] `scope` ≡ `traverse down all`
 
 ---
 
@@ -868,6 +954,10 @@ remove edge where edge.status == "deprecated"
 | Expand search | `traverse <dir> <depth>` |
 | Follow outbound | `traverse out all` |
 | Follow inbound | `traverse in all` |
+| Follow dependency up | `traverse up <n>` |
+| Follow dependency down | `traverse down <n>` |
+| Combined directions | `traverse out up <n>` |
+| Edge scope | `scope` (sugar for `traverse down all`) |
 | Assign attribute | `make node.<attr> = <val> where <pred>` |
 | Delete edges | `remove edge where <pred>` |
 | Delete attribute | `remove node.<attr> where <pred>` |
@@ -884,5 +974,9 @@ remove edge where edge.status == "deprecated"
 | Inequality test | `node.x != "value"` |
 | Attribute exists | `node.x exists` |
 | Set membership | `node in @setname` |
+| Edge parent exists | `edge parent exists` |
+| Edge parent not exists | `edge parent not exists` |
+| Edge depth | `edge.depth == 0` |
+| Edge depends on | `edge depends on <predicate>` |
 | Compound test | `node.x == "a" AND node.y == "b"` |
 

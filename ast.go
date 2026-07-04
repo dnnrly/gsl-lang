@@ -23,11 +23,13 @@ type nodeDecl struct {
 }
 
 type edgeDecl struct {
+	label       *string // optional edge label (e.g., "E1: A -> B")
 	left        []string
 	right       []string
 	textValue   *string
 	attrs       []attribute
 	memberships []string
+	block       []statement // for scoped edges: A -> B { ... }
 	line        int
 	col         int
 }
@@ -57,7 +59,7 @@ type attrValue struct {
 type attrValueKind int
 
 const (
-	valueString  attrValueKind = iota
+	valueString attrValueKind = iota
 	valueNumber
 	valueBool
 	valueNodeRef

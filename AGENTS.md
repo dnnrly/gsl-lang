@@ -114,19 +114,20 @@ Each subsystem may contain:
 
 To avoid context bloat when working with many test fixtures:
 - **All fixtures cataloged** in a single README with quick navigation table
-- **Organized by category** (subgraph filtering, algebra, make, remove, collapse, etc.)
+- **Organized as a learning path** (numbered groups: basics → predicates → make → remove → traversal → edge-dependencies → collapse → named-graphs → pipelines → edge-cases)
 - **Semantic notes** explain correct behavior for each category
 - **Maintenance checklist** included so agents know when to update
 
 **When adding/modifying query fixtures:**
 1. Create fixture directory with `graph.gsl`, `query.gql`, `result.gsl`
-2. Verify it passes: `go test -v -run TestFixtures ./query`
-3. Update `query/testdata/README.md`:
-   - Add entry to appropriate category table
+2. Place it in the appropriate numbered group under `query/testdata/`
+3. Verify it passes: `go test -v -run TestFixtures ./query`
+4. Update `query/testdata/README.md`:
+   - Add entry to appropriate group table
    - Include brief description (one line)
    - Add semantic note if behavior is non-obvious
-4. If adding new category, document it with examples
-5. Follow maintenance checklist at end of README
+5. If adding a new group, create a new numbered directory and add it to the learning path
+6. Follow maintenance checklist at end of README
 
 ## Key Design Patterns
 

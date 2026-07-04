@@ -38,20 +38,29 @@ If no `graph_source` is given, the working graph is the input graph.
 
 ```ebnf
 subgraph_expr
-    = "subgraph" , predicate , [ traverse_clause ] ;
+    = "subgraph" , predicate , [ scope_clause | traverse_clause ] ;
+
+scope_clause
+    = "scope" ;
 
 traverse_clause
-    = "traverse" , direction , depth ;
+    = "traverse" , { direction } , depth ;
 
 direction
     = "in"
     | "out"
-    | "both" ;
+    | "both"
+    | "up"
+    | "down" ;
 
 depth
     = INTEGER
     | "all" ;
 ```
+
+`scope` is syntactic sugar for `traverse down all`.
+
+Directions may be combined (e.g., `traverse out up 1`). Graph-structure directions (`in`/`out`/`both`) follow node adjacency; dependency directions (`up`/`down`) follow the `parent` parent/child chain.
 
 Examples:
 
@@ -59,6 +68,8 @@ Examples:
 subgraph node.team == "payments"
 subgraph node.team == "payments" traverse out 1
 subgraph edge.protocol == "http" traverse all all
+subgraph edge.protocol == "http" scope
+subgraph node.team == "payments" traverse out up 2
 ```
 
 ---
@@ -75,7 +86,10 @@ predicate_term
     | exists_predicate
     | not_exists_predicate
     | set_membership_predicate
-    | set_non_membership_predicate ;
+    | set_non_membership_predicate
+    | parent_exists_predicate
+    | parent_predicate
+    | depth_predicate ;
 ```
 
 All predicate terms in a compound predicate MUST target the same element type (`node` or `edge`). Mixed references are an error.
@@ -172,7 +186,68 @@ edge not in @deprecated
 
 ---
 
-# 10. Attribute Path
+# 10. Parent Exists Predicate
+
+```ebnf
+parent_exists_predicate
+    = element_type , "parent" , "not"? , "exists" ;
+```
+
+| Form                        | Meaning                    |
+|-----------------------------|----------------------------|
+| `edge parent exists`        | edge has a parent edge     |
+| `edge parent not exists`    | edge has no parent (root)  |
+
+A "parent" edge is one referenced by the edge's `parent` field.
+
+Examples:
+
+```
+subgraph edge parent exists
+subgraph edge parent not exists
+```
+
+---
+
+# 11. Depends On Predicate
+
+```ebnf
+parent_predicate
+    = element_type , "depends" , "on" , predicate ;
+```
+
+Evaluates the inner predicate against the parent edge. Only edges with a parent (`parent` set) can match.
+
+Examples:
+
+```
+subgraph edge depends on edge.protocol == "http"
+subgraph edge depends on edge parent exists
+```
+
+---
+
+# 12. Depth Predicate
+
+```ebnf
+depth_predicate
+    = "edge" , "." , "depth" , ( "==" | "!=" ) , INTEGER ;
+```
+
+`depth` is a derived attribute (not stored on the model) computed by walking the `parent` chain:
+- `depth == 0` for edges with no parent
+- `depth == N` for edges N levels deep
+
+Examples:
+
+```
+subgraph edge.depth == 0
+subgraph edge.depth != 0
+```
+
+---
+
+# 13. Attribute Path
 
 ```ebnf
 attribute_path
@@ -190,7 +265,7 @@ edge.protocol
 
 ---
 
-# 11. Make Expression
+# 14. Make Expression
 
 ```ebnf
 make_expr
@@ -208,7 +283,7 @@ make edge.encrypted = true where edge.protocol == "http"
 
 ---
 
-# 12. Remove Expression
+# 15. Remove Expression
 
 ```ebnf
 remove_expr
@@ -228,7 +303,7 @@ remove orphans
 
 ---
 
-# 13. Collapse Expression
+# 16. Collapse Expression
 
 ```ebnf
 collapse_expr
@@ -245,7 +320,7 @@ collapse into platform_group where node.team == "platform"
 
 ---
 
-# 14. From Expression
+# 17. From Expression
 
 ```ebnf
 from_expr
@@ -263,7 +338,7 @@ from PAYMENTS
 
 ---
 
-# 15. Named Graph Binding
+# 18. Named Graph Binding
 
 ```ebnf
 binding
@@ -285,7 +360,7 @@ Example:
 
 ---
 
-# 16. Graph Algebra
+# 19. Graph Algebra
 
 ```ebnf
 graph_algebra
@@ -316,7 +391,7 @@ PAY - PLATFORM
 
 ---
 
-# 17. Values
+# 20. Values
 
 ```ebnf
 value
@@ -328,7 +403,7 @@ value
 
 ---
 
-# 18. Identifiers
+# 21. Identifiers
 
 ```ebnf
 identifier
@@ -337,7 +412,7 @@ identifier
 
 ---
 
-# 19. Literals
+# 22. Literals
 
 ```ebnf
 string
@@ -356,7 +431,7 @@ integer
 
 ---
 
-# 20. Character Classes
+# 23. Character Classes
 
 ```ebnf
 letter
@@ -373,7 +448,7 @@ digit
 
 ---
 
-# 21. Comments
+# 24. Comments
 
 Comments begin with `#` and continue to end of line.
 
@@ -384,7 +459,7 @@ comment
 
 ---
 
-# 22. Reserved Keywords
+# 25. Reserved Keywords
 
 Identifiers **must not match these**:
 
@@ -393,6 +468,7 @@ subgraph
 from
 as
 traverse
+scope
 make
 remove
 collapse
@@ -401,19 +477,24 @@ where
 AND
 in
 out
+up
+down
 exists
 not
 orphans
 all
 node
 edge
+depends
+on
+parent
 true
 false
 ```
 
 ---
 
-# 23. Example Queries Parsed by This Grammar
+# 26. Example Queries Parsed by This Grammar
 
 ### Basic subgraph
 
@@ -512,7 +593,58 @@ subgraph node.team == "payments" traverse out all
 
 ---
 
-# 24. Intentional Grammar Constraints
+### Edge scope (no predicate)
+
+```
+subgraph edge.protocol == "http" scope
+```
+
+Scope is sugar for `traverse down all`.
+
+---
+
+### Edge parent exists
+
+```
+subgraph edge parent exists
+```
+
+---
+
+### Edge parent not exists (root edges)
+
+```
+subgraph edge parent not exists
+```
+
+---
+
+### Edge depends on
+
+```
+subgraph edge depends on edge.protocol == "http"
+```
+
+---
+
+### Edge depth
+
+```
+subgraph edge.depth == 0
+subgraph edge.depth != 0
+```
+
+---
+
+### Combined directions (graph-structure + dependency)
+
+```
+subgraph node.team == "payments" traverse out up 2
+```
+
+---
+
+# 27. Intentional Grammar Constraints
 
 The grammar **intentionally forbids**:
 
@@ -558,7 +690,7 @@ This keeps the parser simple and deterministic.
 
 ---
 
-# 25. Parser Simplicity (Important)
+# 28. Parser Simplicity (Important)
 
 This grammar is intentionally structured so that:
 
@@ -572,7 +704,7 @@ No backtracking required.
 
 ---
 
-# 26. Implementation Hint (Go)
+# 29. Implementation Hint (Go)
 
 The AST shape implied by this grammar is roughly:
 
@@ -613,10 +745,13 @@ Predicate
  └─ []PredicateTerm (joined by AND)
 
 PredicateTerm
- ├─ EqualityPredicate (path == value)
- ├─ InequalityPredicate (path != value)
- ├─ ExistsPredicate (path exists)
- ├─ NotExistsPredicate (path not exists)
- ├─ SetMembershipPredicate (element in @set)
- └─ SetNonMembershipPredicate (element not in @set)
+  ├─ EqualityPredicate (path == value)
+  ├─ InequalityPredicate (path != value)
+  ├─ ExistsPredicate (path exists)
+  ├─ NotExistsPredicate (path not exists)
+  ├─ SetMembershipPredicate (element in @set)
+  ├─ SetNonMembershipPredicate (element not in @set)
+  ├─ ParentExistsPredicate (element parent exists / parent not exists)
+  ├─ DependsOnPredicate (element depends on <predicate>)
+  └─ DepthPredicate (edge.depth == / != INTEGER)
 ```

@@ -1,0 +1,7 @@
+node a
+node b
+node c
+node d
+
+E1: c->d
+a->b [parent=E1]

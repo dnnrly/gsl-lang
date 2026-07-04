@@ -1,10 +1,14 @@
 # GSL Examples
 
-This directory contains example GSL graph definitions and a demonstration of using the GSL library in a Go program.
+This directory contains example GSL graph definitions organized as a learning path, along with a demonstration of using the GSL library in a Go program.
 
-## Graph Definition Examples
+---
 
-### 1. Simple Workflow (`simple_workflow.gsl`)
+## 01-basics — Core Graph Patterns
+
+Simple graph definitions demonstrating fundamental GSL concepts.
+
+### `simple_workflow.gsl`
 
 A basic directed graph representing a sequential process flow.
 
@@ -15,20 +19,7 @@ A basic directed graph representing a sequential process flow.
 
 **Use case:** Process workflows, state machines, pipelines.
 
-### 2. Hierarchical System (`hierarchical_system.gsl`)
-
-A graph with parent-child relationships representing a hierarchical structure.
-
-**Demonstrates:**
-- Set declarations with attributes
-- Node attributes
-- Set membership (`@frontend`, `@backend`, `@database`)
-- Parent-child relationships via explicit parent attributes
-- Edges between different hierarchies
-
-**Use case:** Component hierarchies, organizational structures, system layers.
-
-### 3. Microservices (`microservices.gsl`)
+### `microservices.gsl`
 
 A production-like microservices architecture graph.
 
@@ -41,7 +32,20 @@ A production-like microservices architecture graph.
 
 **Use case:** System architecture, service dependencies, deployment configurations.
 
-### 4. Data Pipeline (`data_pipeline.gsl`)
+### `hierarchical_system.gsl`
+
+A graph with parent-child relationships representing a hierarchical structure.
+
+**Demonstrates:**
+- Set declarations with attributes
+- Node attributes
+- Set membership (`@frontend`, `@backend`, `@database`)
+- Parent-child relationships via explicit parent attributes
+- Edges between different hierarchies
+
+**Use case:** Component hierarchies, organizational structures, system layers.
+
+### `data_pipeline.gsl`
 
 An ETL (Extract-Transform-Load) data pipeline.
 
@@ -54,7 +58,13 @@ An ETL (Extract-Transform-Load) data pipeline.
 
 **Use case:** Data engineering, ETL workflows, analytics pipelines.
 
-### 5. Task Scheduling (`task_scheduling.gsl`)
+---
+
+## 02-algorithms — Graph Algorithm Examples
+
+Graphs designed for algorithmic analysis and traversal.
+
+### `task_scheduling.gsl`
 
 A build system with task dependencies showing the execution flow of a CI/CD pipeline.
 
@@ -66,7 +76,19 @@ A build system with task dependencies showing the execution flow of a CI/CD pipe
 
 **Use case:** Build systems, CI/CD pipelines, task scheduling, dependency resolution.
 
-### 6. Circular Dependencies (`circular_dependencies.gsl`)
+### `task_dependencies.gsl`
+
+A demonstration of edge labels and scoping for task dependency graphs.
+
+**Demonstrates:**
+- Edge labels for dependency targeting (`E1: Setup -> UnitTests`)
+- Scoped edges for implicit dependencies
+- Explicit `parent` attributes
+- Cross-branch dependencies between different pipeline stages
+
+**Use case:** Build systems, workflow orchestration, dependency graphs, task scheduling.
+
+### `circular_dependencies.gsl`
 
 A graph with circular dependencies between services.
 
@@ -77,7 +99,7 @@ A graph with circular dependencies between services.
 
 **Use case:** Detecting problematic circular dependencies, validating acyclic graphs.
 
-### 7. Social Network (`social_network.gsl`)
+### `social_network.gsl`
 
 A social network showing connections between people.
 
@@ -87,6 +109,26 @@ A social network showing connections between people.
 - Unidirectional connections
 
 **Use case:** Path finding, shortest path algorithms, reachability analysis, social network analysis.
+
+---
+
+## 03-edge-cases — Parsing Edge Cases
+
+Graphs that demonstrate parser warnings and edge-case handling.
+
+### `implicit_sets.gsl`
+
+Demonstrates implicit set creation warnings.
+
+### `name_collision.gsl`
+
+Demonstrates node/set name collision warnings.
+
+### `parent_override.gsl`
+
+Demonstrates parent override inside block warnings.
+
+---
 
 ## Example Tests
 
@@ -104,59 +146,60 @@ A social network showing connections between people.
 
 ### Algorithm Examples
 
-- **Example_topologicalSort** - Demonstrates topological sort on a task dependency graph using Kahn's algorithm (`task_scheduling.gsl`)
-- **Example_cycleDetection** - Demonstrates cycle detection using DFS with color marking (`circular_dependencies.gsl`)
-- **Example_pathFinding** - Demonstrates finding all paths between two nodes using DFS (`social_network.gsl`)
+- **Example_topologicalSort** - Demonstrates topological sort on a task dependency graph using Kahn's algorithm (`02-algorithms/task_scheduling.gsl`)
+- **Example_cycleDetection** - Demonstrates cycle detection using DFS with color marking (`02-algorithms/circular_dependencies.gsl`)
+- **Example_pathFinding** - Demonstrates finding all paths between two nodes using DFS (`02-algorithms/social_network.gsl`)
 
 ### Warning Examples
 
-- **Example_implicitSets** - Demonstrates implicit set creation warnings (`implicit_sets.gsl`)
-- **Example_nameCollision** - Demonstrates node/set name collision warnings (`name_collision.gsl`)
-- **Example_parentOverride** - Demonstrates parent override inside block warnings (`parent_override.gsl`)
+- **Example_implicitSets** - Demonstrates implicit set creation warnings (`03-edge-cases/implicit_sets.gsl`)
+- **Example_nameCollision** - Demonstrates node/set name collision warnings (`03-edge-cases/name_collision.gsl`)
+- **Example_parentOverride** - Demonstrates parent override inside block warnings (`03-edge-cases/parent_override.gsl`)
 
-These are Go's standard Example pattern - they run as part of the test suite and also appear in godoc documentation. Warnings are non-fatal and don't prevent parsing; they're informational linter messages.
+These are Go's standard Example pattern — they run as part of the test suite and also appear in godoc documentation. Warnings are non-fatal and don't prevent parsing; they're informational linter messages.
+
+---
 
 ## Running the Tests
-
-To run all example tests:
 
 ```bash
 go test ./examples -v
 ```
 
-To run the full test suite including examples:
+---
 
-```bash
-go test ./...
-```
+## Quick Reference
 
-## Key Features Demonstrated
-
-| Feature | Example File |
-|---------|--------------|
-| Basic nodes & edges | `simple_workflow.gsl` |
+| Feature | Example |
+|---------|---------|
+| Basic nodes & edges | `01-basics/simple_workflow.gsl` |
 | Text attributes | All files |
-| Set membership | `microservices.gsl`, `data_pipeline.gsl` |
-| Parent-child relationships | `hierarchical_system.gsl` |
-| Multi-valued attributes | `microservices.gsl` |
-| Edge attributes | `microservices.gsl`, `data_pipeline.gsl` |
-| Canonical serialization | `main.go` |
-| Graph traversal | `main.go` |
+| Set membership | `01-basics/microservices.gsl`, `01-basics/data_pipeline.gsl` |
+| Parent-child relationships | `01-basics/hierarchical_system.gsl` |
+| Multi-valued attributes | `01-basics/microservices.gsl` |
+| Edge attributes | `01-basics/microservices.gsl`, `01-basics/data_pipeline.gsl` |
+| Topological sort | `02-algorithms/task_scheduling.gsl` |
+| Cycle detection | `02-algorithms/circular_dependencies.gsl` |
+| Path finding | `02-algorithms/social_network.gsl` |
+| Edge labels & dependencies | `02-algorithms/task_dependencies.gsl` |
+| Implicit sets warning | `03-edge-cases/implicit_sets.gsl` |
+| Name collision warning | `03-edge-cases/name_collision.gsl` |
+| Parent override warning | `03-edge-cases/parent_override.gsl` |
 
-## Graph Sizes and Examples
+## Graph Sizes
 
-| File | Nodes | Edges | Sets | Algorithm Use |
-|------|-------|-------|------|---------------|
-| `simple_workflow.gsl` | 6 | 5 | 0 | Basic graph structure |
-| `hierarchical_system.gsl` | 9 | 4 | 3 | Set membership queries |
-| `microservices.gsl` | 7 | 9 | 3 | Set membership queries |
-| `data_pipeline.gsl` | 8 | 7 | 3 | Edge traversal |
-| `task_scheduling.gsl` | 7 | 7 | 0 | Topological sort |
-| `circular_dependencies.gsl` | 4 | 4 | 0 | Cycle detection |
-| `social_network.gsl` | 6 | 7 | 0 | Path finding |
-| `implicit_sets.gsl` | 4 | 1 | 2 | Warning handling |
-| `name_collision.gsl` | 3 | 2 | 1 | Warning handling |
-| `parent_override.gsl` | 4 | 0 | 0 | Warning handling |
+| File | Nodes | Edges | Sets |
+|------|-------|-------|------|
+| `01-basics/simple_workflow.gsl` | 6 | 5 | 0 |
+| `01-basics/microservices.gsl` | 7 | 9 | 3 |
+| `01-basics/hierarchical_system.gsl` | 9 | 4 | 3 |
+| `01-basics/data_pipeline.gsl` | 8 | 7 | 3 |
+| `02-algorithms/task_scheduling.gsl` | 7 | 7 | 0 |
+| `02-algorithms/circular_dependencies.gsl` | 4 | 4 | 0 |
+| `02-algorithms/social_network.gsl` | 6 | 7 | 0 |
+| `03-edge-cases/implicit_sets.gsl` | 4 | 1 | 2 |
+| `03-edge-cases/name_collision.gsl` | 3 | 2 | 1 |
+| `03-edge-cases/parent_override.gsl` | 4 | 0 | 0 |
 
 ## More Information
 

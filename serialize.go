@@ -87,12 +87,29 @@ func serializeNode(n *Node) string {
 
 func serializeEdge(e *Edge) string {
 	var b strings.Builder
+
+	// Output edge label if present
+	if e.Label != "" {
+		b.WriteString(e.Label)
+		b.WriteString(": ")
+	}
+
 	b.WriteString(e.From)
 	b.WriteString("->")
 	b.WriteString(e.To)
-	if len(e.Attributes) > 0 {
+
+	// Build attributes including parent
+	attrs := make(map[string]interface{})
+	for k, v := range e.Attributes {
+		attrs[k] = v
+	}
+	if e.Parent != "" {
+		attrs["parent"] = e.Parent
+	}
+
+	if len(attrs) > 0 {
 		b.WriteString(" ")
-		b.WriteString(serializeAttrs(e.Attributes))
+		b.WriteString(serializeAttrs(attrs))
 	}
 	b.WriteString(serializeSetMemberships(e.Sets))
 	return b.String()
@@ -135,6 +152,10 @@ func serializeAttr(key string, value interface{}) string {
 	}
 	switch v := value.(type) {
 	case string:
+		// Special case: parent outputs as identifier (no quotes)
+		if key == "parent" {
+			return key + "=" + v
+		}
 		return key + "=" + `"` + escapeString(v) + `"`
 	case float64:
 		return key + "=" + formatNumber(v)
