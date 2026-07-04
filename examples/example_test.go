@@ -12,7 +12,7 @@ import (
 
 // Example_parseSimpleWorkflow demonstrates parsing a basic workflow graph.
 func Example_parseSimpleWorkflow() {
-	content, _ := os.ReadFile("simple_workflow.gsl")
+	content, _ := os.ReadFile("01-basics/simple_workflow.gsl")
 	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
@@ -47,7 +47,7 @@ func Example_parseSimpleWorkflow() {
 
 // Example_parseHierarchicalSystem demonstrates parsing a graph with parent-child relationships.
 func Example_parseHierarchicalSystem() {
-	content, _ := os.ReadFile("hierarchical_system.gsl")
+	content, _ := os.ReadFile("01-basics/hierarchical_system.gsl")
 	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
@@ -77,7 +77,7 @@ func Example_parseHierarchicalSystem() {
 
 // Example_microservicesArchitecture demonstrates analyzing a microservices graph.
 func Example_microservicesArchitecture() {
-	content, _ := os.ReadFile("microservices.gsl")
+	content, _ := os.ReadFile("01-basics/microservices.gsl")
 	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
@@ -110,7 +110,7 @@ func Example_microservicesArchitecture() {
 
 // Example_queryNodeDependencies demonstrates querying outbound edges from a node.
 func Example_queryNodeDependencies() {
-	content, _ := os.ReadFile("microservices.gsl")
+	content, _ := os.ReadFile("01-basics/microservices.gsl")
 	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
@@ -142,7 +142,7 @@ func Example_queryNodeDependencies() {
 
 // Example_parseDataPipeline demonstrates parsing an ETL pipeline graph.
 func Example_parseDataPipeline() {
-	content, _ := os.ReadFile("data_pipeline.gsl")
+	content, _ := os.ReadFile("01-basics/data_pipeline.gsl")
 	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
@@ -207,7 +207,7 @@ A->B`
 
 // Example_graphStatistics demonstrates basic graph statistics.
 func Example_graphStatistics() {
-	content, _ := os.ReadFile("microservices.gsl")
+	content, _ := os.ReadFile("01-basics/microservices.gsl")
 	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
@@ -241,7 +241,7 @@ func Example_graphStatistics() {
 
 // Example_implicitSets demonstrates parsing with implicit set creation warnings.
 func Example_implicitSets() {
-	content, _ := os.ReadFile("implicit_sets.gsl")
+	content, _ := os.ReadFile("03-edge-cases/implicit_sets.gsl")
 	graph, parseErr := gsl.Parse(bytes.NewReader(content))
 
 	fmt.Printf("Graph: %d sets created\n", len(graph.GetSets()))
@@ -265,7 +265,7 @@ func Example_implicitSets() {
 
 // Example_nameCollision demonstrates parsing with name collision warnings.
 func Example_nameCollision() {
-	content, _ := os.ReadFile("name_collision.gsl")
+	content, _ := os.ReadFile("03-edge-cases/name_collision.gsl")
 	graph, parseErr := gsl.Parse(bytes.NewReader(content))
 
 	fmt.Printf("Graph: %d nodes, %d sets\n", len(graph.GetNodes()), len(graph.GetSets()))
@@ -288,7 +288,7 @@ func Example_nameCollision() {
 
 // Example_parentOverride demonstrates parsing with parent override warnings.
 func Example_parentOverride() {
-	content, _ := os.ReadFile("parent_override.gsl")
+	content, _ := os.ReadFile("03-edge-cases/parent_override.gsl")
 	graph, parseErr := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
@@ -329,7 +329,7 @@ func Example_parentOverride() {
 
 // Example_topologicalSort demonstrates topological sorting on a task dependency graph.
 func Example_topologicalSort() {
-	content, _ := os.ReadFile("task_scheduling.gsl")
+	content, _ := os.ReadFile("02-algorithms/task_scheduling.gsl")
 	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
@@ -402,7 +402,7 @@ func Example_topologicalSort() {
 
 // Example_cycleDetection demonstrates detecting cycles in a dependency graph using DFS.
 func Example_cycleDetection() {
-	content, _ := os.ReadFile("circular_dependencies.gsl")
+	content, _ := os.ReadFile("02-algorithms/circular_dependencies.gsl")
 	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
@@ -483,7 +483,7 @@ func Example_cycleDetection() {
 
 // Example_pathFinding demonstrates finding all paths between two nodes using DFS.
 func Example_pathFinding() {
-	content, _ := os.ReadFile("social_network.gsl")
+	content, _ := os.ReadFile("02-algorithms/social_network.gsl")
 	graph, _ := gsl.Parse(bytes.NewReader(content))
 
 	nodes := graph.GetNodes()
