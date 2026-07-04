@@ -1,87 +1,82 @@
 ---
-description: Query language fixture test catalog. Quick reference for LLMs and developers to understand test coverage without scanning individual fixtures. Updated for context efficiency.
+description: Query language fixture test catalog. Organized as a learning journey — each group builds on the previous. Quick reference for LLMs and developers.
 ---
 
 # Query Language Test Fixtures
 
-This directory contains **71 fixture-based integration tests** for the GSL Query Language. Each fixture is a directory containing:
+This directory contains **71 fixture-based integration tests** for the GSL Query Language, organized as a **learning path** from simple to complex concepts.
+
+## Structure
+
+Fixtures are nested under numbered group directories:
+
+```
+testdata/
+  01-basics/              → simple subgraph extraction
+  02-predicates/          → filtering conditions (exists, in, !=, AND)
+  03-make/                → attribute assignment
+  04-remove/              → deletion operations
+  05-traversal/           → graph structure traversal (out, in, both)
+  06-edge-dependencies/   → edge hierarchy (parent, depth, depends_on)
+  07-collapse/            → node merging
+  08-named-graphs/        → saving and reusing pipeline results
+  09-pipelines/           → multi-stage query composition
+  10-edge-cases/          → boundary conditions
+```
+
+Each fixture directory contains:
 - `graph.gsl` — input graph
 - `query.gql` — query to execute
 - `result.gsl` — expected output
 
-Tests are loaded and executed by `fixtures_test.go`.
+Tests are loaded recursively by `fixtures_test.go`.
 
 ---
 
-## Quick Navigation
+## 01-basics — Getting Started
 
-| Category | Count | Purpose |
-|----------|-------|---------|
-| [Subgraph Filtering](#subgraph-filtering) | 12 | Extract nodes/edges matching predicates |
-| [Graph Algebra](#graph-algebra) | 7 | Union, intersection, difference, XOR |
-| [Make (Assign)](#make-assign) | 5 | Add/update node/edge attributes |
-| [Remove](#remove) | 7 | Delete edges, attributes, orphan nodes |
-| [Collapse](#collapse) | 7 | Merge nodes with predicate matching |
-| [Traversal](#traversal) | 11 | Follow edges in/out/both/up/down with depth control |
-| [Edge Dependency Predicates](#edge-dependency-predicates) | 3 | Parent existence, depth, depends-on predicates |
-| [Predicates](#predicates) | 4 | Type-sensitive equality, existence checks |
-| [Named Graphs](#named-graphs) | 6 | Binding, from clause, algebra chains |
-| [Pipelines](#pipelines) | 3 | Multi-stage query composition |
-| [Edge Cases](#edge-cases) | 10 | Empty graphs, self-loops, orphans, negative edge tests |
-
----
-
-## Subgraph Filtering
-
-Extract nodes/edges where a predicate is true.
+Foundational subgraph operations.
 
 | Fixture | Tests |
 |---------|-------|
 | `subgraph_node_filter` | `subgraph node.attr = value` extracts matching nodes |
 | `subgraph_edge_filter` | `subgraph edge.attr = value` extracts matching edges |
-| `subgraph_node_inequality` | `subgraph node.attr != value` (NEW: inequality operator) |
-| `subgraph_edge_inequality` | `subgraph edge.attr != value` (NEW: inequality operator) |
+| `single_node_no_edges` | Minimal graph: single node, no edges |
+| `empty_graph_subgraph` | Subgraph on empty graph returns empty |
+| `example_basic` | `subgraph node.exists = true` |
+
+---
+
+## 02-predicates — Filtering Conditions
+
+Attribute existence, inequality, type-sensitive equality, and set membership.
+
+| Fixture | Tests |
+|---------|-------|
 | `subgraph_exists_attribute` | `subgraph node.attr exists` matches nodes with attribute |
 | `subgraph_edge_exists_attribute` | `subgraph edge.attr exists` matches edges with attribute |
 | `subgraph_not_exists_attribute` | `subgraph node.attr not exists` matches without attribute |
-| `subgraph_traverse` | `traverse out 1` follows outgoing edges one level |
-| `subgraph_traverse_in` | `traverse in 2` follows incoming edges two levels |
-| `subgraph_traverse_both` | `traverse both 2` follows both directions |
-| `subgraph_traverse_depth_3` | `traverse out 3` three-level depth |
-| `subgraph_traverse_all_depth` | `traverse out` (no depth limit, acyclic) |
+| `subgraph_node_inequality` | `subgraph node.attr != value` |
+| `subgraph_edge_inequality` | `subgraph edge.attr != value` |
+| `predicate_string_equality` | `node.attr = "value"` string comparison |
+| `predicate_numeric_equality` | `node.attr = 42` numeric comparison |
+| `predicate_boolean_equality` | `node.attr = true` boolean comparison |
+| `predicate_type_sensitive` | `"42" != 42` different types, not equal |
+| `node_in_set` | `node in @set` set membership |
+| `edge_in_set` | `edge in @set` set membership |
+| `node_not_in_set` | `node not in @set` set non-membership |
+| `edge_not_in_set` | `edge not in @set` set non-membership |
+| `node_in_missing_set` | `in @missing_set` is false; `not in @missing_set` is true |
 
 **Key Semantic Notes:**
 - Predicates are type-sensitive: `"42" != 42`
 - Missing attributes: `!= value` returns false (per spec 7.2)
 - `exists` requires attribute presence
-- `traverse` maintains visited set to avoid infinite loops on cycles
+- `in @missing_set` → false, `not in @missing_set` → true
 
 ---
 
-## Graph Algebra
-
-Combine named graphs with set operations.
-
-| Fixture | Tests |
-|---------|-------|
-| `named_graph_union` | `A + B` combines all nodes/edges |
-| `named_graph_intersection` | `A & B` keeps only common nodes |
-| `named_graph_difference` | `A - B` removes nodes in B from A |
-| `named_graph_symmetric_difference` | `A ^ B` nodes in either but not both |
-| `named_graph_attribute_merge_rules` | `A + B` right-wins attribute merging |
-| `named_graph_chained_algebra` | Multiple algebra ops in sequence |
-| `named_graph_from_named` | `from NAME` switches working graph |
-
-**Key Semantic Notes:**
-- Union merges nodes; last-write-wins for attributes
-- Intersection requires node IDs to match
-- Difference removes matching nodes and incident edges
-- Symmetric difference is XOR on node sets
-- Edges deduplicated only during **collapse**, not algebra
-
----
-
-## Make (Assign)
+## 03-make — Attribute Assignment
 
 Add or update node/edge attributes conditionally.
 
@@ -100,17 +95,17 @@ Add or update node/edge attributes conditionally.
 
 ---
 
-## Remove
+## 04-remove — Deletion Operations
 
-Delete nodes, edges, or attributes.
+Delete edges, attributes, or orphan nodes.
 
 | Fixture | Tests |
 |---------|-------|
 | `remove_edge_filter` | `remove edge where predicate` removes matching edges |
-| `remove_edge_attribute` | `remove edge.attr where predicate` clears attribute |
-| `remove_attribute` | `remove node.attr where predicate` clears attribute |
 | `remove_orphans` | `remove orphans` deletes nodes with no incident edges |
 | `remove_orphans_with_self_loop` | Self-loop counts as incident edge (not orphan) |
+| `remove_attribute` | `remove node.attr where predicate` clears attribute |
+| `remove_edge_attribute` | `remove edge.attr where predicate` clears attribute |
 | `remove_multiple_operations` | Multiple removes in sequence |
 | `single_node_remove_orphans` | Single node with no edges is orphan |
 
@@ -118,11 +113,74 @@ Delete nodes, edges, or attributes.
 - Remove edge: nodes remain, edges deleted
 - Remove attribute: node/edge remains, property cleared
 - Self-loop prevents orphan status
-- Orphans pass preserved sets during removal
 
 ---
 
-## Collapse
+## 05-traversal — Graph Structure Traversal
+
+Follow edges from a start node up to a depth limit (`out`, `in`, `both`).
+
+| Fixture | Tests |
+|---------|-------|
+| `subgraph_traverse` | `traverse out 1` one level out |
+| `subgraph_traverse_in` | `traverse in 2` two levels incoming |
+| `subgraph_traverse_both` | `traverse both 2` bidirectional |
+| `subgraph_traverse_depth_3` | `traverse out 3` three levels |
+| `subgraph_traverse_all_depth` | `traverse out` (unbounded, handles cycles) |
+| `cyclic_graph_traversal` | Cycles don't infinite loop (visited set) |
+| `wide_fanout` | High fan-out correctly traversed |
+
+**Key Semantic Notes:**
+- `traverse` requires matching predicate first
+- Visited set prevents cycles from infinite loops
+- `out`, `in`, `both` control graph-structure direction
+- Unbounded traversal (`traverse out`) safe on cyclic graphs
+
+---
+
+## 06-edge-dependencies — Edge Hierarchy
+
+Query and traverse edges based on their position in the dependency tree (`depends_on`).
+
+### Predicates
+
+| Fixture | Tests |
+|---------|-------|
+| `edge_parent_exists` | `subgraph edge parent exists` selects edges with a parent |
+| `edge_parent_not_exists` | `subgraph edge parent not exists` selects root edges |
+| `edge_depth` | `subgraph edge.depth == 0` matches edges by dependency depth |
+
+### Dependency Traversal
+
+| Fixture | Tests |
+|---------|-------|
+| `traverse_up` | `traverse up 1` follows DependsOn chain upward |
+| `traverse_down` | `traverse down 1` follows Children chain downward |
+| `traverse_out_up` | `traverse out up 1` combines graph and dependency directions |
+| `subgraph_scope` | `scope` sugar for `traverse down all` on edge predicates |
+
+### Negative Tests (Boundary Conditions)
+
+| Fixture | Tests |
+|---------|-------|
+| `edge_parent_exists_no_parents` | `edge parent exists` on graph with only root edges → empty |
+| `edge_depth_no_edges` | `edge.depth == 0` on graph with no edges → empty |
+| `scope_no_matching_edges` | `scope` on edge predicate with no matches → empty |
+| `traverse_up_from_root` | `traverse up 1` from root edge → no-op (same result) |
+| `traverse_down_no_children` | `traverse down 1` from leaf node → no-op (same result) |
+
+**Key Semantic Notes:**
+- `parent exists` = edge has `depends_on` set
+- `parent not exists` = edge is a root (no `depends_on`)
+- `depth` is computed by walking the `depends_on` chain
+- `depth == 0` are root edges with no parent
+- `scope` ≡ `traverse down all`
+- Directions can be combined: `traverse out up 2`
+- `edge depends on <predicate>` is tested via unit tests only (`TestDependsOnPredicate`)
+
+---
+
+## 07-collapse — Node Merging
 
 Merge multiple nodes into a single target node.
 
@@ -144,115 +202,38 @@ Merge multiple nodes into a single target node.
 
 ---
 
-## Traversal
+## 08-named-graphs — Saving and Reusing Results
 
-Follow edges from a start node up to a depth limit.
-
-| Fixture | Tests |
-|---------|-------|
-| `subgraph_traverse` | `traverse out 1` one level out |
-| `subgraph_traverse_in` | `traverse in 2` two levels incoming |
-| `subgraph_traverse_both` | `traverse both 2` bidirectional |
-| `subgraph_traverse_depth_3` | `traverse out 3` three levels |
-| `subgraph_traverse_all_depth` | `traverse out` (unbounded, handles cycles) |
-| `cyclic_graph_traversal` | Cycles don't infinite loop (visited set) |
-| `wide_fanout` | High fan-out correctly traversed |
-| `traverse_up` | `traverse up 1` follows DependsOn chain upward |
-| `traverse_down` | `traverse down 1` follows Children chain downward |
-| `traverse_out_up` | `traverse out up 1` combines graph and dependency directions |
-| `subgraph_scope` | `scope` sugar for `traverse down all` on edge predicates |
-
-**Key Semantic Notes:**
-- `traverse` requires matching predicate first
-- Visited set prevents cycles from infinite loops
-- `out`, `in`, `both` control graph-structure direction
-- `up`, `down` control dependency direction (follows `depends_on` and `Children`)
-- Directions can be combined: `traverse out up 2`
-- `scope` is syntactic sugar for `traverse down all`
-- Unbounded traversal (`traverse out`, `scope`) safe on cyclic graphs
-
----
-
-## Predicates
-
-Type-sensitive comparisons and existence checks.
-
-| Fixture | Tests |
-|---------|-------|
-| `predicate_string_equality` | `node.attr = "value"` string comparison |
-| `predicate_numeric_equality` | `node.attr = 42` numeric comparison |
-| `predicate_boolean_equality` | `node.attr = true` boolean comparison |
-| `predicate_type_sensitive` | `"42" != 42` different types, not equal |
-
-**Key Semantic Notes:**
-- Attributes stored as provided (no type coercion)
-- Equality is `==` (double equals) or ` = ` (space-equals-space)
-- Inequality `!=` returns false for missing attributes
-- No implicit string→int conversion
-
----
-
-## Edge Dependency Predicates
-
-Query edges based on their position in the dependency tree.
-
-| Fixture | Tests |
-|---------|-------|
-| `edge_parent_exists` | `subgraph edge parent exists` matches edges with a parent |
-| `edge_parent_not_exists` | `subgraph edge parent not exists` matches root edges |
-| `edge_depth` | `subgraph edge.depth == 0` matches edges by dependency depth |
-
-**Key Semantic Notes:**
-- `parent exists` = edge has `depends_on` set
-- Querying `edge parent exists` on a graph with only root edges returns an empty result
-- `edge.depth` on a graph with no edges returns an empty result (no crash)
-
-### Negative Tests (Edge Cases)
-
-These verify the query engine handles boundary conditions gracefully:
-
-| Fixture | Tests |
-|---------|-------|
-| `edge_parent_exists_no_parents` | `edge parent exists` on graph with only root edges → empty |
-| `edge_depth_no_edges` | `edge.depth == 0` on graph with no edges → empty |
-| `scope_no_matching_edges` | `scope` on edge predicate with no matches → empty |
-| `traverse_up_from_root` | `traverse up 1` from root edge → no-op (same result) |
-| `traverse_down_no_children` | `traverse down 1` from leaf node → no-op (same result) |
-- `parent not exists` = edge is a root (no `depends_on`)
-- `depth` is computed by walking the `depends_on` chain
-- `depth == 0` are root edges with no parent
-- The `edge depends on <predicate>` feature is tested via unit tests only (`TestDependsOnPredicate`)
-
----
-
-## Named Graphs
-
-Bind intermediate results and reference them in algebra.
+Bind intermediate pipeline results and combine them with graph algebra.
 
 | Fixture | Tests |
 |---------|-------|
 | `named_graph_union` | `(pipeline) as NAME` binds graph |
-| `named_graph_intersection` | Reference `NAME` in algebra expression |
-| `named_graph_difference` | `A - B` where A, B are named |
-| `named_graph_symmetric_difference` | `A ^ B` where A, B are named |
-| `named_graph_attribute_merge_rules` | Attribute merge semantics in `A + B` |
-| `named_graph_chained_algebra` | Multiple named graphs, chained operations |
-| `named_graph_from_named` | `from NAME` changes working graph |
+| `named_graph_intersection` | `A + B` union combines all nodes/edges |
+| `named_graph_difference` | `A & B` intersection keeps only common nodes |
+| `named_graph_symmetric_difference` | `A - B` difference removes nodes in B from A |
+| `named_graph_attribute_merge_rules` | `A ^ B` symmetric difference (XOR on node sets) |
+| `named_graph_chained_algebra` | Multiple algebra ops in sequence |
+| `named_graph_from_named` | `from NAME` switches working graph |
 
 **Key Semantic Notes:**
+- Union merges nodes; last-write-wins for attributes
+- Intersection requires node IDs to match
+- Difference removes matching nodes and incident edges
+- Symmetric difference is XOR on node sets
 - Named graph scope is single query (session-local)
 - `from *` resets to input graph
-- `from NAME` changes working graph to named graph
 - Cannot rebind a name (error if attempted twice)
 
 ---
 
-## Pipelines
+## 09-pipelines — Multi-Stage Composition
 
-Multi-stage composition of expressions.
+Chain multiple expressions with the pipe operator.
 
 | Fixture | Tests |
 |---------|-------|
+| `from_clause` | `from *` resets working graph to input |
 | `pipeline_subgraph_traverse_make` | `subgraph \| traverse \| make` three stages |
 | `pipeline_three_stages` | Three different expression types |
 | `pipeline_binding_and_algebra` | Bind + algebra + make in sequence |
@@ -264,30 +245,21 @@ Multi-stage composition of expressions.
 
 ---
 
-## Edge Cases
+## 10-edge-cases — Boundary Conditions
 
-Minimal/boundary graph structures.
+Minimal and unusual graph structures.
 
 | Fixture | Tests |
 |---------|-------|
-| `single_node_no_edges` | Single node, no edges |
-| `empty_graph_subgraph` | Subgraph on empty graph returns empty |
 | `self_loop_only` | Node with only self-loop, no other edges |
 | `disconnected_components` | Multiple disconnected subgraphs |
 | `duplicate_edges_preserved` | Multiple edges between same nodes |
-| `edge_parent_exists_no_parents` | `edge parent exists` on root-only graph → empty |
-| `edge_depth_no_edges` | `edge.depth == 0` on graph with no edges → empty |
-| `scope_no_matching_edges` | `scope` on edge predicate with no matches → empty |
-| `traverse_up_from_root` | `traverse up 1` from root edge → no-op |
-| `traverse_down_no_children` | `traverse down 1` from leaf node → no-op |
 
 **Key Semantic Notes:**
 - Empty graph is valid result
 - Self-loop counts as incident edge
 - Duplicate edges preserved except during collapse
 - Disconnected components behave independently
-- `edge parent exists` on root-only graphs returns empty (no error)
-- `traverse up` from root edge and `traverse down` from leaf are no-ops (no crash)
 
 ---
 
@@ -295,21 +267,21 @@ Minimal/boundary graph structures.
 
 **For any agent adding new tests or modifying existing ones:**
 
-- [ ] **Add new fixture?** Update this README with entry in appropriate category
+- [ ] **Add new fixture?** Place it in the appropriate numbered group directory
+- [ ] **New concept that doesn't fit?** Add a new numbered group and update this README
 - [ ] **Change predicate syntax?** Update predicate examples and semantic notes
 - [ ] **Change algebra semantics?** Update graph algebra section and merge rules
 - [ ] **Change collapse behavior?** Update collapse section, especially deduplication rules
-- [ ] **Add new operator/keyword?** Add new category section and document semantics
+- [ ] **Add new operator/keyword?** Add new group section and document semantics
 - [ ] **Run all tests?** Verify `go test -v ./query` passes before commit
 - [ ] **Document in QUERY_SPEC.md?** Core language changes belong in spec, not just here
 
 **Maintaining context efficiency:**
 
 This README is designed so LLMs can:
-1. Quickly understand test coverage without scanning 71 directories
-2. Find relevant fixtures by category (15 categories, 1-12 entries each)
+1. Follow the learning path from basics → edge cases
+2. Find relevant fixtures by group (10 groups, 3-14 entries each)
 3. Reference semantic notes for correct behavior
 4. Know when to update this file (checklist above)
 
 Keep entries brief: test name + one-line description + key semantic note.
-

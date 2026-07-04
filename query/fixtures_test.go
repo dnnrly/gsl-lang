@@ -2,42 +2,38 @@ package query
 
 import (
 	"bytes"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 
+	gsl "github.com/dnnrly/gsl-lang"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	gsl "github.com/dnnrly/gsl-lang"
 )
 
 func TestFixtures(t *testing.T) {
 	testdataDir := filepath.Join("testdata")
-	entries, err := os.ReadDir(testdataDir)
-	if err != nil {
-		t.Fatalf("failed to read testdata directory: %v", err)
-	}
-
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
+	err := filepath.WalkDir(testdataDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || d.Name() != "query.gql" {
+			return nil
 		}
 
-		testName := entry.Name()
-		t.Run(testName, func(t *testing.T) {
-			testDir := filepath.Join(testdataDir, testName)
-
+		testDir := filepath.Dir(path)
+		relPath, _ := filepath.Rel(testdataDir, testDir)
+		t.Run(relPath, func(t *testing.T) {
 			// Read input files
 			graphPath := filepath.Join(testDir, "graph.gsl")
 			queryPath := filepath.Join(testDir, "query.gql")
 			resultPath := filepath.Join(testDir, "result.gsl")
 
-			// Check that all required files exist
-			for _, path := range []string{graphPath, queryPath, resultPath} {
-				require.FileExists(t, path, "required file missing")
+			for _, p := range []string{graphPath, queryPath, resultPath} {
+				require.FileExists(t, p, "required file missing")
 			}
 
-			// Parse the input graph
 			graphData, err := os.ReadFile(graphPath)
 			require.NoError(t, err, "failed to read graph.gsl")
 
@@ -45,11 +41,9 @@ func TestFixtures(t *testing.T) {
 			require.False(t, parseErr != nil && parseErr.HasError(), "failed to parse graph.gsl: %v", parseErr)
 			require.False(t, parseErr != nil && parseErr.HasWarnings(), "parsing warnings in graph.gsl")
 
-			// Read the query
 			queryData, err := os.ReadFile(queryPath)
 			require.NoError(t, err, "failed to read query.gql")
 
-			// Read expected result
 			resultData, err := os.ReadFile(resultPath)
 			require.NoError(t, err, "failed to read result.gsl")
 
@@ -57,12 +51,10 @@ func TestFixtures(t *testing.T) {
 			require.False(t, parseErr != nil && parseErr.HasError(), "failed to parse result.gsl: %v", parseErr)
 			require.False(t, parseErr != nil && parseErr.HasWarnings(), "parsing warnings in result.gsl")
 
-			// Parse and execute the query
 			queryParser := NewQueryParser(string(queryData))
 			parsedQuery, err := queryParser.Parse()
 			require.NoError(t, err, "failed to parse query")
 
-			// Execute the query
 			ctx := &QueryContext{
 				InputGraph:  graph,
 				NamedGraphs: make(map[string]*gsl.Graph),
@@ -70,7 +62,6 @@ func TestFixtures(t *testing.T) {
 			result, err := parsedQuery.Execute(ctx)
 			require.NoError(t, err, "failed to execute query")
 
-			// Extract the graph from the result
 			var actualGraph *gsl.Graph
 			switch v := result.(type) {
 			case GraphValue:
@@ -79,11 +70,15 @@ func TestFixtures(t *testing.T) {
 				require.Fail(t, "unexpected result type", "got %T", result)
 			}
 
-			// Compare serialized versions
 			actual := gsl.Serialize(actualGraph)
 			expected := gsl.Serialize(expectedResult)
 
 			assert.Equal(t, expected, actual, "query result mismatch")
 		})
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("failed to walk testdata directory: %v", err)
 	}
 }
