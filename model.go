@@ -19,8 +19,9 @@ type Node struct {
 type Edge struct {
 	From       string
 	To         string
-	Label      string // optional edge label for dependency targeting
-	DependsOn  string // optional reference to parent edge label
+	Label      string  // optional edge label for dependency targeting
+	DependsOn  string  // optional reference to parent edge label
+	Children   []*Edge // child edges (populated after build from DependsOn references)
 	Attributes AttributeMap
 	Sets       map[string]struct{}
 }

@@ -40,6 +40,9 @@ func buildGraph(prog *program) (*Graph, []error, error) {
 		}
 	}
 
+	// Populate Children pointers from DependsOn references
+	b.populateChildren()
+
 	// Validate all edge dependencies (labels must exist)
 	b.validateEdgeDependencies()
 
@@ -252,6 +255,25 @@ func (b *builder) processScopedBlock(stmts []statement, parentLabel string) {
 
 	// Restore outer scope
 	b.edgeScope = oldScope
+}
+
+// populateChildren populates Children pointers on each edge from DependsOn references.
+// For each edge with DependsOn set, the parent edge (matched by label) gets this edge
+// appended to its Children slice.
+func (b *builder) populateChildren() {
+	labelIndex := make(map[string]*Edge)
+	for _, edge := range b.graph.edges {
+		if edge.Label != "" {
+			labelIndex[edge.Label] = edge
+		}
+	}
+	for _, edge := range b.graph.edges {
+		if edge.DependsOn != "" {
+			if parent, ok := labelIndex[edge.DependsOn]; ok {
+				parent.Children = append(parent.Children, edge)
+			}
+		}
+	}
 }
 
 // validateEdgeDependencies checks that all depends_on references resolve to valid labels

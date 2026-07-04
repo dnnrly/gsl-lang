@@ -691,6 +691,109 @@ func TestGraphCloneNilGraph(t *testing.T) {
 	}
 }
 
+func TestGraphCloneEdgeLabelsAndChildren(t *testing.T) {
+	// Build graph with labeled edges and dependency chain
+	parentLabel := "E1"
+	childLabel := "E2"
+	prog := &program{
+		statements: []statement{
+			&edgeDecl{
+				label: &parentLabel,
+				left:  []string{"A"},
+				right: []string{"B"},
+				line:  1, col: 1,
+			},
+			&edgeDecl{
+				label: &childLabel,
+				left:  []string{"B"},
+				right: []string{"C"},
+				attrs: []attribute{
+					{key: "depends_on", value: &attrValue{kind: valueString, strVal: "E1"}, line: 2, col: 10},
+				},
+				line: 2, col: 1,
+			},
+		},
+	}
+	g, _, err := buildGraph(prog)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Clone
+	cloned := g.Clone()
+
+	// Verify edges are deep-copied with label and DependsOn
+	origEdges := g.GetEdges()
+	clonedEdges := cloned.GetEdges()
+	if len(origEdges) != len(clonedEdges) {
+		t.Fatalf("expected %d edges in clone, got %d", len(origEdges), len(clonedEdges))
+	}
+
+	// Verify label and DependsOn are preserved in clone
+	for i := range origEdges {
+		if origEdges[i].Label != clonedEdges[i].Label {
+			t.Errorf("edge %d: expected Label %q, got %q", i, origEdges[i].Label, clonedEdges[i].Label)
+		}
+		if origEdges[i].DependsOn != clonedEdges[i].DependsOn {
+			t.Errorf("edge %d: expected DependsOn %q, got %q", i, origEdges[i].DependsOn, clonedEdges[i].DependsOn)
+		}
+	}
+
+	// Verify modification independence
+	clonedEdges[0].Label = "MODIFIED"
+	if g.GetEdges()[0].Label == "MODIFIED" {
+		t.Error("expected clone mutation to not affect original Label")
+	}
+}
+
+func TestGraphCloneScopedEdgeChildren(t *testing.T) {
+	// Build graph with scoped edges for implicit dependency
+	// E1: A -> B { B -> C }
+	parentLabel := "E1"
+	child := &edgeDecl{
+		left:  []string{"B"},
+		right: []string{"C"},
+		line:  2, col: 5,
+	}
+	prog := &program{
+		statements: []statement{
+			&edgeDecl{
+				label: &parentLabel,
+				left:  []string{"A"},
+				right: []string{"B"},
+				block: []statement{child},
+				line:  1, col: 1,
+			},
+		},
+	}
+	g, _, err := buildGraph(prog)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify Children populated in original
+	origEdges := g.GetEdges()
+	if len(origEdges[0].Children) != 1 {
+		t.Fatalf("expected parent to have 1 child, got %d", len(origEdges[0].Children))
+	}
+	if origEdges[0].Children[0].DependsOn != "E1" {
+		t.Errorf("expected child DependsOn E1, got %q", origEdges[0].Children[0].DependsOn)
+	}
+
+	// Clone and verify
+	cloned := g.Clone()
+	clonedEdges := cloned.GetEdges()
+	if len(clonedEdges) != 2 {
+		t.Fatalf("expected 2 edges in clone, got %d", len(clonedEdges))
+	}
+	if clonedEdges[0].Label != "E1" {
+		t.Errorf("expected clone parent label E1, got %q", clonedEdges[0].Label)
+	}
+	if clonedEdges[1].DependsOn != "E1" {
+		t.Errorf("expected clone child DependsOn E1, got %q", clonedEdges[1].DependsOn)
+	}
+}
+
 // --- Edge labels and scoping tests ---
 
 func TestBuildEdgeLabel(t *testing.T) {
@@ -838,6 +941,13 @@ func TestBuildExplicitDependsOn(t *testing.T) {
 	if edges[1].DependsOn != "E1" {
 		t.Errorf("expected depends_on E1, got %q", edges[1].DependsOn)
 	}
+	// Parent edge should have child in Children
+	if len(edges[0].Children) != 1 {
+		t.Fatalf("expected parent edge to have 1 child, got %d", len(edges[0].Children))
+	}
+	if edges[0].Children[0] != edges[1] {
+		t.Error("expected Children[0] to be the second edge")
+	}
 }
 
 func TestBuildScopedEdgeWithUnlabeledParent(t *testing.T) {
@@ -873,6 +983,59 @@ func TestBuildScopedEdgeWithUnlabeledParent(t *testing.T) {
 	// Child edge should have depends_on even though parent is unlabeled
 	// The dependency is tracked internally but since parent has no label,
 	// the child edge should have empty DependsOn in the current implementation
+}
+
+func TestBuildChildrenPopulated(t *testing.T) {
+	// A -> B { B -> C C -> D }
+	// Parent edge E1 should have two children in its Children slice
+	parentLabel := "E1"
+	child1 := &edgeDecl{
+		left:  []string{"B"},
+		right: []string{"C"},
+		line:  2, col: 5,
+	}
+	child2 := &edgeDecl{
+		left:  []string{"C"},
+		right: []string{"D"},
+		line:  3, col: 5,
+	}
+	prog := &program{
+		statements: []statement{
+			&edgeDecl{
+				label: &parentLabel,
+				left:  []string{"A"},
+				right: []string{"B"},
+				block: []statement{child1, child2},
+				line:  1, col: 1,
+			},
+		},
+	}
+	g, _, err := buildGraph(prog)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	edges := g.GetEdges()
+	if len(edges) != 3 {
+		t.Fatalf("expected 3 edges, got %d", len(edges))
+	}
+
+	// Parent edge is edges[0] (E1: A->B)
+	parent := edges[0]
+	if len(parent.Children) != 2 {
+		t.Fatalf("expected parent edge (E1) to have 2 children, got %d", len(parent.Children))
+	}
+
+	// Verify children are the correct edges
+	childNodes := make(map[string]bool)
+	for _, child := range parent.Children {
+		childNodes[child.From+"->"+child.To] = true
+	}
+	if !childNodes["B->C"] {
+		t.Error("expected B->C to be a child of E1")
+	}
+	if !childNodes["C->D"] {
+		t.Error("expected C->D to be a child of E1")
+	}
 }
 
 func TestBuildDuplicateLabelError(t *testing.T) {
