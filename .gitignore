@@ -19,3 +19,7 @@ WORK.md
 
 # Ignore fuzz seed corpus cache
 testdata/
+
+# Ignore generated diagram files
+*.mmd
+*.puml

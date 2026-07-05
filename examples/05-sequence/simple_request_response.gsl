@@ -1,0 +1,20 @@
+# Simple Request-Response
+# Demonstrates the most basic sequence diagram pattern:
+# a client calls a server, the server queries a database,
+# and responses flow back. Return arrows are auto-detected
+# when edge.To matches the parent edge.From (i.e., a child
+# edge points back to the parent's source).
+#
+# Convert to a sequence diagram:
+#   gsl-diagram -i examples/05-sequence/simple_request_response.gsl -f mermaid -t sequence
+#   gsl-diagram -i examples/05-sequence/simple_request_response.gsl -f plantuml -t sequence
+
+node Client [text = "Web Browser"]
+node Server [text = "Application Server"]
+node DB [text = "Database"]
+
+Client -> Server [method = "GET /api/users"] {
+    Server -> DB [method = "SELECT * FROM users"]
+    DB -> Server [method = "result set"]
+    Server -> Client [method = "200 OK"]
+}

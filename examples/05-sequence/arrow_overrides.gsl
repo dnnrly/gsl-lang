@@ -1,0 +1,34 @@
+# Arrow Style Overrides
+# By default, arrows are auto-detected:
+#   - Solid arrow:  edge direction is forward (request)
+#   - Dashed arrow: edge direction points back to parent's source (return)
+#
+# Use the `arrow` attribute to override:
+#   - arrow = "solid"  — force a solid arrow regardless of direction
+#   - arrow = "dashed" — force a dashed arrow regardless of direction
+#
+# This is useful for async events, callbacks, or logging flows
+# that don't follow the standard request/return pattern.
+#
+# Convert to a sequence diagram:
+#   gsl-diagram -i examples/05-sequence/arrow_overrides.gsl -f mermaid -t sequence
+#   gsl-diagram -i examples/05-sequence/arrow_overrides.gsl -f plantuml -t sequence
+
+node Client [text = "Client"]
+node Server [text = "Server"]
+node Logger [text = "Logger"]
+node Queue [text = "Message Queue"]
+
+# Within a scope: auto-detected arrows (solid request, dashed return)
+Client -> Server [method = "POST /data"] {
+    Server -> Client [method = "202 Accepted"]
+
+    # Async log — not a return, but forced dashed
+    Server -> Logger [method = "audit event", arrow = "dashed"]
+
+    # Publish to queue — explicit solid arrow for a forward edge
+    Server -> Queue [method = "publish event", arrow = "solid"]
+}
+
+# Standalone edges with explicit arrow override
+Server -> Logger [method = "heartbeat", arrow = "dashed"]

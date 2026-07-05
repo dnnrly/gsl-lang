@@ -1,0 +1,36 @@
+# API Orchestration
+# Shows a fan-out pattern where a single client request
+# triggers calls to multiple downstream services. All child
+# edges execute within the parent activation context,
+# producing a rich sequence diagram that shows the full
+# orchestration flow.
+#
+# Convert to a sequence diagram:
+#   gsl-diagram -i examples/05-sequence/api_orchestration.gsl -f mermaid -t sequence
+#   gsl-diagram -i examples/05-sequence/api_orchestration.gsl -f plantuml -t sequence
+
+node App [text = "Mobile App"]
+node Gateway [text = "API Gateway"]
+node Auth [text = "Auth Service"]
+node Profile [text = "Profile Service"]
+node Feed [text = "Feed Service"]
+node Notify [text = "Notification Service"]
+node DB [text = "Database"]
+
+App -> Gateway [method = "GET /dashboard"] {
+    Gateway -> Auth [method = "verify token"]
+    Auth -> Gateway [method = "user ID"]
+
+    Gateway -> Profile [method = "get profile"]
+    Profile -> Gateway [method = "profile data"]
+
+    Gateway -> Feed [method = "get feed"]
+    Feed -> DB [method = "query posts"]
+    DB -> Feed [method = "posts"]
+    Feed -> Gateway [method = "feed data"]
+
+    Gateway -> Notify [method = "get unread count"]
+    Notify -> Gateway [method = "count"]
+
+    Gateway -> App [method = "200 OK"]
+}

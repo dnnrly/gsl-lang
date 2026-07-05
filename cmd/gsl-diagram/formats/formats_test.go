@@ -234,6 +234,40 @@ Client -> Server [method = "GET /api/users"] {
 	}
 }
 
+func TestPlantUMLSequenceUnlabeledEdge(t *testing.T) {
+	gslInput := `
+node A
+node B
+node C
+
+E1: A -> B {
+    B -> C
+}
+`
+
+	graph, parseErr := gsl.Parse(bytes.NewReader([]byte(gslInput)))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("failed to parse GSL: %v", parseErr)
+	}
+
+	factory, _ := GetFactory("plantuml")
+	conv := factory("sequence")
+	output := conv.Convert(graph)
+
+	if !strings.Contains(output, "A -> B") {
+		t.Errorf("plantuml sequence: missing A->B arrow")
+	}
+	if !strings.Contains(output, "B -> C") {
+		t.Errorf("plantuml sequence: missing B->C arrow")
+	}
+	if !strings.Contains(output, "activate B") {
+		t.Errorf("plantuml sequence: missing activate B")
+	}
+	if !strings.Contains(output, "deactivate B") {
+		t.Errorf("plantuml sequence: missing deactivate B")
+	}
+}
+
 func TestSequenceParticipants(t *testing.T) {
 	gslInput := `
 node Client [text = "Web Browser"]
