@@ -96,7 +96,9 @@ func serializeEdges(edges []*Edge) string {
 	labelIndex := make(map[string]*Edge)
 	for _, e := range edges {
 		if e.Label != "" {
-			labelIndex[e.Label] = e
+			if _, exists := labelIndex[e.Label]; !exists {
+				labelIndex[e.Label] = e
+			}
 		}
 	}
 
@@ -145,16 +147,16 @@ func serializeEdges(edges []*Edge) string {
 }
 
 // isEdgeCyclic walks the edge parent chain to detect cycles.
+// Uses edge pointer tracking to avoid false positives when two
+// different edges share the same label in the parent chain.
 func isEdgeCyclic(e *Edge, labelIndex map[string]*Edge) bool {
-	visited := make(map[string]bool)
+	visited := make(map[*Edge]bool)
 	current := e
 	for current != nil && current.Parent != "" {
-		if current.Label != "" {
-			if visited[current.Label] {
-				return true
-			}
-			visited[current.Label] = true
+		if visited[current] {
+			return true
 		}
+		visited[current] = true
 		parent, ok := labelIndex[current.Parent]
 		if !ok {
 			return false

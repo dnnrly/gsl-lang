@@ -257,6 +257,19 @@ func TestParseWithErrors(t *testing.T) {
 	}
 }
 
+func TestParseDuplicateLabelAcrossScopes(t *testing.T) {
+	// Reusing the same edge label in a nested scope is an error
+	// (labels are globally unique)
+	input := "X: A -> B {\n    X: C -> D\n}"
+	_, parseErr := Parse(strings.NewReader(input))
+	if parseErr == nil || !parseErr.HasError() {
+		t.Fatal("expected error for duplicate label in nested scope")
+	}
+	if !strings.Contains(parseErr.Error(), "duplicate edge label") {
+		t.Errorf("expected 'duplicate edge label' error, got: %v", parseErr)
+	}
+}
+
 // assertRoundTrip parses input, serializes, re-parses, and checks equality.
 func assertRoundTrip(t *testing.T, input string) {
 	t.Helper()

@@ -144,7 +144,6 @@ A labeled grouped edge with duplicate nodes that must be serialized as a grouped
 - Avoiding duplicate edge label error in re-parsed output
 
 ---
-
 ## Example Tests
 
 `example_test.go` contains runnable documentation examples that demonstrate common patterns:
