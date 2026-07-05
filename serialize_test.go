@@ -499,3 +499,85 @@ func TestSerializeNumberFormatting(t *testing.T) {
 		t.Errorf("expected %q, got %q", expected, got)
 	}
 }
+
+func TestSerializeGroupedEdgeLeft(t *testing.T) {
+	// Multiple edges with same label and same To → left-grouped form
+	g := testGraph(
+		map[string]*Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		map[string]*Set{},
+		[]*Edge{
+			{From: "A", To: "Z", Label: "X", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			{From: "B", To: "Z", Label: "X", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+	)
+	got := Serialize(g)
+	// Edges share To=Z, so should be left-grouped: X: A,B->Z
+	expected := "node A\nnode B\n\nX: A,B->Z"
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+func TestSerializeGroupedEdgeRight(t *testing.T) {
+	// Multiple edges with same label and same From → right-grouped form
+	g := testGraph(
+		map[string]*Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		map[string]*Set{},
+		[]*Edge{
+			{From: "A", To: "B", Label: "X", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			{From: "A", To: "C", Label: "X", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+	)
+	got := Serialize(g)
+	// Edges share From=A, so should be right-grouped: X: A->B,C
+	expected := "node A\nnode B\nnode C\n\nX: A->B,C"
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+func TestSerializeGroupedEdgeDuplicatePairs(t *testing.T) {
+	// Duplicate identical edges with same label group to one declaration
+	g := testGraph(
+		map[string]*Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		map[string]*Set{},
+		[]*Edge{
+			{From: "A", To: "A", Label: "X", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			{From: "A", To: "A", Label: "X", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+	)
+	got := Serialize(g)
+	// Both edges identical (A→A, label X); both conditions true, left-grouped chosen
+	expected := "node A\n\nX: A,A->A"
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+func TestSerializeGroupedEdgeSingle(t *testing.T) {
+	// Single labeled edge should serialize normally (no grouping needed)
+	g := testGraph(
+		map[string]*Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		map[string]*Set{},
+		[]*Edge{
+			{From: "A", To: "B", Label: "E1", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+	)
+	got := Serialize(g)
+	expected := "node A\nnode B\n\nE1: A->B"
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}

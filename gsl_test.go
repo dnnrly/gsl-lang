@@ -161,6 +161,25 @@ func TestRoundTripLabeledEdge(t *testing.T) {
 	assertRoundTrip(t, input)
 }
 
+func TestRoundTripLabeledGroupedEdgeRight(t *testing.T) {
+	// Labeled grouped edge (right-grouped) should round-trip.
+	// This was a fuzzing failure: the serializer must reconstruct grouped form.
+	input := "A:A->A,A"
+	assertRoundTrip(t, input)
+}
+
+func TestRoundTripLabeledGroupedEdgeLeft(t *testing.T) {
+	// Labeled grouped edge (left-grouped) should round-trip.
+	input := "A: A,A->A"
+	assertRoundTrip(t, input)
+}
+
+func TestRoundTripLabeledGroupedEdgeDistinct(t *testing.T) {
+	// Labeled grouped edge with distinct nodes should round-trip.
+	input := "X: A,B->Z"
+	assertRoundTrip(t, input)
+}
+
 func TestRoundTripScopedEdge(t *testing.T) {
 	// Scoped edges should use nested block syntax in canonical form
 	input := "E1: A -> B { B -> C }"

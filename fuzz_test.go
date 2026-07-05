@@ -140,6 +140,7 @@ func FuzzRoundTrip(f *testing.F) {
 	f.Add("A -> B { node C C -> D }")
 	f.Add("A -> B { set flow B -> C }")
 	f.Add("node A [x=1] @s1 @s2")
+	f.Add("A:A->A,A")
 
 	for _, input := range loadGSLFiles("examples", "query/testdata") {
 		f.Add(input)

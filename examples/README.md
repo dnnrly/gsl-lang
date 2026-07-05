@@ -130,6 +130,21 @@ Demonstrates parent override inside block warnings.
 
 ---
 
+## 04-serialization — Serialization Round-Trip
+
+Graphs that verify canonical serialization produces parseable output.
+
+### `grouped_edges.gsl`
+
+A labeled grouped edge with duplicate nodes that must be serialized as a grouped declaration to preserve round-trip correctness.
+
+**Demonstrates:**
+- Labeled grouped edges
+- Serialization round-trip with duplicate edges sharing a label
+- Avoiding duplicate edge label error in re-parsed output
+
+---
+
 ## Example Tests
 
 `example_test.go` contains runnable documentation examples that demonstrate common patterns:
@@ -185,6 +200,7 @@ go test ./examples -v
 | Implicit sets warning | `03-edge-cases/implicit_sets.gsl` |
 | Name collision warning | `03-edge-cases/name_collision.gsl` |
 | Parent override warning | `03-edge-cases/parent_override.gsl` |
+| Labeled grouped edges | `04-serialization/grouped_edges.gsl` |
 
 ## Graph Sizes
 
@@ -200,6 +216,7 @@ go test ./examples -v
 | `03-edge-cases/implicit_sets.gsl` | 4 | 1 | 2 |
 | `03-edge-cases/name_collision.gsl` | 3 | 2 | 1 |
 | `03-edge-cases/parent_override.gsl` | 4 | 0 | 0 |
+| `04-serialization/grouped_edges.gsl` | 1 | 2 | 0 |
 
 ## More Information
 

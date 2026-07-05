@@ -164,6 +164,7 @@ Before submitting changes:
 - [ ] Lint passes: `make lint`
 - [ ] Markdown validates: `go test -v -run TestMarkdownCodeBlocks`
 - [ ] Round-trip tests added (if touching parser/serializer)
+- [ ] Example fixture (`.gsl` file in `examples/`) added for serialization round-trip fixes
 - [ ] Integration tests added (if modifying CLI tools or converters)
 - [ ] LSP tests pass: `go test ./lsp/...`
 - [ ] LSP file structure updated in this file if reorganizing lsp/
