@@ -8,6 +8,40 @@ import (
 	"github.com/dnnrly/gsl-lang/cmd/gsl-diagram/converter"
 )
 
+type plantUMLSequenceConverter struct{}
+
+func (c *plantUMLSequenceConverter) Convert(graph *gsl.Graph) string {
+	var sb strings.Builder
+
+	sb.WriteString("@startuml\n")
+
+	nodes := graph.GetNodes()
+	edges := graph.GetEdges()
+
+	participants := collectParticipants(edges, nodes)
+	sb.WriteString("\n")
+	for _, p := range participants {
+		displayName := participantDisplayName(p, nodes)
+		if displayName != p {
+			sb.WriteString(fmt.Sprintf("participant \"%s\" as %s\n", displayName, p))
+		} else {
+			sb.WriteString(fmt.Sprintf("participant %s\n", p))
+		}
+	}
+	sb.WriteString("\n")
+
+	childSet := buildChildSet(edges)
+	for _, edge := range edges {
+		if _, isChild := childSet[edge]; !isChild {
+			renderSequenceEdgePlantUML(&sb, edge, nil, nodes, "")
+		}
+	}
+
+	sb.WriteString("@enduml\n")
+
+	return sb.String()
+}
+
 type plantUMLComponentConverter struct{}
 
 func (c *plantUMLComponentConverter) Convert(graph *gsl.Graph) string {

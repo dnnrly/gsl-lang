@@ -11,9 +11,10 @@ type builder struct {
 
 // edgeScope tracks edge labels and parent relationships for dependency resolution
 type edgeScope struct {
-	labels map[string]*Edge // label -> edge mapping for current scope
-	parent string           // label of parent edge (for implicit dependencies)
-	outer  *edgeScope       // outer scope for nested blocks
+	labels     map[string]*Edge // label -> edge mapping for current scope
+	parent     string           // label of parent edge (for implicit dependencies)
+	parentEdge *Edge            // pointer to the parent edge (for children tracking)
+	outer      *edgeScope       // outer scope for nested blocks
 }
 
 func buildGraph(prog *program) (*Graph, []error, error) {
@@ -196,8 +197,14 @@ func (b *builder) processEdgeDeclWithScope(ed *edgeDecl, insideScope bool) {
 			}
 
 			// If inside a scope, set implicit dependency on parent
-			if insideScope && b.edgeScope != nil && b.edgeScope.parent != "" {
-				edge.Parent = b.edgeScope.parent
+			if insideScope && b.edgeScope != nil && b.edgeScope.parentEdge != nil {
+				if b.edgeScope.parent != "" {
+					// Labeled parent: use label-based reference (populateChildren handles Children)
+					edge.Parent = b.edgeScope.parent
+				} else {
+					// Unlabeled parent: directly track children (no label for populateChildren)
+					b.edgeScope.parentEdge.Children = append(b.edgeScope.parentEdge.Children, edge)
+				}
 			}
 
 			// Memberships
@@ -224,17 +231,22 @@ func (b *builder) processEdgeDeclWithScope(ed *edgeDecl, insideScope bool) {
 
 	// Process scoped block if present
 	if len(ed.block) > 0 {
-		b.processScopedBlock(ed.block, edgeLabel)
+		b.processScopedBlock(ed.block, parentEdge)
 	}
 }
 
 // processScopedBlock processes statements inside an edge scope
-func (b *builder) processScopedBlock(stmts []statement, parentLabel string) {
+func (b *builder) processScopedBlock(stmts []statement, parentEdge *Edge) {
+	var parentLabel string
+	if parentEdge != nil {
+		parentLabel = parentEdge.Label
+	}
 	// Create new scope
 	newScope := &edgeScope{
-		labels: make(map[string]*Edge),
-		parent: parentLabel,
-		outer:  b.edgeScope,
+		labels:     make(map[string]*Edge),
+		parent:     parentLabel,
+		parentEdge: parentEdge,
+		outer:      b.edgeScope,
 	}
 
 	// Save old scope and set new one

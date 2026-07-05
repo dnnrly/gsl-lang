@@ -50,7 +50,7 @@ func main() {
 	rootCmd.Flags().StringVarP(&inputFile, "input", "i", "", "Input GSL file (read from stdin if not provided)")
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output diagram file (write to stdout if not provided)")
 	rootCmd.Flags().StringVarP(&format, "format", "f", "mermaid", "Output format: mermaid, plantuml (default: mermaid)")
-	rootCmd.Flags().StringVarP(&diagramType, "type", "t", "component", "Diagram type (default: component)")
+	rootCmd.Flags().StringVarP(&diagramType, "type", "t", "component", "Diagram type: component, graph, sequence (default: component)")
 
 	helpCmd := &cobra.Command{
 		Use:   "help",
@@ -79,7 +79,7 @@ func main() {
 func printVersion() {
 	fmt.Printf("gsl-diagram version %s\n", Version)
 	fmt.Printf("Commit: %s\n", Commit)
-	
+
 	// Parse BuildDate if it's in a standard format
 	if BuildDate != "unknown" {
 		if t, err := time.Parse(time.RFC3339, BuildDate); err == nil {
@@ -90,7 +90,7 @@ func printVersion() {
 	} else {
 		fmt.Printf("Build Date: %s\n", BuildDate)
 	}
-	
+
 	// Include Go version info
 	if info, ok := debug.ReadBuildInfo(); ok {
 		fmt.Printf("Go: %s\n", info.GoVersion)
