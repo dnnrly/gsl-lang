@@ -254,12 +254,14 @@ Minimal and unusual graph structures.
 | `01_self_loop_only` | Node with only self-loop, no other edges |
 | `02_disconnected_components` | Multiple disconnected subgraphs |
 | `03_duplicate_edges_preserved` | Multiple edges between same nodes |
+| `04_self_referencing_parent` | Edge with Label == Parent (self-reference in parent chain) |
 
 **Key Semantic Notes:**
 - Empty graph is valid result
 - Self-loop counts as incident edge
 - Duplicate edges preserved except during collapse
 - Disconnected components behave independently
+- Self-referencing parent edges are depth 1 (cycle detected, not depth 0)
 
 ---
 

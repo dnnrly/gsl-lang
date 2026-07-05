@@ -96,7 +96,9 @@ func serializeEdges(edges []*Edge) string {
 	labelIndex := make(map[string]*Edge)
 	for _, e := range edges {
 		if e.Label != "" {
-			labelIndex[e.Label] = e
+			if _, exists := labelIndex[e.Label]; !exists {
+				labelIndex[e.Label] = e
+			}
 		}
 	}
 
@@ -115,10 +117,29 @@ func serializeEdges(edges []*Edge) string {
 		}
 	}
 
+	// Group labeled root edges by label for grouped-edge serialization.
+	// Unlabeled root edges are serialized individually via serializeEdgeNested.
+	labelGroups := make(map[string][]*Edge)
+	for _, e := range edges {
+		if !childSet[e] && e.Label != "" {
+			labelGroups[e.Label] = append(labelGroups[e.Label], e)
+		}
+	}
+
 	var lines []string
 	visiting := make(map[string]bool)
+	seenLabels := make(map[string]bool)
+
 	for _, e := range edges {
-		if !childSet[e] {
+		if childSet[e] {
+			continue
+		}
+		if e.Label != "" {
+			if !seenLabels[e.Label] {
+				seenLabels[e.Label] = true
+				lines = append(lines, serializeLabeledEdgeGroup(labelGroups[e.Label], childMap, visiting))
+			}
+		} else {
 			lines = append(lines, serializeEdgeNested(e, childMap, visiting))
 		}
 	}
@@ -126,16 +147,16 @@ func serializeEdges(edges []*Edge) string {
 }
 
 // isEdgeCyclic walks the edge parent chain to detect cycles.
+// Uses edge pointer tracking to avoid false positives when two
+// different edges share the same label in the parent chain.
 func isEdgeCyclic(e *Edge, labelIndex map[string]*Edge) bool {
-	visited := make(map[string]bool)
+	visited := make(map[*Edge]bool)
 	current := e
 	for current != nil && current.Parent != "" {
-		if current.Label != "" {
-			if visited[current.Label] {
-				return true
-			}
-			visited[current.Label] = true
+		if visited[current] {
+			return true
 		}
+		visited[current] = true
 		parent, ok := labelIndex[current.Parent]
 		if !ok {
 			return false
@@ -282,6 +303,95 @@ func serializeEdgeNested(e *Edge, childMap map[string][]*Edge, visiting map[stri
 		}
 		b.WriteString("}")
 		visiting[e.Label] = false
+	}
+
+	return b.String()
+}
+
+// serializeLabeledEdgeGroup serializes a group of edges sharing the same label
+// as a single grouped-edge declaration. It detects whether the edges all share
+// To (left-grouped: label: from1,from2,...->to) or all share From (right-grouped:
+// label: from->to1,to2,...). This ensures the output can be re-parsed without
+// triggering the duplicate edge label error.
+func serializeLabeledEdgeGroup(edges []*Edge, childMap map[string][]*Edge, visiting map[string]bool) string {
+	if len(edges) == 0 {
+		return ""
+	}
+
+	var b strings.Builder
+	label := edges[0].Label
+
+	// Detect grouping pattern: all share To (left-grouped) or all share From (right-grouped)
+	allShareTo := true
+	for _, e := range edges[1:] {
+		if e.To != edges[0].To {
+			allShareTo = false
+			break
+		}
+	}
+
+	allShareFrom := true
+	for _, e := range edges[1:] {
+		if e.From != edges[0].From {
+			allShareFrom = false
+			break
+		}
+	}
+
+	b.WriteString(label)
+	b.WriteString(": ")
+
+	if allShareTo {
+		// Left-grouped: label: from1,from2,...->to
+		for i, e := range edges {
+			if i > 0 {
+				b.WriteString(",")
+			}
+			b.WriteString(e.From)
+		}
+		b.WriteString("->")
+		b.WriteString(edges[0].To)
+	} else if allShareFrom {
+		// Right-grouped: label: from->to1,to2,...
+		b.WriteString(edges[0].From)
+		b.WriteString("->")
+		for i, e := range edges {
+			if i > 0 {
+				b.WriteString(",")
+			}
+			b.WriteString(e.To)
+		}
+	} else {
+		// Fallback: shouldn't happen for parser-produced graphs
+		// (valid GSL produces edges that share From or To within a label)
+		// Serialize individually; re-parse may fail for API-constructed graphs.
+		var lines []string
+		for _, e := range edges {
+			lines = append(lines, serializeEdgeNested(e, childMap, visiting))
+		}
+		return strings.Join(lines, "\n")
+	}
+
+	// Attributes (all edges from the same declaration share attributes)
+	if len(edges[0].Attributes) > 0 {
+		b.WriteString(" ")
+		b.WriteString(serializeAttrs(edges[0].Attributes))
+	}
+
+	// Set memberships
+	b.WriteString(serializeSetMemberships(edges[0].Sets))
+
+	// Children (scoped block) — looked up by label
+	if children, ok := childMap[label]; ok && len(children) > 0 && !visiting[label] {
+		visiting[label] = true
+		b.WriteString(" {\n")
+		for _, child := range children {
+			childStr := serializeEdgeNested(child, childMap, visiting)
+			b.WriteString(indentBlock(childStr, "    "))
+			b.WriteString("\n")
+		}
+		b.WriteString("}")
+		visiting[label] = false
 	}
 
 	return b.String()

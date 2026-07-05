@@ -161,6 +161,25 @@ func TestRoundTripLabeledEdge(t *testing.T) {
 	assertRoundTrip(t, input)
 }
 
+func TestRoundTripLabeledGroupedEdgeRight(t *testing.T) {
+	// Labeled grouped edge (right-grouped) should round-trip.
+	// This was a fuzzing failure: the serializer must reconstruct grouped form.
+	input := "A:A->A,A"
+	assertRoundTrip(t, input)
+}
+
+func TestRoundTripLabeledGroupedEdgeLeft(t *testing.T) {
+	// Labeled grouped edge (left-grouped) should round-trip.
+	input := "A: A,A->A"
+	assertRoundTrip(t, input)
+}
+
+func TestRoundTripLabeledGroupedEdgeDistinct(t *testing.T) {
+	// Labeled grouped edge with distinct nodes should round-trip.
+	input := "X: A,B->Z"
+	assertRoundTrip(t, input)
+}
+
 func TestRoundTripScopedEdge(t *testing.T) {
 	// Scoped edges should use nested block syntax in canonical form
 	input := "E1: A -> B { B -> C }"
@@ -235,6 +254,19 @@ func TestParseWithErrors(t *testing.T) {
 	_, parseErr := Parse(strings.NewReader(input))
 	if parseErr == nil || !parseErr.HasError() {
 		t.Fatal("expected error for invalid input")
+	}
+}
+
+func TestParseDuplicateLabelAcrossScopes(t *testing.T) {
+	// Reusing the same edge label in a nested scope is an error
+	// (labels are globally unique)
+	input := "X: A -> B {\n    X: C -> D\n}"
+	_, parseErr := Parse(strings.NewReader(input))
+	if parseErr == nil || !parseErr.HasError() {
+		t.Fatal("expected error for duplicate label in nested scope")
+	}
+	if !strings.Contains(parseErr.Error(), "duplicate edge label") {
+		t.Errorf("expected 'duplicate edge label' error, got: %v", parseErr)
 	}
 }
 

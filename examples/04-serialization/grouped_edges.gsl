@@ -1,0 +1,3 @@
+# Labeled grouped edges with round-trip correctness
+# Serialization must reconstruct grouped form to avoid duplicate-label error
+A: A->A,A

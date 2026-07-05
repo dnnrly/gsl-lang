@@ -136,12 +136,12 @@ func (b *builder) processEdgeDeclWithScope(ed *edgeDecl, insideScope bool) {
 		return
 	}
 
-	// Check for label uniqueness within current scope
+	// Check for label uniqueness across all scopes (global uniqueness)
 	var edgeLabel string
 	if ed.label != nil {
 		edgeLabel = *ed.label
-		if b.edgeScope != nil {
-			if _, exists := b.edgeScope.labels[edgeLabel]; exists {
+		for scope := b.edgeScope; scope != nil; scope = scope.outer {
+			if _, exists := scope.labels[edgeLabel]; exists {
 				b.errors = append(b.errors, fmt.Errorf("%d:%d: duplicate edge label %q", ed.line, ed.col, edgeLabel))
 				return
 			}
@@ -259,12 +259,15 @@ func (b *builder) processScopedBlock(stmts []statement, parentLabel string) {
 
 // populateChildren populates Children pointers on each edge from Parent references.
 // For each edge with Parent set, the parent edge (matched by label) gets this edge
-// appended to its Children slice.
+// appended to its Children slice. Uses first-write-wins for label resolution
+// (matching the serializer) since labels are globally unique.
 func (b *builder) populateChildren() {
 	labelIndex := make(map[string]*Edge)
 	for _, edge := range b.graph.edges {
 		if edge.Label != "" {
-			labelIndex[edge.Label] = edge
+			if _, exists := labelIndex[edge.Label]; !exists {
+				labelIndex[edge.Label] = edge
+			}
 		}
 	}
 	for _, edge := range b.graph.edges {

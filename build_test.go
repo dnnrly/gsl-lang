@@ -1070,8 +1070,7 @@ func TestBuildDuplicateLabelError(t *testing.T) {
 
 func TestBuildNestedScopeLabelShadowing(t *testing.T) {
 	// E1: A -> B { C -> D E1: E -> F }
-	// Nested scopes allow label shadowing - inner E1 shadows outer E1
-	// This should succeed per the spec
+	// Labels are globally unique - shadowing is not allowed
 	label := "E1"
 	innerLabel := "E1"
 	child2 := &edgeDecl{
@@ -1096,37 +1095,12 @@ func TestBuildNestedScopeLabelShadowing(t *testing.T) {
 			},
 		},
 	}
-	g, _, err := buildGraph(prog)
-	if err != nil {
-		t.Fatalf("unexpected error for nested scope label shadowing: %v", err)
+	_, _, err := buildGraph(prog)
+	if err == nil {
+		t.Fatal("expected error for duplicate edge label in nested scope")
 	}
-	edges := g.GetEdges()
-	if len(edges) != 3 {
-		t.Fatalf("expected 3 edges, got %d", len(edges))
-	}
-	// Verify both labeled edges exist
-	outerFound := false
-	innerFound := false
-	for _, e := range edges {
-		if e.Label == "E1" {
-			if e.From == "A" && e.To == "B" {
-				outerFound = true
-				if e.Parent != "" {
-					t.Errorf("outer edge should have no dependency")
-				}
-			} else if e.From == "E" && e.To == "F" {
-				innerFound = true
-				if e.Parent != "E1" {
-					t.Errorf("inner edge should depend on outer E1")
-				}
-			}
-		}
-	}
-	if !outerFound {
-		t.Error("outer E1 edge not found")
-	}
-	if !innerFound {
-		t.Error("inner E1 edge not found")
+	if !strings.Contains(err.Error(), "duplicate edge label") {
+		t.Errorf("expected 'duplicate edge label' error, got: %v", err)
 	}
 }
 

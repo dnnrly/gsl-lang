@@ -386,7 +386,7 @@ E1: A -> B
 
 Labels:
 
-* MUST uniquely identify an edge within scope
+* MUST be globally unique
 * MAY be used as dependency targets
 
 ---
@@ -649,6 +649,9 @@ The following conditions MUST produce a syntax error:
 * NodeRef values in set attributes.
 * Use of reserved keywords as identifiers.
 * Explicit `parent` inside scoped edges.
+* Duplicate edge labels (labels are globally unique).
+
+---
 
 ---
 
@@ -683,6 +686,14 @@ node node
 ```
 
 Reserved keyword `node` used as identifier (invalid).
+
+```invalid-gsl
+X: A -> B {
+    X: C -> D
+}
+```
+
+Duplicate edge label `X` in nested scope (labels are globally unique).
 
 ---
 
