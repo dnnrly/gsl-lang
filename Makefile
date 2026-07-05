@@ -6,6 +6,7 @@ SHELL := /bin/bash
 .SHELLFLAGS = -ec
 
 TMP_DIR?=./tmp
+FUZZTIME ?= 30s
 BASE_DIR=$(shell pwd)
 MAKEFILE_ABSPATH := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 MAKEFILE_RELPATH := $(call MAKEFILE_ABSPATH)
@@ -39,8 +40,16 @@ test: ## run tests with coverage checks
 	@go tool cover -func=$(TMP_DIR)/coverage.txt | grep total | awk '{print "Total coverage: " $$3}'
 
 .PHONY: fuzz
-fuzz: ## run fuzz tests
-	go test -tags fuzz -fuzztime=2m
+fuzz: ## run a single fuzz test (set FUZZ to match a function, e.g. make fuzz FUZZ=FuzzParse; set FUZZTIME for duration)
+	go test -tags fuzz -fuzz=$(or $(FUZZ),.) -fuzztime=$(FUZZTIME)
+
+.PHONY: fuzz-all
+fuzz-all: ## run all fuzz tests sequentially (set FUZZTIME for per-test duration, e.g. make fuzz-all FUZZTIME=1m)
+	@for f in $$(printf '%s\n' FuzzLexer FuzzParse FuzzRoundTrip FuzzGraphQuery FuzzQueryParse FuzzQueryExecute | shuf); do \
+		case $$f in FuzzQueryParse|FuzzQueryExecute) pkg=./query ;; *) pkg=. ;; esac; \
+		echo "=== fuzzing $$f for $(FUZZTIME) ==="; \
+		go test -tags fuzz -fuzz=^$$f$$ -fuzztime=$(FUZZTIME) $$pkg; \
+	done
 
 .PHONY: test-integration
 test-integration: build ## run integration tests (skip if tools missing)

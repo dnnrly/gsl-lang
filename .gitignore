@@ -16,3 +16,6 @@ editors/vscode/*.vsix
 .quick-ref.md
 TODO.md
 WORK.md
+
+# Ignore fuzz seed corpus cache
+testdata/
