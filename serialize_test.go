@@ -141,7 +141,64 @@ func TestSerializeNodeWithParent(t *testing.T) {
 		nil,
 	)
 	got := Serialize(g)
-	expected := "node A [parent=B]\nnode B"
+	expected := "node B {\n    node A\n}"
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+func TestSerializeNestedNodeHierarchy(t *testing.T) {
+	parentB := "A"
+	parentC := "B"
+	g := testGraph(
+		map[string]*Node{
+			"A": {
+				ID:         "A",
+				Attributes: map[string]interface{}{},
+				Sets:       map[string]struct{}{},
+			},
+			"B": {
+				ID:         "B",
+				Attributes: map[string]interface{}{"color": "red"},
+				Sets:       map[string]struct{}{},
+				Parent:     &parentB,
+			},
+			"C": {
+				ID:         "C",
+				Attributes: map[string]interface{}{"flag": nil},
+				Sets:       map[string]struct{}{"group": {}},
+				Parent:     &parentC,
+			},
+		},
+		map[string]*Set{
+			"group": {ID: "group", Attributes: map[string]interface{}{}},
+		},
+		nil,
+	)
+	got := Serialize(g)
+	expected := "set group\n\nnode A {\n    node B [color=\"red\"] {\n        node C [flag] @group\n    }\n}"
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+func TestSerializeNodeWithParentMissing(t *testing.T) {
+	parent := "Missing"
+	g := testGraph(
+		map[string]*Node{
+			"A": {
+				ID:         "A",
+				Attributes: map[string]interface{}{"parent": NodeRef("Missing")},
+				Sets:       map[string]struct{}{},
+				Parent:     &parent,
+			},
+		},
+		map[string]*Set{},
+		nil,
+	)
+	got := Serialize(g)
+	// Parent doesn't exist in graph, so A outputs at root level with explicit parent
+	expected := "node A [parent=Missing]"
 	if got != expected {
 		t.Errorf("expected %q, got %q", expected, got)
 	}
@@ -203,6 +260,85 @@ func TestSerializeEdgeWithMembership(t *testing.T) {
 	}
 }
 
+func TestSerializeEdgeWithNestedScope(t *testing.T) {
+	childEdge := &Edge{
+		From:       "B",
+		To:         "C",
+		Parent:     "E1",
+		Attributes: map[string]interface{}{},
+		Sets:       map[string]struct{}{},
+	}
+	g := testGraph(
+		map[string]*Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		map[string]*Set{},
+		[]*Edge{
+			{
+				From:       "A",
+				To:         "B",
+				Label:      "E1",
+				Attributes: map[string]interface{}{},
+				Sets:       map[string]struct{}{},
+				Children:   []*Edge{childEdge},
+			},
+			childEdge,
+		},
+	)
+	got := Serialize(g)
+	expected := "node A\nnode B\nnode C\n\nE1: A->B {\n    B->C\n}"
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
+func TestSerializeEdgeWithDeeplyNestedScope(t *testing.T) {
+	edgeCD := &Edge{
+		From:       "C",
+		To:         "D",
+		Parent:     "E2",
+		Attributes: map[string]interface{}{},
+		Sets:       map[string]struct{}{},
+	}
+	edgeE2 := &Edge{
+		From:       "B",
+		To:         "C",
+		Label:      "E2",
+		Parent:     "E1",
+		Attributes: map[string]interface{}{},
+		Sets:       map[string]struct{}{},
+		Children:   []*Edge{edgeCD},
+	}
+	g := testGraph(
+		map[string]*Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"D": {ID: "D", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		map[string]*Set{},
+		[]*Edge{
+			{
+				From:       "A",
+				To:         "B",
+				Label:      "E1",
+				Attributes: map[string]interface{}{},
+				Sets:       map[string]struct{}{},
+				Children:   []*Edge{edgeE2},
+			},
+			edgeE2,
+			edgeCD,
+		},
+	)
+	got := Serialize(g)
+	expected := "node A\nnode B\nnode C\nnode D\n\nE1: A->B {\n    E2: B->C {\n        C->D\n    }\n}"
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
 func TestSerializeSet(t *testing.T) {
 	g := testGraph(
 		map[string]*Node{},
@@ -249,6 +385,8 @@ func TestSerializeOrdering(t *testing.T) {
 		},
 	)
 	got := Serialize(g)
+	// Nodes ordered by first edge appearance: Z (edge 0), A (edge 0).
+	// Both at edge 0, tiebreak by ID: A then Z.
 	expected := "set alpha\nset beta\n\nnode A\nnode Z\n\nZ->A\nA->Z"
 	if got != expected {
 		t.Errorf("expected %q, got %q", expected, got)

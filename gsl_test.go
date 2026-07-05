@@ -162,7 +162,7 @@ func TestRoundTripLabeledEdge(t *testing.T) {
 }
 
 func TestRoundTripScopedEdge(t *testing.T) {
-	// Scoped edges should flatten to parent in canonical form
+	// Scoped edges should use nested block syntax in canonical form
 	input := "E1: A -> B { B -> C }"
 	g1, parseErr := Parse(strings.NewReader(input))
 	if parseErr != nil && parseErr.HasError() {
@@ -179,10 +179,13 @@ func TestRoundTripScopedEdge(t *testing.T) {
 		t.Errorf("expected child edge to have parent E1, got %q", edges[1].Parent)
 	}
 
-	// Serialize and verify canonical form has parent
+	// Serialize and verify canonical form uses nested block
 	canonical := Serialize(g1)
-	if !strings.Contains(canonical, "parent=E1") {
-		t.Errorf("canonical form should contain parent=E1, got: %s", canonical)
+	if !strings.Contains(canonical, "{") {
+		t.Errorf("canonical form should contain nested block, got: %s", canonical)
+	}
+	if strings.Contains(canonical, "parent=E1") {
+		t.Errorf("canonical form should not contain explicit parent=E1 inside block, got: %s", canonical)
 	}
 
 	// Re-parse and verify

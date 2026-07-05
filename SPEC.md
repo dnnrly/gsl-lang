@@ -283,7 +283,8 @@ Block syntax:
 
 * MUST be treated as syntactic sugar.
 * Each node declared inside the block MUST implicitly receive `parent=<enclosing node>`.
-* Block structure MUST NOT be preserved in canonical form.
+* Block structure MUST be preserved as the canonical form.
+* Children inside a block MUST NOT include an explicit `parent` attribute (it is implicit).
 
 If a node inside a block explicitly declares a conflicting parent:
 
@@ -608,15 +609,20 @@ parse(serialize(parse(input))) == parse(input)
 Canonicalisation MUST:
 
 1. Expand grouped edges.
-2. Convert block syntax to explicit `parent` attributes.
-3. Preserve duplicate edges.
-4. Preserve empty attributes.
-5. Materialise implicitly created sets.
-6. Merge multiple declarations.
+2. Use nested block syntax for parent-child relationships (derived from `parent` attributes).
+3. Omit the explicit `parent` attribute within blocks (it is implicit from the nesting).
+4. Preserve duplicate edges.
+5. Preserve empty attributes.
+6. Materialise implicitly created sets.
+7. Merge multiple declarations.
 
 Ordering:
 
-* Ordering of nodes and sets in serialisation MAY be implementation-defined.
+* Ordering of sets in serialisation MUST be sorted by ID.
+* Ordering of nodes MUST be derived from their first appearance in edge declarations, with unreferenced nodes sorted by ID.
+* Ordering of edges MUST preserve declaration order.
+* Child nodes within a block MUST follow the same ordering rules.
+* Child edges within a scoped block MUST preserve declaration order.
 * Canonical form MUST parse into an identical internal representation.
 
 ---

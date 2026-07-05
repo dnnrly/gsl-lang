@@ -1,0 +1,5 @@
+# Flat style: child edges have explicit parent attribute
+# Demonstrates conversion to nested scoped blocks
+E1: A -> B
+B -> C [parent=E1]
+C -> D [parent=E1]

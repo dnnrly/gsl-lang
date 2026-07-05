@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"testing"
 
 	gsl "github.com/dnnrly/gsl-lang"
 )
@@ -203,6 +204,42 @@ A->B`
 	// node B [text="End"]
 	//
 	// A->B
+}
+
+func TestFlatNodeParentToNested(t *testing.T) {
+	input, err := os.ReadFile("04-serialization/flat_nodes.gsl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	graph, _ := gsl.Parse(bytes.NewReader(input))
+	actual := gsl.Serialize(graph)
+
+	expected, err := os.ReadFile("04-serialization/flat_nodes_nested.gsl")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if actual != strings.TrimRight(string(expected), "\n") {
+		t.Errorf("got:\n%s\n\nwant:\n%s", actual, string(expected))
+	}
+}
+
+func TestFlatEdgeParentToNested(t *testing.T) {
+	input, err := os.ReadFile("04-serialization/flat_edges.gsl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	graph, _ := gsl.Parse(bytes.NewReader(input))
+	actual := gsl.Serialize(graph)
+
+	expected, err := os.ReadFile("04-serialization/flat_edges_nested.gsl")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if actual != strings.TrimRight(string(expected), "\n") {
+		t.Errorf("got:\n%s\n\nwant:\n%s", actual, string(expected))
+	}
 }
 
 // Example_graphStatistics demonstrates basic graph statistics.

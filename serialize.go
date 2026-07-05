@@ -8,8 +8,10 @@ import (
 )
 
 // Serialize converts a Graph to canonical GSL text.
-// Output is deterministic: sets first (sorted by ID), nodes second (sorted by ID),
-// edges last (in slice order). Attribute keys are sorted alphabetically.
+// Output uses nested block syntax for parent-child relationships.
+// Deterministic: sets first (sorted by ID), root nodes next (ordered by
+// first appearance in edge list, then by ID), root edges last (in slice order).
+// Children are nested under their parent using block syntax.
 func Serialize(g *Graph) string {
 	if g == nil {
 		return ""
@@ -33,33 +35,146 @@ func Serialize(g *Graph) string {
 		sections = append(sections, strings.Join(lines, "\n"))
 	}
 
-	// Nodes, sorted by ID
+	// Nodes, with nesting
 	nodes := g.GetNodes()
 	if len(nodes) > 0 {
-		nodeIDs := make([]string, 0, len(nodes))
-		for id := range nodes {
-			nodeIDs = append(nodeIDs, id)
-		}
-		sort.Strings(nodeIDs)
-
-		var lines []string
-		for _, id := range nodeIDs {
-			lines = append(lines, serializeNode(nodes[id]))
-		}
-		sections = append(sections, strings.Join(lines, "\n"))
+		sections = append(sections, serializeNodes(nodes, g.GetEdges()))
 	}
 
-	// Edges, in slice order
+	// Edges, with nesting built from Parent field at serialization time
 	edges := g.GetEdges()
 	if len(edges) > 0 {
-		var lines []string
-		for _, e := range edges {
-			lines = append(lines, serializeEdge(e))
-		}
-		sections = append(sections, strings.Join(lines, "\n"))
+		sections = append(sections, serializeEdges(edges))
 	}
 
 	return strings.Join(sections, "\n\n")
+}
+
+// serializeNodes builds the parent-child tree and serializes with recursive nesting.
+func serializeNodes(nodes map[string]*Node, edges []*Edge) string {
+	positions := buildNodePositions(edges)
+
+	// Build parent->children map, detecting cycles
+	children := make(map[string][]*Node)
+	for _, n := range nodes {
+		if n.Parent != nil {
+			if _, ok := nodes[*n.Parent]; ok && !isCyclic(n, nodes) {
+				children[*n.Parent] = append(children[*n.Parent], n)
+			}
+		}
+	}
+
+	// Sort children within each parent
+	for id := range children {
+		sortNodesByPosition(children[id], positions)
+	}
+
+	// Determine roots: no parent, parent doesn't exist, or in a cycle
+	roots := []*Node{}
+	for _, n := range nodes {
+		if n.Parent == nil || nodes[*n.Parent] == nil || isCyclic(n, nodes) {
+			roots = append(roots, n)
+		}
+	}
+	sortNodesByPosition(roots, positions)
+
+	var lines []string
+	for _, n := range roots {
+		lines = append(lines, serializeNodeNested(n, children[n.ID], children, make(map[string]bool), false))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// serializeEdges identifies root edges and serializes children inside blocks.
+// Parent-child relationships are built from the Parent field at serialization
+// time (consistent with how node nesting works), not from the pre-populated
+// Children field which may not be set in all code paths.
+func serializeEdges(edges []*Edge) string {
+	// Build parent label → children map from Parent field
+	childMap := make(map[string][]*Edge)
+	for _, e := range edges {
+		if e.Parent != "" {
+			childMap[e.Parent] = append(childMap[e.Parent], e)
+		}
+	}
+
+	// Identify root edges (no Parent or parent label not present)
+	labelIndex := make(map[string]bool)
+	for _, e := range edges {
+		if e.Label != "" {
+			labelIndex[e.Label] = true
+		}
+	}
+
+	childSet := make(map[*Edge]bool)
+	for _, e := range edges {
+		if e.Parent != "" {
+			if labelIndex[e.Parent] {
+				childSet[e] = true
+			}
+		}
+	}
+
+	var lines []string
+	for _, e := range edges {
+		if !childSet[e] {
+			lines = append(lines, serializeEdgeNested(e, childMap))
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+// buildNodePositions returns node ID to first edge index referencing it.
+func buildNodePositions(edges []*Edge) map[string]int {
+	positions := make(map[string]int)
+	for i, e := range edges {
+		if _, ok := positions[e.From]; !ok {
+			positions[e.From] = i
+		}
+		if _, ok := positions[e.To]; !ok {
+			positions[e.To] = i
+		}
+	}
+	return positions
+}
+
+// sortNodesByPosition sorts nodes by first edge appearance, then ID.
+func sortNodesByPosition(nodes []*Node, positions map[string]int) {
+	sort.SliceStable(nodes, func(i, j int) bool {
+		pi, hasI := positions[nodes[i].ID]
+		pj, hasJ := positions[nodes[j].ID]
+		if hasI && hasJ {
+			if pi != pj {
+				return pi < pj
+			}
+			return nodes[i].ID < nodes[j].ID
+		}
+		if hasI {
+			return true
+		}
+		if hasJ {
+			return false
+		}
+		return nodes[i].ID < nodes[j].ID
+	})
+}
+
+// isCyclic walks the parent chain to detect cycles.
+func isCyclic(n *Node, allNodes map[string]*Node) bool {
+	visited := make(map[string]bool)
+	current := n
+	for current != nil && current.Parent != nil {
+		if visited[current.ID] {
+			return true
+		}
+		visited[current.ID] = true
+		parent, ok := allNodes[*current.Parent]
+		if !ok {
+			return false
+		}
+		current = parent
+	}
+	return false
 }
 
 func serializeSet(s *Set) string {
@@ -73,22 +188,54 @@ func serializeSet(s *Set) string {
 	return b.String()
 }
 
-func serializeNode(n *Node) string {
+// serializeNodeNested serializes a node with optional block children.
+// stripParent controls whether the "parent" attribute is omitted (true when
+// inside a block where parent is implicit).
+func serializeNodeNested(n *Node, children []*Node, childMap map[string][]*Node, visiting map[string]bool, stripParent bool) string {
 	var b strings.Builder
 	b.WriteString("node ")
 	b.WriteString(n.ID)
-	if len(n.Attributes) > 0 {
-		b.WriteString(" ")
-		b.WriteString(serializeAttrs(n.Attributes))
+
+	// Build attrs, omitting parent when inside a block
+	var attrs map[string]interface{}
+	if stripParent {
+		attrs = make(map[string]interface{})
+		for k, v := range n.Attributes {
+			if k != "parent" {
+				attrs[k] = v
+			}
+		}
+	} else {
+		attrs = n.Attributes
 	}
+	if len(attrs) > 0 {
+		b.WriteString(" ")
+		b.WriteString(serializeAttrs(attrs))
+	}
+
+	// Set memberships
 	b.WriteString(serializeSetMemberships(n.Sets))
+
+	// Block children (if any and no cycle)
+	if len(children) > 0 && !visiting[n.ID] {
+		visiting[n.ID] = true
+		b.WriteString(" {\n")
+		for _, child := range children {
+			grandchildren := childMap[child.ID]
+			childStr := serializeNodeNested(child, grandchildren, childMap, visiting, true)
+			b.WriteString(indentBlock(childStr, "    "))
+			b.WriteString("\n")
+		}
+		b.WriteString("}")
+		visiting[n.ID] = false
+	}
+
 	return b.String()
 }
 
-func serializeEdge(e *Edge) string {
+func serializeEdgeNested(e *Edge, childMap map[string][]*Edge) string {
 	var b strings.Builder
 
-	// Output edge label if present
 	if e.Label != "" {
 		b.WriteString(e.Label)
 		b.WriteString(": ")
@@ -98,20 +245,22 @@ func serializeEdge(e *Edge) string {
 	b.WriteString("->")
 	b.WriteString(e.To)
 
-	// Build attributes including parent
-	attrs := make(map[string]interface{})
-	for k, v := range e.Attributes {
-		attrs[k] = v
-	}
-	if e.Parent != "" {
-		attrs["parent"] = e.Parent
-	}
-
-	if len(attrs) > 0 {
+	if len(e.Attributes) > 0 {
 		b.WriteString(" ")
-		b.WriteString(serializeAttrs(attrs))
+		b.WriteString(serializeAttrs(e.Attributes))
 	}
 	b.WriteString(serializeSetMemberships(e.Sets))
+
+	if children, ok := childMap[e.Label]; ok && len(children) > 0 {
+		b.WriteString(" {\n")
+		for _, child := range children {
+			childStr := serializeEdgeNested(child, childMap)
+			b.WriteString(indentBlock(childStr, "    "))
+			b.WriteString("\n")
+		}
+		b.WriteString("}")
+	}
+
 	return b.String()
 }
 
@@ -152,7 +301,6 @@ func serializeAttr(key string, value interface{}) string {
 	}
 	switch v := value.(type) {
 	case string:
-		// Special case: parent outputs as identifier (no quotes)
 		if key == "parent" {
 			return key + "=" + v
 		}
@@ -195,4 +343,12 @@ func formatNumber(f float64) string {
 		return strconv.FormatFloat(f, 'f', 0, 64)
 	}
 	return strconv.FormatFloat(f, 'f', -1, 64)
+}
+
+func indentBlock(s string, indent string) string {
+	lines := strings.Split(s, "\n")
+	for i, line := range lines {
+		lines[i] = indent + line
+	}
+	return strings.Join(lines, "\n")
 }
