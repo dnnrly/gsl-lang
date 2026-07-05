@@ -10,11 +10,7 @@ statement    ::= node_decl
                | scoped_edge_decl
                | set_decl
 
-node_decl    ::= "node" IDENT node_suffix? membership*
-
-node_suffix  ::= attribute_list
-               | ":" STRING
-               | block
+node_decl    ::= "node" IDENT (attribute_list | ":" STRING)? block? membership*
 
 block        ::= "{" statement* "}"
 

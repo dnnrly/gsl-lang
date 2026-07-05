@@ -89,39 +89,60 @@ func serializeNodes(nodes map[string]*Node, edges []*Edge) string {
 // Parent-child relationships are built from the Parent field at serialization
 // time (consistent with how node nesting works), not from the pre-populated
 // Children field which may not be set in all code paths.
+// Edges in parent cycles are treated as roots with explicit parent attribute.
 func serializeEdges(edges []*Edge) string {
 	// Build parent label → children map from Parent field
-	childMap := make(map[string][]*Edge)
-	for _, e := range edges {
-		if e.Parent != "" {
-			childMap[e.Parent] = append(childMap[e.Parent], e)
-		}
-	}
-
-	// Identify root edges (no Parent or parent label not present)
-	labelIndex := make(map[string]bool)
+	// Index edges by label for cycle detection
+	labelIndex := make(map[string]*Edge)
 	for _, e := range edges {
 		if e.Label != "" {
-			labelIndex[e.Label] = true
+			labelIndex[e.Label] = e
 		}
 	}
 
+	// Build parent label → children map, excluding cyclic edges
+	// (cyclic edges are output at root level with explicit parent attribute)
+	childMap := make(map[string][]*Edge)
 	childSet := make(map[*Edge]bool)
 	for _, e := range edges {
 		if e.Parent != "" {
-			if labelIndex[e.Parent] {
+			parentExists := labelIndex[e.Parent] != nil
+			cyclic := parentExists && isEdgeCyclic(e, labelIndex)
+			if parentExists && !cyclic {
+				childMap[e.Parent] = append(childMap[e.Parent], e)
 				childSet[e] = true
 			}
 		}
 	}
 
 	var lines []string
+	visiting := make(map[string]bool)
 	for _, e := range edges {
 		if !childSet[e] {
-			lines = append(lines, serializeEdgeNested(e, childMap))
+			lines = append(lines, serializeEdgeNested(e, childMap, visiting))
 		}
 	}
 	return strings.Join(lines, "\n")
+}
+
+// isEdgeCyclic walks the edge parent chain to detect cycles.
+func isEdgeCyclic(e *Edge, labelIndex map[string]*Edge) bool {
+	visited := make(map[string]bool)
+	current := e
+	for current != nil && current.Parent != "" {
+		if current.Label != "" {
+			if visited[current.Label] {
+				return true
+			}
+			visited[current.Label] = true
+		}
+		parent, ok := labelIndex[current.Parent]
+		if !ok {
+			return false
+		}
+		current = parent
+	}
+	return false
 }
 
 // buildNodePositions returns node ID to first edge index referencing it.
@@ -213,9 +234,6 @@ func serializeNodeNested(n *Node, children []*Node, childMap map[string][]*Node,
 		b.WriteString(serializeAttrs(attrs))
 	}
 
-	// Set memberships
-	b.WriteString(serializeSetMemberships(n.Sets))
-
 	// Block children (if any and no cycle)
 	if len(children) > 0 && !visiting[n.ID] {
 		visiting[n.ID] = true
@@ -230,10 +248,13 @@ func serializeNodeNested(n *Node, children []*Node, childMap map[string][]*Node,
 		visiting[n.ID] = false
 	}
 
+	// Memberships must come after block (parser expects this order)
+	b.WriteString(serializeSetMemberships(n.Sets))
+
 	return b.String()
 }
 
-func serializeEdgeNested(e *Edge, childMap map[string][]*Edge) string {
+func serializeEdgeNested(e *Edge, childMap map[string][]*Edge, visiting map[string]bool) string {
 	var b strings.Builder
 
 	if e.Label != "" {
@@ -251,14 +272,16 @@ func serializeEdgeNested(e *Edge, childMap map[string][]*Edge) string {
 	}
 	b.WriteString(serializeSetMemberships(e.Sets))
 
-	if children, ok := childMap[e.Label]; ok && len(children) > 0 {
+	if children, ok := childMap[e.Label]; ok && len(children) > 0 && !visiting[e.Label] {
+		visiting[e.Label] = true
 		b.WriteString(" {\n")
 		for _, child := range children {
-			childStr := serializeEdgeNested(child, childMap)
+			childStr := serializeEdgeNested(child, childMap, visiting)
 			b.WriteString(indentBlock(childStr, "    "))
 			b.WriteString("\n")
 		}
 		b.WriteString("}")
+		visiting[e.Label] = false
 	}
 
 	return b.String()

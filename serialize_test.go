@@ -339,6 +339,50 @@ func TestSerializeEdgeWithDeeplyNestedScope(t *testing.T) {
 	}
 }
 
+func TestSerializeEdgeCyclicDependency(t *testing.T) {
+	g := testGraph(
+		map[string]*Node{
+			"A": {ID: "A", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"B": {ID: "B", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+			"C": {ID: "C", Attributes: map[string]interface{}{}, Sets: map[string]struct{}{}},
+		},
+		map[string]*Set{},
+		[]*Edge{
+			{
+				From:       "A",
+				To:         "B",
+				Label:      "E1",
+				Parent:     "E3",
+				Attributes: map[string]interface{}{"parent": "E3"},
+				Sets:       map[string]struct{}{},
+			},
+			{
+				From:       "B",
+				To:         "C",
+				Label:      "E2",
+				Parent:     "E1",
+				Attributes: map[string]interface{}{"parent": "E1"},
+				Sets:       map[string]struct{}{},
+			},
+			{
+				From:       "C",
+				To:         "A",
+				Label:      "E3",
+				Parent:     "E2",
+				Attributes: map[string]interface{}{"parent": "E2"},
+				Sets:       map[string]struct{}{},
+			},
+		},
+	)
+	got := Serialize(g)
+	// All three edges are in a cycle, so none is nested.
+	// Each appears at root level with explicit parent attribute.
+	expected := "node A\nnode B\nnode C\n\nE1: A->B [parent=E3]\nE2: B->C [parent=E1]\nE3: C->A [parent=E2]"
+	if got != expected {
+		t.Errorf("expected %q, got %q", expected, got)
+	}
+}
+
 func TestSerializeSet(t *testing.T) {
 	g := testGraph(
 		map[string]*Node{},

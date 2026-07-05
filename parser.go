@@ -116,17 +116,22 @@ func (p *parser) parseNodeDecl() *nodeDecl {
 	}
 	nd.name = p.advance().Literal
 
-	// Parse optional suffix
-	switch p.peek().Type {
-	case TOKEN_LBRACKET:
+	// Parse attributes (optional, can be followed by block)
+	if p.peek().Type == TOKEN_LBRACKET {
 		nd.attrs = p.parseAttributeList(true)
-	case TOKEN_COLON:
+	}
+
+	// Parse text shorthand (mutually exclusive with attributes)
+	if len(nd.attrs) == 0 && p.peek().Type == TOKEN_COLON {
 		p.advance() // consume ':'
 		strTok := p.expect(TOKEN_STRING)
 		if strTok.Type == TOKEN_STRING {
 			nd.textValue = &strTok.Literal
 		}
-	case TOKEN_LBRACE:
+	}
+
+	// Parse block (optional, can follow attributes)
+	if p.peek().Type == TOKEN_LBRACE {
 		nd.block = p.parseBlock(nd.name)
 	}
 
