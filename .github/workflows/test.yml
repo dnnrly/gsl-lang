@@ -15,7 +15,7 @@ jobs:
     
     strategy:
       matrix:
-        go-version: ['1.24']
+        go-version: ['1.26']
     
     steps:
     - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
     
     strategy:
       matrix:
-        go-version: ['1.24']
+        go-version: ['1.26']
     
     steps:
     - uses: actions/checkout@v4
