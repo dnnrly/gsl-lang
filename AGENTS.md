@@ -16,7 +16,7 @@ make test-integration           # Run integration tests (skip if tools missing)
 make test-integration-strict    # Run integration tests (fail if tools missing)
 make lint                       # Run linting
 make fuzz                       # Run fuzz tests
-make build                      # Build gsl-diagram CLI tool
+make build                      # Build CLI tools (gsl-diagram, gsl-query)
 make clean                      # Clean build artifacts
 go test -v -run TestName        # Run specific test
 ```
@@ -36,6 +36,22 @@ go test -v -run TestName        # Run specific test
 
 **CLI Tools:**
 - `cmd/gsl-diagram/` - Converts GSL graphs to diagram formats (Mermaid, PlantUML)
+- `cmd/gsl-query/` - Runs GSL queries from the command line
+- `cmd/gsl-lsp/` - LSP server binary entry point
+
+**LSP Server:**
+- `lsp/server.go` — Server struct, lifecycle, document management
+- `lsp/dispatch.go` — Parse routing, GSL/GQL diagnostic handling
+- `lsp/handler.go` — LSP feature handlers (completion, hover, definition, etc.)
+- `lsp/gsl.go` — GSL-specific features (completions, symbols, semantic tokens)
+- `lsp/gql.go` — GQL-specific features (keyword completions, hover, symbols, tokens)
+- `lsp/helpers.go` — Shared utilities (wordAt, tokenize, lineColToPos)
+
+**VS Code Extension:**
+- `editors/vscode/` — VS Code extension for GSL/GQL language support
+- `editors/vscode/extension.js` — Extension entry point, binary discovery, client setup
+- `editors/vscode/package.json` — Extension manifest
+- `editors/vscode/syntaxes/` — TextMate grammars for GSL and GQL
 
 **Documentation:**
 - `SPEC.md` - Normative spec (source of truth for language rules)
@@ -71,6 +87,9 @@ make lint
 | Graph structure | model.go, build.go, build_test.go |
 | Language rules | SPEC.md, GRAMMAR.md, markdown_test.go |
 | CLI diagram tool | cmd/gsl-diagram/*, cli_integration_test.go |
+| CLI query tool | cmd/gsl-query/* |
+| LSP server | lsp/*, cmd/gsl-lsp/main.go |
+| VS Code extension | editors/vscode/* |
 | Documentation examples | README.md, SPEC.md, LLM_GUIDE.md |
 | Query language tests | query/testdata/*, query/.test-plan.md |
 
@@ -146,6 +165,8 @@ Before submitting changes:
 - [ ] Markdown validates: `go test -v -run TestMarkdownCodeBlocks`
 - [ ] Round-trip tests added (if touching parser/serializer)
 - [ ] Integration tests added (if modifying CLI tools or converters)
+- [ ] LSP tests pass: `go test ./lsp/...`
+- [ ] LSP file structure updated in this file if reorganizing lsp/
 - [ ] SPEC.md updated (if changing language semantics)
 - [ ] GRAMMAR.md updated (if changing syntax)
 - [ ] New code examples in markdown are valid `gsl` blocks
