@@ -1,0 +1,36 @@
+{
+  "scopeName": "source.gsl",
+  "name": "GSL",
+  "fileTypes": ["gsl"],
+  "patterns": [
+    {
+      "match": "\\b(node|set|digraph|graph|subgraph|edge|->|@)\\b",
+      "name": "keyword.control.gsl"
+    },
+    {
+      "match": "\\b(true|false)\\b",
+      "name": "constant.language.boolean.gsl"
+    },
+    {
+      "match": "\\b-?[0-9]+(\\.[0-9]+)?\\b",
+      "name": "constant.numeric.gsl"
+    },
+    {
+      "match": "\"[^\"]*\"",
+      "name": "string.quoted.double.gsl"
+    },
+    {
+      "match": "//[^\n]*",
+      "name": "comment.line.double-slash.gsl"
+    },
+    {
+      "begin": "/\\*",
+      "end": "\\*/",
+      "name": "comment.block.gsl"
+    },
+    {
+      "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b",
+      "name": "variable.other.gsl"
+    }
+  ]
+}

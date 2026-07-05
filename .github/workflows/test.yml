@@ -15,7 +15,7 @@ jobs:
     
     strategy:
       matrix:
-        go-version: ['1.24']
+        go-version: ['1.26']
     
     steps:
     - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
     
     strategy:
       matrix:
-        go-version: ['1.24']
+        go-version: ['1.26']
     
     steps:
     - uses: actions/checkout@v4
@@ -51,5 +51,8 @@ jobs:
     
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v6
+      env:
+        ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       with:
-        version: latest
+        version: v1.64.8
+        install-mode: goinstall
