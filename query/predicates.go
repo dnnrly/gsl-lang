@@ -268,20 +268,27 @@ func (p *DepthPredicate) computeDepth(edge *gsl.Edge) int {
 		return 0
 	}
 	if globalLabelIndex != nil {
-		return p.walkDepth(edge, 0)
+		return p.walkDepth(edge, 0, make(map[string]bool))
 	}
 	return 1
 }
 
-func (p *DepthPredicate) walkDepth(edge *gsl.Edge, depth int) int {
+func (p *DepthPredicate) walkDepth(edge *gsl.Edge, depth int, visited map[string]bool) int {
 	if edge.Parent == "" {
 		return depth
+	}
+	// Detect cycles in the parent chain to prevent infinite recursion
+	if edge.Label != "" {
+		if visited[edge.Label] {
+			return depth
+		}
+		visited[edge.Label] = true
 	}
 	parent, ok := globalLabelIndex[edge.Parent]
 	if !ok || parent == nil {
 		return depth + 1 // can't walk further, estimate
 	}
-	return p.walkDepth(parent, depth+1)
+	return p.walkDepth(parent, depth+1, visited)
 }
 
 func (p *DepthPredicate) TargetType() string { return p.Target }
