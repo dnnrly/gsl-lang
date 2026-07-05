@@ -55,3 +55,4 @@ jobs:
         ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       with:
         version: v1.64.8
+        install-mode: goinstall
