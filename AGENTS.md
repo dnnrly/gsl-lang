@@ -11,7 +11,7 @@ This document provides instructions for AI agents working on the GSL-Lang projec
 ## Quick Commands
 
 ```bash
-make test                       # Run all tests with coverage
+make test                       # Run all tests with coverage (query fixtures run silently; use `go test -v -run TestFixtures ./query` to watch them)
 make test-integration           # Run integration tests (skip if tools missing)
 make test-integration-strict    # Run integration tests (fail if tools missing)
 make lint                       # Run linting

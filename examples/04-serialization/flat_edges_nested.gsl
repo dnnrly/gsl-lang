@@ -1,0 +1,9 @@
+node A
+node B
+node C
+node D
+
+E1: A->B {
+    B->C
+    C->D
+}

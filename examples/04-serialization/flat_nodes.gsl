@@ -1,0 +1,5 @@
+# Flat style: child nodes have explicit parent attribute
+# Demonstrates conversion to nested block syntax
+node C
+node B [parent=C]
+node A [parent=B]
