@@ -3,6 +3,7 @@ package lsp
 import (
 	"context"
 	"fmt"
+	"log"
 	"regexp"
 	"sort"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/dnnrly/gsl-lang"
+	"github.com/dnnrly/gsl-lang/query"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
@@ -21,6 +23,9 @@ type document struct {
 
 	graph *gsl.Graph
 	pErrs []protocol.Diagnostic
+
+	gqlQuery *query.Query
+	gqlErr   error
 }
 
 type wordAtPos struct {
@@ -143,7 +148,18 @@ func (s *Server) DidClose(ctx context.Context, params *protocol.DidCloseTextDocu
 	return nil
 }
 
+func isGQLFile(docURI uri.URI) bool {
+	return strings.HasSuffix(strings.ToLower(string(docURI)), ".gql")
+}
+
 func (s *Server) parseAndDiagnose(ctx context.Context, doc *document) {
+	if isGQLFile(doc.docURI) {
+		log.Printf("gsl-lsp: parsing GQL file %s", doc.docURI)
+		s.parseGQLAndDiagnose(ctx, doc)
+		return
+	}
+	log.Printf("gsl-lsp: parsing GSL file %s", doc.docURI)
+
 	graph, pErr := gsl.Parse(strings.NewReader(doc.content))
 	doc.graph = graph
 
@@ -192,7 +208,40 @@ func (s *Server) parseAndDiagnose(ctx context.Context, doc *document) {
 	})
 }
 
+func (s *Server) parseGQLAndDiagnose(ctx context.Context, doc *document) {
+	parser := query.NewQueryParser(doc.content)
+	q, err := parser.Parse()
+	doc.gqlQuery = q
+	doc.gqlErr = err
+
+	var diags []protocol.Diagnostic
+	if err != nil {
+		d := gqlParseErrorToDiagnostic(err, doc.content)
+		if d != nil {
+			diags = append(diags, *d)
+		} else {
+			diags = append(diags, protocol.Diagnostic{
+				Range: protocol.Range{
+					Start: protocol.Position{Line: 0, Character: 0},
+					End:   protocol.Position{Line: 0, Character: 0},
+				},
+				Severity: protocol.DiagnosticSeverityError,
+				Source:   protocol.NewOptional("gql"),
+				Message:  protocol.String(err.Error()),
+			})
+		}
+	}
+	doc.pErrs = diags
+
+	_ = s.client.PublishDiagnostics(ctx, &protocol.PublishDiagnosticsParams{
+		URI:         doc.docURI,
+		Version:     protocol.NewOptional(doc.version),
+		Diagnostics: diags,
+	})
+}
+
 var errPosRe = regexp.MustCompile(`at (\d+):(\d+)$`)
+var gqlErrPosRe = regexp.MustCompile(`(\d+):(\d+):`)
 
 func parseErrorToDiagnostic(msg, content string) *protocol.Diagnostic {
 	m := errPosRe.FindStringSubmatch(msg)
@@ -226,12 +275,47 @@ func parseErrorToDiagnostic(msg, content string) *protocol.Diagnostic {
 	}
 }
 
+func gqlParseErrorToDiagnostic(err error, content string) *protocol.Diagnostic {
+	msg := err.Error()
+	m := gqlErrPosRe.FindStringSubmatch(msg)
+	if m != nil {
+		line, _ := strconv.Atoi(m[1])
+		col, _ := strconv.Atoi(m[2])
+		start := protocol.Position{
+			Line:      uint32(max(0, line-1)),
+			Character: uint32(max(0, col-1)),
+		}
+		lines := strings.Split(content, "\n")
+		end := start
+		if int(start.Line) < len(lines) {
+			end.Character = uint32(len(lines[start.Line]))
+		}
+
+		cleanMsg := gqlErrPosRe.ReplaceAllString(msg, "")
+		cleanMsg = strings.TrimSpace(cleanMsg)
+
+		return &protocol.Diagnostic{
+			Range:    protocol.Range{Start: start, End: end},
+			Severity: protocol.DiagnosticSeverityError,
+			Source:   protocol.NewOptional("gql"),
+			Message:  protocol.String(cleanMsg),
+		}
+	}
+
+	return nil
+}
+
 func (s *Server) Completion(ctx context.Context, params *protocol.CompletionParams) (protocol.CompletionResult, error) {
 	s.mu.Lock()
 	doc, ok := s.documents[params.TextDocument.URI]
 	s.mu.Unlock()
 	if !ok {
 		return protocol.CompletionItemSlice{}, nil
+	}
+
+	if isGQLFile(doc.docURI) {
+		items := completeGQL(doc.content, int(params.Position.Line), int(params.Position.Character))
+		return protocol.CompletionItemSlice(items), nil
 	}
 
 	pos := params.Position
@@ -243,7 +327,15 @@ func (s *Server) Hover(ctx context.Context, params *protocol.HoverParams) (*prot
 	s.mu.Lock()
 	doc, ok := s.documents[params.TextDocument.URI]
 	s.mu.Unlock()
-	if !ok || doc.graph == nil {
+	if !ok {
+		return nil, nil
+	}
+
+	if isGQLFile(doc.docURI) {
+		return hoverGQL(doc, int(params.Position.Line), int(params.Position.Character)), nil
+	}
+
+	if doc.graph == nil {
 		return nil, nil
 	}
 
@@ -276,7 +368,7 @@ func (s *Server) Definition(ctx context.Context, params *protocol.DefinitionPara
 	s.mu.Lock()
 	doc, ok := s.documents[params.TextDocument.URI]
 	s.mu.Unlock()
-	if !ok {
+	if !ok || isGQLFile(doc.docURI) {
 		return nil, nil
 	}
 
@@ -298,7 +390,7 @@ func (s *Server) References(ctx context.Context, params *protocol.ReferenceParam
 	s.mu.Lock()
 	doc, ok := s.documents[params.TextDocument.URI]
 	s.mu.Unlock()
-	if !ok {
+	if !ok || isGQLFile(doc.docURI) {
 		return nil, nil
 	}
 
@@ -320,6 +412,11 @@ func (s *Server) DocumentSymbol(ctx context.Context, params *protocol.DocumentSy
 		return protocol.DocumentSymbolSlice{}, nil
 	}
 
+	if isGQLFile(doc.docURI) {
+		symbols := gqlDocumentSymbols(doc.content)
+		return protocol.DocumentSymbolSlice(symbols), nil
+	}
+
 	tokens := tokenize(doc.content)
 	symbols := buildSymbols(tokens)
 	return protocol.DocumentSymbolSlice(symbols), nil
@@ -329,7 +426,7 @@ func (s *Server) Formatting(ctx context.Context, params *protocol.DocumentFormat
 	s.mu.Lock()
 	doc, ok := s.documents[params.TextDocument.URI]
 	s.mu.Unlock()
-	if !ok || doc.graph == nil {
+	if !ok || doc.graph == nil || isGQLFile(doc.docURI) {
 		return nil, nil
 	}
 
@@ -360,6 +457,11 @@ func (s *Server) SemanticTokensFull(ctx context.Context, params *protocol.Semant
 		return &protocol.SemanticTokens{Data: []uint32{}}, nil
 	}
 
+	if isGQLFile(doc.docURI) {
+		data := gqlSemanticTokens(doc.content)
+		return &protocol.SemanticTokens{Data: data}, nil
+	}
+
 	tokens := tokenize(doc.content)
 	data := encodeSemanticTokens(tokens)
 	return &protocol.SemanticTokens{Data: data}, nil
@@ -382,6 +484,256 @@ func (s *Server) DidSave(ctx context.Context, params *protocol.DidSaveTextDocume
 		s.parseAndDiagnose(ctx, doc)
 	}
 	return nil
+}
+
+var gqlKeywords = []struct {
+	label  string
+	detail string
+	kind   protocol.CompletionItemKind
+}{
+	{"subgraph", "Filter nodes/edges by predicate", protocol.CompletionItemKindKeyword},
+	{"from", "Select input graph", protocol.CompletionItemKindKeyword},
+	{"make", "Set attributes matching predicate", protocol.CompletionItemKindKeyword},
+	{"remove", "Remove edges, attributes, or orphans", protocol.CompletionItemKindKeyword},
+	{"collapse", "Merge nodes matching predicate", protocol.CompletionItemKindKeyword},
+	{"into", "Target node ID for collapse", protocol.CompletionItemKindKeyword},
+	{"where", "Predicate clause", protocol.CompletionItemKindKeyword},
+	{"traverse", "Graph traversal", protocol.CompletionItemKindKeyword},
+	{"scope", "Sugar for traverse down all", protocol.CompletionItemKindKeyword},
+	{"node", "Element type for predicate", protocol.CompletionItemKindKeyword},
+	{"edge", "Element type for predicate", protocol.CompletionItemKindKeyword},
+	{"exists", "Attribute existence check", protocol.CompletionItemKindKeyword},
+	{"not", "Negation", protocol.CompletionItemKindKeyword},
+	{"AND", "Logical AND", protocol.CompletionItemKindKeyword},
+	{"in", "Set membership / traversal direction", protocol.CompletionItemKindKeyword},
+	{"out", "Traversal direction", protocol.CompletionItemKindKeyword},
+	{"both", "Traversal direction", protocol.CompletionItemKindKeyword},
+	{"up", "Traversal direction (dependency)", protocol.CompletionItemKindKeyword},
+	{"down", "Traversal direction (dependency)", protocol.CompletionItemKindKeyword},
+	{"all", "Unlimited traversal depth", protocol.CompletionItemKindKeyword},
+	{"orphans", "Remove isolated nodes", protocol.CompletionItemKindKeyword},
+	{"parent", "Edge parent predicate", protocol.CompletionItemKindKeyword},
+	{"depth", "Edge dependency depth", protocol.CompletionItemKindKeyword},
+	{"depends", "Edge dependency predicate", protocol.CompletionItemKindKeyword},
+	{"on", "Part of 'depends on'", protocol.CompletionItemKindKeyword},
+	{"true", "Boolean true", protocol.CompletionItemKindKeyword},
+	{"false", "Boolean false", protocol.CompletionItemKindKeyword},
+	{"as", "Named graph binding", protocol.CompletionItemKindKeyword},
+}
+
+func completeGQL(content string, line, character int) []protocol.CompletionItem {
+	lines := strings.Split(content, "\n")
+	if line >= len(lines) {
+		return keywordCompletionsGQL("")
+	}
+	lineStr := lines[line]
+	prefix := lineStr[:min(character, len(lineStr))]
+	trimmed := strings.TrimSpace(prefix)
+
+	lastWord := trimmed
+	if idx := strings.LastIndexAny(trimmed, " \t|("); idx >= 0 {
+		lastWord = trimmed[idx+1:]
+	}
+
+	return keywordCompletionsGQL(lastWord)
+}
+
+func keywordCompletionsGQL(prefix string) []protocol.CompletionItem {
+	var items []protocol.CompletionItem
+	for _, kw := range gqlKeywords {
+		if prefix == "" || strings.HasPrefix(kw.label, prefix) {
+			items = append(items, protocol.CompletionItem{
+				Label:      kw.label,
+				Detail:     protocol.NewOptional(kw.detail),
+				Kind:       kw.kind,
+				InsertText: protocol.NewOptional(kw.label),
+			})
+		}
+	}
+	return items
+}
+
+func hoverGQL(doc *document, line, character int) *protocol.Hover {
+	word := wordAt(doc.content, line, character)
+	if word == nil {
+		return nil
+	}
+
+	for _, kw := range gqlKeywords {
+		if kw.label == word.word {
+			rnj := protocol.Range{
+				Start: protocol.Position{Line: uint32(word.line), Character: uint32(word.colS)},
+				End:   protocol.Position{Line: uint32(word.line), Character: uint32(word.colE)},
+			}
+			return &protocol.Hover{
+				Contents: &protocol.MarkupContent{
+					Kind:  protocol.MarkupKindMarkdown,
+					Value: fmt.Sprintf("**`%s`** — %s", kw.label, kw.detail),
+				},
+				Range: &rnj,
+			}
+		}
+	}
+	return nil
+}
+
+func gqlDocumentSymbols(content string) []protocol.DocumentSymbol {
+	lines := strings.Split(content, "\n")
+	var symbols []protocol.DocumentSymbol
+
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+
+		// Split by pipe to handle pipelines on a single line
+		parts := strings.Split(trimmed, "|")
+		col := 0
+		for _, part := range parts {
+			exp := strings.TrimSpace(part)
+			if exp == "" {
+				col += len(part) + 1
+				continue
+			}
+
+			expType := ""
+			switch {
+			case strings.HasPrefix(exp, "subgraph"):
+				expType = "subgraph"
+			case strings.HasPrefix(exp, "from"):
+				expType = "from"
+			case strings.HasPrefix(exp, "make"):
+				expType = "make"
+			case strings.HasPrefix(exp, "remove"):
+				expType = "remove"
+			case strings.HasPrefix(exp, "collapse"):
+				expType = "collapse"
+			}
+
+			if expType != "" {
+				symbols = append(symbols, protocol.DocumentSymbol{
+					Name:   expType,
+					Detail: &exp,
+					Kind:   protocol.SymbolKindFunction,
+					Range: protocol.Range{
+						Start: protocol.Position{Line: uint32(i), Character: uint32(col)},
+						End:   protocol.Position{Line: uint32(i), Character: uint32(col + len(exp))},
+					},
+					SelectionRange: protocol.Range{
+						Start: protocol.Position{Line: uint32(i), Character: uint32(col)},
+						End:   protocol.Position{Line: uint32(i), Character: uint32(col + len(expType))},
+					},
+				})
+			}
+			col += len(part) + 1
+		}
+	}
+	return symbols
+}
+
+func gqlSemanticTokens(content string) []uint32 {
+	type gqlTok struct {
+		line    int
+		col     int
+		len     int
+		typeIdx uint32
+	}
+	var tokens []gqlTok
+
+	lines := strings.Split(content, "\n")
+	for lineIdx, line := range lines {
+		i := 0
+		for i < len(line) {
+			if line[i] == ' ' || line[i] == '\t' {
+				i++
+				continue
+			}
+
+			if line[i] == '#' {
+				break
+			}
+
+			if line[i] == '"' {
+				end := i + 1
+				for end < len(line) && line[end] != '"' {
+					end++
+				}
+				if end < len(line) {
+					end++
+				}
+				tokens = append(tokens, gqlTok{lineIdx, i, end - i, 1})
+				i = end
+				continue
+			}
+
+			if line[i] >= '0' && line[i] <= '9' || line[i] == '-' && i+1 < len(line) && line[i+1] >= '0' && line[i+1] <= '9' {
+				end := i
+				if line[end] == '-' {
+					end++
+				}
+				for end < len(line) && (line[end] >= '0' && line[end] <= '9' || line[end] == '.') {
+					end++
+				}
+				tokens = append(tokens, gqlTok{lineIdx, i, end - i, 2})
+				i = end
+				continue
+			}
+
+			if (line[i] >= 'a' && line[i] <= 'z') || (line[i] >= 'A' && line[i] <= 'Z') || line[i] == '_' {
+				end := i
+				for end < len(line) && ((line[end] >= 'a' && line[end] <= 'z') || (line[end] >= 'A' && line[end] <= 'Z') || (line[end] >= '0' && line[end] <= '9') || line[end] == '_') {
+					end++
+				}
+				word := line[i:end]
+				ti := uint32(0)
+				for _, kw := range gqlKeywords {
+					if kw.label == word {
+						ti = 0
+						break
+					}
+				}
+				if word == "true" || word == "false" {
+					ti = 3
+				}
+				tokens = append(tokens, gqlTok{lineIdx, i, end - i, ti})
+				i = end
+				continue
+			}
+
+			switch line[i] {
+			case '|', '@', '.', '(', ')', '+', '&', '-', '^':
+				tokens = append(tokens, gqlTok{lineIdx, i, 1, 6})
+			case '=', '!':
+				if i+1 < len(line) && line[i+1] == '=' {
+					tokens = append(tokens, gqlTok{lineIdx, i, 2, 6})
+					i += 2
+					continue
+				}
+				tokens = append(tokens, gqlTok{lineIdx, i, 1, 6})
+			}
+			i++
+		}
+	}
+
+	if len(tokens) == 0 {
+		return []uint32{}
+	}
+
+	var data []uint32
+	prevLine := uint32(0)
+	prevChar := uint32(0)
+	for _, tok := range tokens {
+		deltaLine := uint32(tok.line) - prevLine
+		deltaChar := uint32(tok.col)
+		if deltaLine == 0 {
+			deltaChar = uint32(tok.col) - prevChar
+		}
+		data = append(data, deltaLine, deltaChar, uint32(tok.len), tok.typeIdx, 0)
+		prevLine = uint32(tok.line)
+		prevChar = uint32(tok.col)
+	}
+	return data
 }
 
 func wordAt(content string, line, character int) *wordAtPos {
@@ -960,6 +1312,5 @@ func encodeSemanticTokens(tokens []gsl.Token) []uint32 {
 }
 
 var (
-	_ = fmt.Sprintf
 	_ = regexp.Compile
 )
