@@ -1,0 +1,35 @@
+{
+  "scopeName": "source.gql",
+  "name": "GQL",
+  "fileTypes": ["gql"],
+  "patterns": [
+    {
+      "match": "\\b(subgraph|from|make|remove|collapse|into|where|traverse|scope|and|AND|not|in|out|both|up|down|all|orphans|parent|depth|depends|on|as|exists|node|edge)\\b",
+      "name": "keyword.control.gql"
+    },
+    {
+      "match": "\\b(true|false)\\b",
+      "name": "constant.language.boolean.gql"
+    },
+    {
+      "match": "\\b-?[0-9]+(\\.[0-9]+)?\\b",
+      "name": "constant.numeric.gql"
+    },
+    {
+      "match": "\"[^\"]*\"",
+      "name": "string.quoted.double.gql"
+    },
+    {
+      "match": "#[^\n]*",
+      "name": "comment.line.hash.gql"
+    },
+    {
+      "match": "==|!=|->|=|\\|",
+      "name": "keyword.operator.gql"
+    },
+    {
+      "match": "[A-Z][A-Z0-9_]*",
+      "name": "variable.other.gql"
+    }
+  ]
+}

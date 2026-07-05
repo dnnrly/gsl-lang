@@ -4,7 +4,8 @@ gsl-diagram
 gsl-query
 bin/
 /gsl-lsp
-vscode-gsl/
+editors/vscode/node_modules/
+editors/vscode/*.vsix
 
 # Ignore plan and progress files
 *.plan

@@ -1,0 +1,60 @@
+{
+  "name": "gsl-lang",
+  "displayName": "GSL Language Support",
+  "description": "GSL (Graph Specification Language) language support",
+  "version": "0.1.0",
+  "publisher": "gsl-lang",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "activationEvents": [
+    "onLanguage:gsl",
+    "onLanguage:gql"
+  ],
+  "main": "./extension",
+  "contributes": {
+    "languages": [
+      {
+        "id": "gsl",
+        "aliases": ["GSL", "gsl"],
+        "extensions": [".gsl"],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "gql",
+        "aliases": ["GQL", "gql", "GSL Query"],
+        "extensions": [".gql"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "gsl",
+        "scopeName": "source.gsl",
+        "path": "./syntaxes/gsl.tmLanguage.json"
+      },
+      {
+        "language": "gql",
+        "scopeName": "source.gql",
+        "path": "./syntaxes/gql.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "gsl.restartLSP",
+        "title": "GSL: Restart Language Server"
+      }
+    ]
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "scripts": {
+    "install:ext": "npm install && mkdir -p syntaxes"
+  }
+}
