@@ -11,9 +11,9 @@
 
 ## Query Language (GQL)
 
-- [QUERY_SPEC.md](query/QUERY_SPEC.md): Query language specification
-- [QUERY_GRAMMAR.md](query/QUERY_GRAMMAR.md): Query language formal grammar
-- [QUERY_AI_GUIDE.md](query/QUERY_AI_GUIDE.md): Self-contained query language guide for LLMs
+- [QUERY_SPEC.md](QUERY_SPEC.md): Query language specification
+- [QUERY_GRAMMAR.md](QUERY_GRAMMAR.md): Query language formal grammar
+- [QUERY_AI_GUIDE.md](QUERY_AI_GUIDE.md): Self-contained query language guide for LLMs
 
 ## Getting Started
 

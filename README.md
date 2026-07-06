@@ -24,8 +24,8 @@ GSL **is a language** — not just a Go library. This repository is the **canoni
 | [`SPEC.md`](SPEC.md) | The authoritative language specification |
 | [`GRAMMAR.md`](GRAMMAR.md) | The formal grammar (for implementing a parser) |
 | [`LLM_GUIDE.md`](LLM_GUIDE.md) | A self-contained GSL syntax & semantics reference |
-| [`query/QUERY_SPEC.md`](query/QUERY_SPEC.md) | The query language specification |
-| [`query/QUERY_AI_GUIDE.md`](query/QUERY_AI_GUIDE.md) | A self-contained GQL syntax & semantics reference |
+| [`QUERY_SPEC.md`](QUERY_SPEC.md) | The query language specification |
+| [`QUERY_AI_GUIDE.md`](QUERY_AI_GUIDE.md) | A self-contained GQL syntax & semantics reference |
 | [`GO_GUIDE.md`](GO_GUIDE.md) | The Go API patterns and algorithms |
 | [`AGENTS.md`](AGENTS.md) | Development instructions for contributing |
 
@@ -275,25 +275,6 @@ input graph → expr₁ → expr₂ → … → result graph
 
 Expressions are separated by `|` and evaluated left-to-right, similar to a Unix shell pipeline but for graphs.
 
-### Query Quick Start
-
-```go
-import (
-	gsl "github.com/dnnrly/gsl-lang"
-	"github.com/dnnrly/gsl-lang/query"
-)
-
-// Parse a query
-q, errs := query.ParseQuery(`subgraph node.team == "payments" | remove orphans`)
-if len(errs) > 0 {
-    log.Fatal(errs)
-}
-
-// Serialize back to string
-queryStr := query.SerializeQuery(q)
-fmt.Println(queryStr)
-```
-
 ### Pipeline Expressions
 
 | Expression | Syntax | Purpose |
@@ -418,91 +399,34 @@ When the same node appears in both graphs, attributes from the right-hand side o
 
 For additional examples and detailed explanations, see:
 
-* [QUERY_TUTORIAL.md](query/QUERY_TUTORIAL.md) — Step-by-step learning guide  
-* [QUERY_SPEC.md](query/QUERY_SPEC.md) — Complete formal specification  
+* [QUERY_TUTORIAL.md](QUERY_TUTORIAL.md) — Step-by-step learning guide  
+* [QUERY_SPEC.md](QUERY_SPEC.md) — Complete formal specification  
 * [query/](query/) — Go package documentation
 
-### Query Examples
+---
 
-```gsl-query
-# Select a team and show their dependencies
-subgraph node.team == "payments" traverse out all
+### Go API Reference
 
-# Recursive traversal with edge filter
-start "Service" | flow out where edge.color = "Blue" recursive
+Parse and serialize queries programmatically:
 
-# Filter by node attributes
-start A | where status = "active"
-
-# Multiple filters in a pipeline
-start A | flow out | where critical = true | where type != "archived"
-
-# Combine pipelines with union
-(start A | flow out) union (start B | flow in)
-
-# Complex combinators
-(start X | flow out recursive) union (start Y) minus (start Z | flow both)
-```
-
-### Query API
-
-Import the query package:
 ```go
 import "github.com/dnnrly/gsl-lang/query"
+
+// Parse a query string
+q, errs := query.ParseQuery(`subgraph node.team == "payments" | remove orphans`)
+
+// Serialize back to a query string
+queryStr := query.SerializeQuery(q)
 ```
 
-#### `query.ParseQuery(input string) (*Query, []error)`
+**Functions:**
 
-Parses a query string and returns:
-- `*Query`: The parsed query AST
-- `[]error`: Parse errors, if any
+| Function | Description |
+|---|---|
+| `query.ParseQuery(input string) (*Query, []error)` | Parse a GQL query string into an AST |
+| `query.SerializeQuery(q *Query) string` | Serialize a query AST back to a string |
 
-#### `query.SerializeQuery(q *Query) string`
-
-Serializes a query AST back to a query string.
-
-#### Query AST Structure
-
-```go
-type Query struct {
-    Root Step  // Entry point of the query
-}
-
-type Pipeline struct {
-    Steps []Step  // Sequence of pipeline steps
-}
-
-type StartStep struct {
-    NodeIDs []string  // Starting node IDs
-}
-
-type FlowStep struct {
-    Direction   string       // "in", "out", "both"
-    Recursive   bool         // true if * or "recursive"
-    EdgeFilter  *FilterSpec  // Optional edge filter
-}
-
-type FilterStep struct {
-    Filter *FilterSpec  // Node attribute filter
-}
-
-type MinusStep struct {
-    Pipeline *Pipeline  // Sub-pipeline to subtract
-}
-
-type CombinatorExpr struct {
-    Type  string      // "union", "intersect", "minus"
-    Left  *Pipeline   // Left operand
-    Right *Pipeline   // Right operand
-}
-
-type FilterSpec struct {
-    IsEdge bool        // true for edge filters, false for node filters
-    Attr   string      // Attribute name
-    Op     string      // Operator: "=", "!=", "contains", "matches"
-    Value  interface{} // Comparison value
-}
-```
+**AST Types:** `Query`, `Pipeline`, `StartStep`, `FlowStep`, `FilterStep`, `MinusStep`, `CombinatorExpr`, `FilterSpec` — see `query/` package for full definitions.
 
 ---
 

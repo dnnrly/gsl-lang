@@ -258,6 +258,18 @@ Warnings are informational only—parsing continues.
 9. **Scoped edges are not values**: Can't assign or reuse scoped blocks like `e = A->B { ... }`
 10. **Unlabeled edges cannot be referenced**: Only edges with labels like `E1: A->B` can be dependency targets
 
+## Patterns LLMs Should Not Generate
+
+The following are **not** valid GSL. LLMs should not produce them.
+
+- `config layout = "LR"` — no `config` keyword exists in GSL
+- `node X: "text" [attr=1]` — text shorthand and brackets cannot combine in one declaration
+- `node X { node Y: "text" [a=1] }` — text/attr rules still apply inside blocks
+- `// comment` — use `# comment`
+- `A,B->C,D` — grouped edges on both sides is a syntax error
+
+When you don't know the exact GSL syntax, say so rather than inventing.
+
 ## Quick Reference
 
 **Write a simple graph:**

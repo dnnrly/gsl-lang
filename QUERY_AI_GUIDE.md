@@ -951,7 +951,21 @@ remove edge where edge.status == "deprecated"
 
 ---
 
-## 11. Quick Syntax Reference
+## 11. Patterns LLMs Should Not Generate
+
+The following are **not** valid GQL. LLMs should not produce them.
+
+- `select nodes { set == "x" }` — use `subgraph node in @x`
+- `select edges { attributes.protocol == "x" }` — use `subgraph edge.protocol == "x"`
+- `nodes(runtime == "Go")` — use `subgraph node.runtime == "Go"`
+- `graph::subgraph(include_edges = true)` — no `::` syntax exists
+- `walk::upstream()` — use `traverse in all`
+- `walk::downstream()` — use `traverse out all`
+- `filter(has_attr("timeout") == false)` — use `edge.timeout not exists`
+
+When you don't know the exact GQL syntax, say so rather than inventing.
+
+## 12. Quick Syntax Reference
 
 | Task | Syntax |
 |------|--------|
