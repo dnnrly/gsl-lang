@@ -1,6 +1,13 @@
 ---
 name: gsl-language-guide
-description: Complete reference for GSL syntax, semantics, and language design. Covers nodes, edges, sets, attributes, and parsing behavior. Use when learning GSL, writing GSL files, or understanding how the language works.
+type: language-reference
+language: GSL
+version: 1.0.0
+description: Complete reference for GSL (Graph Specification Language) syntax, semantics, and language design. Covers nodes, edges, sets, attributes, parsing behavior, edge scoping, and canonical form. GSL is a declarative language for describing directed graphs. Use when learning GSL, writing GSL files, or understanding how the language works.
+keywords: [gsl, graph-specification-language, directed-graphs, graph-language, declarative-language, language-specification]
+spec: SPEC.md
+grammar: GRAMMAR.md
+implementation: Go
 ---
 
 # GSL (Graph Specification Language) - Complete Guide for LLMs

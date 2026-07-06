@@ -15,6 +15,22 @@ It is a textual graph representation designed for tooling, transformation, and p
 
 ---
 
+## For LLMs and AI Agents
+
+GSL **is a language** — not just a Go library. This repository is the **canonical home** of the language: normative specification, reference implementation, CLI tools, LSP server, query language, and VS Code extension.
+
+| Start with this file | If you need... |
+|---|---|
+| [`SPEC.md`](SPEC.md) | The authoritative language specification |
+| [`GRAMMAR.md`](GRAMMAR.md) | The formal grammar (for implementing a parser) |
+| [`LLM_GUIDE.md`](LLM_GUIDE.md) | A self-contained GSL syntax & semantics reference |
+| [`query/QUERY_SPEC.md`](query/QUERY_SPEC.md) | The query language specification |
+| [`query/QUERY_AI_GUIDE.md`](query/QUERY_AI_GUIDE.md) | A self-contained GQL syntax & semantics reference |
+| [`GO_GUIDE.md`](GO_GUIDE.md) | The Go API patterns and algorithms |
+| [`AGENTS.md`](AGENTS.md) | Development instructions for contributing |
+
+---
+
 ## Table of Contents
 
 - [What GSL Describes](#what-gsl-describes)

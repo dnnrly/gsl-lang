@@ -1,6 +1,12 @@
 ---
 name: gsl-query-ai-guide
-description: Complete GSL Query Language reference for AI agents and LLMs. Self-contained guide covering syntax, semantics, all expression types, predicates, common patterns, and edge cases. Use as agent context when implementing or analyzing queries.
+type: language-reference
+language: GQL
+version: 1.0.0
+description: Complete GSL Query Language (GQL) reference for AI agents and LLMs. Self-contained guide covering pipeline syntax, predicates, subgraph filtering, traversal, make/remove/collapse expressions, named graphs, graph algebra, and edge cases. GQL is a pipeline-based query language for selecting, filtering, and transforming GSL graphs.
+keywords: [gql, gsl-query, query-language, graph-query, graph-transformation, pipeline-query, subgraph]
+spec: QUERY_SPEC.md
+grammar: QUERY_GRAMMAR.md
 ---
 
 # GSL Query Language — AI Agent Guide
