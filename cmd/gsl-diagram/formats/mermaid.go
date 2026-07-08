@@ -8,6 +8,37 @@ import (
 	"github.com/dnnrly/gsl-lang/cmd/gsl-diagram/converter"
 )
 
+type mermaidSequenceConverter struct{}
+
+func (c *mermaidSequenceConverter) Convert(graph *gsl.Graph) string {
+	var sb strings.Builder
+
+	sb.WriteString("sequenceDiagram\n")
+
+	nodes := graph.GetNodes()
+	edges := graph.GetEdges()
+
+	participants := collectParticipants(edges, nodes)
+	for _, p := range participants {
+		displayName := participantDisplayName(p, nodes)
+		if displayName != p {
+			sb.WriteString(fmt.Sprintf("    participant %s as \"%s\"\n", p, displayName))
+		} else {
+			sb.WriteString(fmt.Sprintf("    participant %s\n", p))
+		}
+	}
+	sb.WriteString("\n")
+
+	childSet := buildChildSet(edges)
+	for _, edge := range edges {
+		if _, isChild := childSet[edge]; !isChild {
+			renderSequenceEdgeMermaid(&sb, edge, nil, nodes, "    ")
+		}
+	}
+
+	return sb.String()
+}
+
 type mermaidComponentConverter struct{}
 
 func (c *mermaidComponentConverter) Convert(graph *gsl.Graph) string {

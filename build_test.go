@@ -859,6 +859,62 @@ func TestBuildScopedEdge(t *testing.T) {
 	}
 }
 
+func TestBuildScopedBlockWithNodeAndSet(t *testing.T) {
+	// A -> B {
+	//   node C
+	//   set my_set
+	//   C -> D
+	// }
+	nodeC := &nodeDecl{
+		name: "C",
+	}
+	setDecl := &setDecl{
+		name: "my_set",
+	}
+	child := &edgeDecl{
+		left:  []string{"C"},
+		right: []string{"D"},
+		line:  4, col: 5,
+	}
+	prog := &program{
+		statements: []statement{
+			&edgeDecl{
+				left:  []string{"A"},
+				right: []string{"B"},
+				block: []statement{nodeC, setDecl, child},
+				line:  1, col: 1,
+			},
+		},
+	}
+	g, _, err := buildGraph(prog)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	nodes := g.GetNodes()
+	if nodes["C"] == nil {
+		t.Errorf("expected node C to exist (declared inside scoped block)")
+	}
+
+	sets := g.GetSets()
+	if sets["my_set"] == nil {
+		t.Errorf("expected set my_set to exist (declared inside scoped block)")
+	}
+
+	edges := g.GetEdges()
+	if len(edges) != 2 {
+		t.Fatalf("expected 2 edges, got %d", len(edges))
+	}
+
+	// Parent A->B should have C->D as child (unlabeled scope)
+	if len(edges[0].Children) != 1 {
+		t.Errorf("expected parent edge to have 1 child, got %d", len(edges[0].Children))
+	}
+	if edges[0].Children[0] != edges[1] {
+		t.Errorf("expected child edge C->D to be in parent's Children")
+	}
+}
+
 func TestBuildNestedScopedEdges(t *testing.T) {
 	// A: a -> b { B: b -> c { c -> d } }
 	outerLabel := "A"

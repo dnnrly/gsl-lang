@@ -1,0 +1,25 @@
+# Nested Activations
+# Demonstrates multiple levels of activation/deactivation.
+# Each nested scoped block creates a deeper activation level:
+# the parent edge activates its target, and child edges within
+# it execute in that context. A child scope then activates its
+# own target, creating a "stack" of activations.
+#
+# Convert to a sequence diagram:
+#   gsl-diagram -i examples/05-sequence/nested_activations.gsl -f mermaid -t sequence
+#   gsl-diagram -i examples/05-sequence/nested_activations.gsl -f plantuml -t sequence
+
+node Client [text = "Mobile Client"]
+node Auth [text = "Auth Service"]
+node DB [text = "Database"]
+
+Client -> Auth [method = "POST /login"] {
+    Auth -> DB [method = "find user"]
+    DB -> Auth [method = "user found"]
+
+    Auth -> DB [method = "create session", arrow = "solid"] {
+        DB -> Auth [method = "session created"]
+    }
+
+    Auth -> Client [method = "200 OK"]
+}

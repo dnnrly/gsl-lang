@@ -142,8 +142,73 @@ A labeled grouped edge with duplicate nodes that must be serialized as a grouped
 - Labeled grouped edges
 - Serialization round-trip with duplicate edges sharing a label
 - Avoiding duplicate edge label error in re-parsed output
+---
+
+## 05-sequence — Sequence Diagrams
+
+GSL graphs that produce sequence diagrams when converted with `-t sequence`. These demonstrate edge scoping for activation/deactivation, auto-detected return arrows, and attribute-based arrow overrides.
+
+### `user_login.gsl`
+
+A user login flow with nested 2FA verification. Demonstrates the core sequence pattern: parent edge activates target, child edges execute within that context.
+
+**Demonstrates:**
+- Nested scoped blocks for multi-level interaction
+- Auto-detected return arrows (child edge pointing back to parent's source)
+- Node display names via `text` attribute
+
+### `simple_request_response.gsl`
+
+A basic client-server-database interaction with auto-detected request and return arrows.
+
+**Demonstrates:**
+- Simplest possible sequence pattern
+- Auto-detected dashed return arrow from DB to Server
+- Multi-step request/response chain
+
+### `nested_activations.gsl`
+
+Three levels of nesting: client → auth → database, with a deeply scoped session creation.
+
+**Demonstrates:**
+- Stacked activation/deactivation (each scope level adds a frame)
+- Mixed auto-detected and overridden arrow styles inside scopes
+
+### `arrow_overrides.gsl`
+
+Shows how to force solid or dashed arrows using the `arrow` attribute, overriding auto-detection.
+
+**Demonstrates:**
+- `arrow = "dashed"` for async events and logging
+- `arrow = "solid"` for forward-direction edges that would otherwise be auto-detected as returns
+
+### `flat_edges_parent.gsl`
+
+Builds a sequence diagram using explicit `parent` attributes on child edges instead of scoped blocks.
+
+**Demonstrates:**
+- Labeled parent edges with `E1:` syntax
+- Child edges referencing parent via `[parent=E1]`
+- Same activation/deactivation behavior as scoped blocks
+
+### `error_handling.gsl`
+
+An online checkout flow with both happy path and fraud-decline error path.
+
+**Demonstrates:**
+- Multiple scoped blocks from the same parent edge
+- Different outcomes based on child edge flow
+
+### `api_orchestration.gsl`
+
+Fan-out orchestration where a single API Gateway call triggers multiple downstream services.
+
+**Demonstrates:**
+- Multiple child edges from different participants within one scope
+- Rich multi-service interaction diagrams
 
 ---
+
 ## Example Tests
 
 `example_test.go` contains runnable documentation examples that demonstrate common patterns:
@@ -200,6 +265,13 @@ go test ./examples -v
 | Name collision warning | `03-edge-cases/name_collision.gsl` |
 | Parent override warning | `03-edge-cases/parent_override.gsl` |
 | Labeled grouped edges | `04-serialization/grouped_edges.gsl` |
+| Sequence diagrams | `05-sequence/user_login.gsl` |
+| Simple request-response | `05-sequence/simple_request_response.gsl` |
+| Nested activations | `05-sequence/nested_activations.gsl` |
+| Arrow style overrides | `05-sequence/arrow_overrides.gsl` |
+| Flat edges with explicit parent | `05-sequence/flat_edges_parent.gsl` |
+| Error handling flow | `05-sequence/error_handling.gsl` |
+| API orchestration | `05-sequence/api_orchestration.gsl` |
 
 ## Graph Sizes
 
@@ -216,6 +288,13 @@ go test ./examples -v
 | `03-edge-cases/name_collision.gsl` | 3 | 2 | 1 |
 | `03-edge-cases/parent_override.gsl` | 4 | 0 | 0 |
 | `04-serialization/grouped_edges.gsl` | 1 | 2 | 0 |
+| `05-sequence/user_login.gsl` | 5 | 8 | 0 |
+| `05-sequence/simple_request_response.gsl` | 3 | 4 | 0 |
+| `05-sequence/nested_activations.gsl` | 3 | 5 | 0 |
+| `05-sequence/arrow_overrides.gsl` | 4 | 5 | 0 |
+| `05-sequence/flat_edges_parent.gsl` | 4 | 5 | 0 |
+| `05-sequence/error_handling.gsl` | 6 | 11 | 0 |
+| `05-sequence/api_orchestration.gsl` | 7 | 11 | 0 |
 
 ## More Information
 

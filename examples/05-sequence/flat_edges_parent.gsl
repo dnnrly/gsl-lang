@@ -1,0 +1,27 @@
+# Flat Edges with Explicit Parent
+# Sequence diagrams can also be built using explicit parent
+# references instead of scoped blocks. This is useful when
+# edges are declared in different parts of the file or when
+# you want to keep all edge declarations at the same level.
+#
+# The `parent` attribute on a child edge associates it with
+# a labeled parent edge, producing the same activation/
+# deactivation behavior as a scoped block.
+#
+# Convert to a sequence diagram:
+#   gsl-diagram -i examples/05-sequence/flat_edges_parent.gsl -f mermaid -t sequence
+#   gsl-diagram -i examples/05-sequence/flat_edges_parent.gsl -f plantuml -t sequence
+
+node Client [text = "Client"]
+node Server [text = "API Server"]
+node DB [text = "Database"]
+node Logger [text = "Audit Logger"]
+
+# Label the parent edge
+E1: Client -> Server [method = "POST /login"]
+
+# Child edges reference parent by label
+Server -> DB [method = "query user", parent = E1]
+DB -> Server [method = "user found", parent = E1]
+Server -> Logger [method = "write log", parent = E1, arrow = "dashed"]
+Server -> Client [method = "200 OK", parent = E1]

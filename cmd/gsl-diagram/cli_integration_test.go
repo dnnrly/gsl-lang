@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package main
@@ -467,6 +468,97 @@ func TestExampleFilesWithPlantUML(t *testing.T) {
 				t.Errorf("%s: missing @startuml directive", entry.Name())
 			}
 
+			if !contains(output, "@enduml") {
+				t.Errorf("%s: missing @enduml directive", entry.Name())
+			}
+		})
+	}
+}
+
+func TestExampleSequenceFilesWithMermaid(t *testing.T) {
+	examplesDir := "../../examples/05-sequence"
+
+	entries, err := os.ReadDir(examplesDir)
+	if err != nil {
+		t.Fatalf("failed to read examples/05-sequence directory: %v", err)
+	}
+
+	factory, err := formats.GetFactory("mermaid")
+	if err != nil {
+		t.Fatalf("failed to get mermaid factory: %v", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !bytes.HasSuffix([]byte(entry.Name()), []byte(".gsl")) {
+			continue
+		}
+
+		t.Run("mermaid_seq_"+entry.Name(), func(t *testing.T) {
+			filePath := examplesDir + "/" + entry.Name()
+			input, err := os.ReadFile(filePath)
+			if err != nil {
+				t.Fatalf("failed to read example file %s: %v", filePath, err)
+			}
+
+			graph, parseErr := gsl.Parse(bytes.NewReader(input))
+			if parseErr != nil && parseErr.HasError() {
+				t.Fatalf("failed to parse GSL from %s: %v", filePath, parseErr)
+			}
+
+			conv := factory("sequence")
+			output := conv.Convert(graph)
+
+			if len(output) == 0 {
+				t.Errorf("%s: empty output", entry.Name())
+			}
+
+			if !contains(output, "sequenceDiagram") {
+				t.Errorf("%s: missing sequenceDiagram directive", entry.Name())
+			}
+		})
+	}
+}
+
+func TestExampleSequenceFilesWithPlantUML(t *testing.T) {
+	examplesDir := "../../examples/05-sequence"
+
+	entries, err := os.ReadDir(examplesDir)
+	if err != nil {
+		t.Fatalf("failed to read examples/05-sequence directory: %v", err)
+	}
+
+	factory, err := formats.GetFactory("plantuml")
+	if err != nil {
+		t.Fatalf("failed to get plantuml factory: %v", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !bytes.HasSuffix([]byte(entry.Name()), []byte(".gsl")) {
+			continue
+		}
+
+		t.Run("plantuml_seq_"+entry.Name(), func(t *testing.T) {
+			filePath := examplesDir + "/" + entry.Name()
+			input, err := os.ReadFile(filePath)
+			if err != nil {
+				t.Fatalf("failed to read example file %s: %v", filePath, err)
+			}
+
+			graph, parseErr := gsl.Parse(bytes.NewReader(input))
+			if parseErr != nil && parseErr.HasError() {
+				t.Fatalf("failed to parse GSL from %s: %v", filePath, parseErr)
+			}
+
+			conv := factory("sequence")
+			output := conv.Convert(graph)
+
+			if len(output) == 0 {
+				t.Errorf("%s: empty output", entry.Name())
+			}
+
+			if !contains(output, "@startuml") {
+				t.Errorf("%s: missing @startuml directive", entry.Name())
+			}
 			if !contains(output, "@enduml") {
 				t.Errorf("%s: missing @enduml directive", entry.Name())
 			}

@@ -1,0 +1,36 @@
+# Error Handling Flow
+# Demonstrates a sequence with a failure path in an online
+# checkout flow. The fraud check returns "declined", causing
+# an early error response instead of proceeding to payment.
+#
+# Convert to a sequence diagram:
+#   gsl-diagram -i examples/05-sequence/error_handling.gsl -f mermaid -t sequence
+#   gsl-diagram -i examples/05-sequence/error_handling.gsl -f plantuml -t sequence
+
+node Client [text = "Shopper"]
+node API [text = "Checkout API"]
+node Fraud [text = "Fraud Detection"]
+node Payment [text = "Payment Service"]
+node DB [text = "Orders Database"]
+node Email [text = "Email Service"]
+
+# Happy path
+Client -> API [method = "POST /checkout"] {
+    API -> Fraud [method = "check order"]
+    Fraud -> API [method = "approved"]
+
+    API -> Payment [method = "charge"]
+    Payment -> DB [method = "insert order"]
+    DB -> Payment [method = "order created"]
+
+    Payment -> API [method = "receipt"]
+    API -> Email [method = "send confirmation", arrow = "dashed"]
+    API -> Client [method = "201 Created"]
+}
+
+# Error path: fraud check declines the order
+Client -> API [method = "POST /checkout"] {
+    API -> Fraud [method = "check order"]
+    Fraud -> API [method = "declined"]
+    API -> Client [method = "403 Forbidden"]
+}
