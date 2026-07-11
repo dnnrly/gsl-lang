@@ -3,11 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"runtime/debug"
-	"strings"
-	"time"
 
 	gsl "github.com/dnnrly/gsl-lang"
+	"github.com/dnnrly/gsl-lang/cmd/internal/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -17,48 +15,6 @@ var (
 	Commit    = "unknown"
 	BuildDate = "unknown"
 )
-
-// extractFrontmatter extracts YAML frontmatter from markdown
-// Returns name, description, and remaining content
-func extractFrontmatter(md string) (name, description, content string) {
-	if !strings.HasPrefix(md, "---") {
-		return "", "", md
-	}
-
-	// Find closing ---
-	rest := md[3:]
-	endIdx := strings.Index(rest, "---")
-	if endIdx == -1 {
-		return "", "", md
-	}
-
-	frontmatter := rest[:endIdx]
-	content = strings.TrimPrefix(rest[endIdx+3:], "\n")
-
-	// Extract name and description from YAML
-	for _, line := range strings.Split(frontmatter, "\n") {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "name:") {
-			name = strings.Trim(strings.TrimPrefix(line, "name:"), " \"'")
-		} else if strings.HasPrefix(line, "description:") {
-			description = strings.Trim(strings.TrimPrefix(line, "description:"), " \"'")
-		}
-	}
-
-	return name, description, content
-}
-
-// loadGuide loads a guide file and extracts its metadata
-func loadGuide(filename string) (name, description, content string, err error) {
-	// Load from embedded files in the main gsl package
-	data, err := gsl.Guides.ReadFile(filename)
-	if err == nil {
-		name, description, content = extractFrontmatter(string(data))
-		return name, description, content, nil
-	}
-
-	return "", "", "", fmt.Errorf("could not find %s: %w", filename, err)
-}
 
 func main() {
 	var inputFile, outputFile, queryFile string
@@ -117,126 +73,27 @@ func main() {
 		Use:   "version",
 		Short: "Print version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			printVersion()
+			cli.PrintVersion("gsl-query", Version, Commit, BuildDate)
 		},
 	}
 
 	// Load guides
-	_, gslDesc, gslContent, gslErr := loadGuide("LLM_GUIDE.md")
-	_, queryDesc, queryContent, queryErr := loadGuide("QUERY_AI_GUIDE.md")
+	gslDesc, gslContent, gslErr := cli.LoadGuide(gsl.Guides, "LLM_GUIDE.md")
+	queryDesc, queryContent, queryErr := cli.LoadGuide(gsl.Guides, "QUERY_AI_GUIDE.md")
 
-	// help ai command - lists available guides
-	helpAICmd := &cobra.Command{
-		Use:   "ai",
-		Short: "Show AI/LLM guides",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Available AI/LLM guides:")
-			fmt.Println()
-			if gslErr == nil {
-				fmt.Printf("  gsl    - %s\n", gslDesc)
-			}
-			if queryErr == nil {
-				fmt.Printf("  query  - %s\n", queryDesc)
-			}
-			fmt.Println()
-			fmt.Println("Run 'gsl-query help ai <guide>' to view a guide")
-		},
+	guides := []cli.GuideSpec{
+		{Use: "gsl", Desc: gslDesc, Content: gslContent, Err: gslErr},
+		{Use: "query", Desc: queryDesc, Content: queryContent, Err: queryErr},
 	}
 
-	// help ai gsl command - prints LLM_GUIDE.md
-	if gslErr == nil {
-		helpAIGSLCmd := &cobra.Command{
-			Use:   "gsl",
-			Short: gslDesc,
-			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Println(gslContent)
-			},
-		}
-		helpAICmd.AddCommand(helpAIGSLCmd)
-	}
+	// Build AI command trees
+	cli.BuildAICommand(rootCmd, guides, "Available AI/LLM guides:", "Run 'gsl-query ai <guide>' to view a guide")
+	cli.BuildAICommand(helpCmd, guides, "Available AI/LLM guides:", "Run 'gsl-query help ai <guide>' to view a guide")
 
-	// help ai query command - prints QUERY_AI_GUIDE.md
-	if queryErr == nil {
-		helpAIQueryCmd := &cobra.Command{
-			Use:   "query",
-			Short: queryDesc,
-			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Println(queryContent)
-			},
-		}
-		helpAICmd.AddCommand(helpAIQueryCmd)
-	}
-
-	helpCmd.AddCommand(helpAICmd)
 	rootCmd.AddCommand(helpCmd, versionCmd)
-
-	// ai command - synonym for help ai
-	aiCmd := &cobra.Command{
-		Use:   "ai",
-		Short: "Show AI/LLM guides",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Available AI/LLM guides:")
-			fmt.Println()
-			if gslErr == nil {
-				fmt.Printf("  gsl    - %s\n", gslDesc)
-			}
-			if queryErr == nil {
-				fmt.Printf("  query  - %s\n", queryDesc)
-			}
-			fmt.Println()
-			fmt.Println("Run 'gsl-query ai <guide>' to view a guide")
-		},
-	}
-
-	// ai gsl command
-	if gslErr == nil {
-		aiGSLCmd := &cobra.Command{
-			Use:   "gsl",
-			Short: gslDesc,
-			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Println(gslContent)
-			},
-		}
-		aiCmd.AddCommand(aiGSLCmd)
-	}
-
-	// ai query command
-	if queryErr == nil {
-		aiQueryCmd := &cobra.Command{
-			Use:   "query",
-			Short: queryDesc,
-			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Println(queryContent)
-			},
-		}
-		aiCmd.AddCommand(aiQueryCmd)
-	}
-
-	rootCmd.AddCommand(aiCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
-	}
-}
-
-func printVersion() {
-	fmt.Printf("gsl-query version %s\n", Version)
-	fmt.Printf("Commit: %s\n", Commit)
-	
-	// Parse BuildDate if it's in a standard format
-	if BuildDate != "unknown" {
-		if t, err := time.Parse(time.RFC3339, BuildDate); err == nil {
-			fmt.Printf("Build Date: %s\n", t.Format("2006-01-02 15:04:05 MST"))
-		} else {
-			fmt.Printf("Build Date: %s\n", BuildDate)
-		}
-	} else {
-		fmt.Printf("Build Date: %s\n", BuildDate)
-	}
-	
-	// Include Go version info
-	if info, ok := debug.ReadBuildInfo(); ok {
-		fmt.Printf("Go: %s\n", info.GoVersion)
 	}
 }

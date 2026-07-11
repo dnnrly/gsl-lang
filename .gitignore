@@ -1,7 +1,7 @@
 .idea
 tmp/
-gsl-diagram
-gsl-query
+/gsl-diagram
+/gsl-query
 bin/
 /gsl-lsp
 editors/vscode/node_modules/
