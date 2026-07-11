@@ -15,6 +15,7 @@
 - [QUERY_GRAMMAR.md](QUERY_GRAMMAR.md): Query language formal grammar
 - [GQL_GUIDE.md](GQL_GUIDE.md): Self-contained GQL language guide
 - [QUERY_TUTORIAL.md](QUERY_TUTORIAL.md): Step-by-step GQL learning guide
+- [query/testdata/README.md](query/testdata/README.md): GQL test fixture catalog (organized learning path)
 
 ## Getting Started
 

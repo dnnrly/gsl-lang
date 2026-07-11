@@ -78,8 +78,8 @@ func main() {
 	}
 
 	// Load guides
-	gslDesc, gslContent, gslErr := cli.LoadGuide(gsl.Guides, "LLM_GUIDE.md")
-	queryDesc, queryContent, queryErr := cli.LoadGuide(gsl.Guides, "QUERY_AI_GUIDE.md")
+	gslDesc, gslContent, gslErr := cli.LoadGuide(gsl.Guides, "GSL_GUIDE.md")
+	queryDesc, queryContent, queryErr := cli.LoadGuide(gsl.Guides, "GQL_GUIDE.md")
 
 	guides := []cli.GuideSpec{
 		{Use: "gsl", Desc: gslDesc, Content: gslContent, Err: gslErr},
