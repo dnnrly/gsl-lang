@@ -15,6 +15,7 @@ This document provides instructions for AI agents working on the GSL-Lang projec
 make test                       # Run all tests with coverage (query fixtures run silently; use `go test -v -run TestFixtures ./query` to watch them)
 make test-integration           # Run integration tests (skip if tools missing)
 make test-integration-strict    # Run integration tests (fail if tools missing)
+make test-acceptance            # Run acceptance tests (BDD/godog feature tests)
 make lint                       # Run linting
 make fuzz                       # Run fuzz tests
 make build                      # Build CLI tools (gsl-diagram, gsl-query)
@@ -34,6 +35,7 @@ go test -v -run TestName        # Run specific test
 - `*_test.go` files - Unit and integration tests
 - `markdown_test.go` - Validates all code blocks in `.md` files
 - `cmd/gsl-diagram/cli_integration_test.go` - CLI tool integration tests (requires `mmdc` and `plantuml`)
+- `test/` - Acceptance tests using godog (BDD/Gherkin feature files)
 
 **CLI Tools:**
 - `cmd/gsl-diagram/` - Converts GSL graphs to diagram formats (Mermaid, PlantUML)
@@ -93,6 +95,7 @@ make lint
 | VS Code extension | editors/vscode/* |
 | Documentation examples | README.md, SPEC.md, LLM_GUIDE.md |
 | Query language tests | query/testdata/*, query/.test-plan.md |
+| Acceptance tests | test/features/*.feature, test/*_test.go |
 
 ## Planning & Progress Tracking
 
