@@ -667,7 +667,7 @@ expr1 | expr2 | expr3
 
 ### Pattern 1: Filter by Attribute
 
-```
+```gql
 subgraph node.team == "payments"
 ```
 
@@ -675,7 +675,7 @@ Result: All nodes in the payments team with edges between them.
 
 ### Pattern 2: Filter + Expand
 
-```
+```gql
 subgraph node.team == "payments" traverse out 1
 ```
 
@@ -683,7 +683,7 @@ Result: Payments team plus their direct dependencies.
 
 ### Pattern 3: Filter + Cleanup
 
-```
+```gql
 subgraph node.team == "payments" | remove orphans
 ```
 
@@ -691,7 +691,7 @@ Result: Payments team, with any isolated nodes removed.
 
 ### Pattern 4: Multi-Step Transformation
 
-```
+```gql
 subgraph node.zone == "A" traverse out all
 | remove edge where edge.protocol == "tcp"
 | remove orphans
@@ -705,7 +705,7 @@ subgraph node.zone == "A" traverse out all
 
 ### Pattern 5: Graph Union
 
-```
+```gql
 (subgraph node.team == "payments") as PAY
 | from *
 | (subgraph node.team == "identity") as ID
@@ -716,7 +716,7 @@ Result: All nodes from both teams.
 
 ### Pattern 6: Difference
 
-```
+```gql
 (subgraph node in @critical) as CRIT
 | from *
 | (subgraph node in @deprecated) as DEP
@@ -743,7 +743,7 @@ Traversal must detect visited nodes to terminate. The implementation should main
 node.zone != "C"
 ```
 
-If a node has no `zone` attribute, this predicate is **false**.
+If a node has no `zone` attribute, this predicate is **false**. Nodes without the attribute are NOT included in the result.
 
 ### 6.4 Empty Named Graphs
 
@@ -784,10 +784,48 @@ In a single compound predicate, all conditions must target the same element type
 ```
 # Valid
 node.team == "payments" AND node.zone == "A"
+```
 
-# Invalid
+```invalid-gql
 node.team == "payments" AND edge.protocol == "grpc"
 ```
+
+### 6.11 Self-Loop Is Not an Orphan
+
+A node with only a self-loop (`a -> a`) is **not** an orphan. `remove orphans` keeps self-looped nodes because the self-loop counts as an incident edge.
+
+### 6.12 Type-Sensitive Equality
+
+Attribute comparison is type-sensitive: `"42" ≠ 42`. A string `"42"` and a number `42` are distinct values. The query `node.count == "42"` will NOT match a node with `count=42`.
+
+### 6.13 Missing Set Behavior
+
+Set membership checks on undefined sets are asymmetric:
+- `node in @missing` → **false** (nothing matches)
+- `node not in @missing` → **true** (everything matches)
+
+### 6.14 Collapse Creates Self-Loops
+
+When a node is collapsed into another, edges pointing TO the collapsed node become self-loops:
+
+```gql
+# If a -> b exists and b is collapsed into a:
+collapse into a where node.id == "b"
+# Result: a -> a (self-loop)
+```
+
+### 6.15 `from *` Required Between Named Graph Bindings
+
+To bind a second named graph from the same input, you must reset with `from *`:
+
+```gql
+(subgraph node.team == "api") as API
+| from *
+| (subgraph node.env == "prod") as PROD
+| API + PROD
+```
+
+Without `from *`, the second `subgraph` operates on the already-filtered result of the first.
 
 ---
 
@@ -902,7 +940,7 @@ When implementing a query parser/evaluator:
 ### Example 1: Service Dependencies
 
 **Query:**
-```
+```gql
 subgraph node.type == "service" traverse out all
 ```
 
@@ -911,7 +949,7 @@ subgraph node.type == "service" traverse out all
 ### Example 2: Critical Path
 
 **Query:**
-```
+```gql
 subgraph node in @critical traverse in all
 ```
 
@@ -920,7 +958,7 @@ subgraph node in @critical traverse in all
 ### Example 3: Network Boundary
 
 **Query:**
-```
+```gql
 subgraph node.zone == "A" | remove edge where edge.zone != "A" | remove orphans
 ```
 
@@ -929,7 +967,7 @@ subgraph node.zone == "A" | remove edge where edge.zone != "A" | remove orphans
 ### Example 4: Team Ownership
 
 **Query:**
-```
+```gql
 (subgraph node.team == "payments") as PAYMENTS
 | from *
 | (subgraph node.team == "fraud") as FRAUD
@@ -941,7 +979,7 @@ subgraph node.zone == "A" | remove edge where edge.zone != "A" | remove orphans
 ### Example 5: Remove Stale Connections
 
 **Query:**
-```
+```gql
 remove edge where edge.status == "deprecated"
 | remove edge where edge.protocol == "http"
 | remove orphans
@@ -955,13 +993,75 @@ remove edge where edge.status == "deprecated"
 
 The following are **not** valid GQL. LLMs should not produce them.
 
-- `select nodes { set == "x" }` — use `subgraph node in @x`
-- `select edges { attributes.protocol == "x" }` — use `subgraph edge.protocol == "x"`
-- `nodes(runtime == "Go")` — use `subgraph node.runtime == "Go"`
-- `graph::subgraph(include_edges = true)` — no `::` syntax exists
-- `walk::upstream()` — use `traverse in all`
-- `walk::downstream()` — use `traverse out all`
-- `filter(has_attr("timeout") == false)` — use `edge.timeout not exists`
+**No `select` keyword — use `subgraph`:**
+
+```invalid-gql
+select nodes { set == "x" }
+```
+
+Use: `subgraph node in @x`
+
+```invalid-gql
+select edges { attributes.protocol == "x" }
+```
+
+Use: `subgraph edge.protocol == "x"`
+
+**No function-call syntax:**
+
+```invalid-gql
+nodes(runtime == "Go")
+```
+
+Use: `subgraph node.runtime == "Go"`
+
+```invalid-gql
+filter(has_attr("timeout") == false)
+```
+
+Use: `edge.timeout not exists`
+
+**No `::` namespace syntax:**
+
+```invalid-gql
+graph::subgraph(include_edges = true)
+```
+
+```invalid-gql
+walk::upstream()
+```
+
+Use: `traverse in all`
+
+```invalid-gql
+walk::downstream()
+```
+
+Use: `traverse out all`
+
+**`traverse` must follow `subgraph`, not standalone:**
+
+```invalid-gql
+traverse out all
+```
+
+Use: `subgraph node.id == "X" traverse out all`
+
+**No `OR` support — only `AND`:**
+
+```invalid-gql
+subgraph node.team == "payments" OR node.team == "fraud"
+```
+
+Use two separate queries or named graph algebra: `(subgraph node.team == "payments") as P | from * | (subgraph node.team == "fraud") as F | P + F`
+
+**`make` and `remove` require `where` clause:**
+
+```invalid-gql
+make node.status = "reviewed"
+```
+
+Use: `make node.status = "reviewed" where node.team == "payments"`
 
 When you don't know the exact GQL syntax, say so rather than inventing.
 
@@ -999,4 +1099,8 @@ When you don't know the exact GQL syntax, say so rather than inventing.
 | Edge depth | `edge.depth == 0` |
 | Edge depends on | `edge depends on <predicate>` |
 | Compound test | `node.x == "a" AND node.y == "b"` |
+
+---
+
+**For a step-by-step learning path**, see [QUERY_TUTORIAL.md](QUERY_TUTORIAL.md).
 

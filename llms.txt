@@ -14,6 +14,7 @@
 - [QUERY_SPEC.md](QUERY_SPEC.md): Query language specification
 - [QUERY_GRAMMAR.md](QUERY_GRAMMAR.md): Query language formal grammar
 - [GQL_GUIDE.md](GQL_GUIDE.md): Self-contained GQL language guide
+- [QUERY_TUTORIAL.md](QUERY_TUTORIAL.md): Step-by-step GQL learning guide
 
 ## Getting Started
 

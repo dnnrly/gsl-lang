@@ -2,6 +2,8 @@
 
 A step-by-step guide to understanding GSL-QL — the pipeline-oriented query and transformation language for GSL graphs.
 
+**For a complete syntax reference**, see [GQL_GUIDE.md](GQL_GUIDE.md).
+
 ---
 
 ## Prerequisites

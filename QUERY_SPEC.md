@@ -730,6 +730,26 @@ An implementation MUST produce an error for:
 * unknown expressions
 * type-incompatible values passed to an expression
 
+**Examples of invalid syntax:**
+
+Standalone `traverse` without `subgraph`:
+
+```invalid-gql
+traverse out all
+```
+
+Function-call syntax (not supported):
+
+```invalid-gql
+nodes(runtime == "Go")
+```
+
+Namespace syntax (not supported):
+
+```invalid-gql
+walk::upstream()
+```
+
 ---
 
 # 16. Deferred Topics
