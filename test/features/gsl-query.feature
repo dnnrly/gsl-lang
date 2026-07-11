@@ -11,6 +11,23 @@ Feature: gsl-query CLI validation
     Then the app exits without error
     And the app output contains "Usage:"
 
+  Scenario: Prints AI topics
+    When I run gsl-query with parameters "ai"
+    Then the app exits without error
+    And the app output contains "Available AI/LLM guides:"
+    And the app output contains "gsl"
+    And the app output contains "query"
+
+  Scenario: Prints GSL Guide
+    When I run gsl-query with parameters "ai gsl"
+    Then the app exits without error
+    And the app output contains "# GSL (Graph Specification Language) - Complete Guide for LLMs"
+
+  Scenario: Prints GQL Guide
+    When I run gsl-query with parameters "ai query"
+    Then the app exits without error
+    And the app output contains "# GSL Query Language"
+
   Scenario: Prints version information
     When I run gsl-query with parameters "version"
     Then the app exits without error

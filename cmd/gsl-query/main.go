@@ -123,7 +123,7 @@ func main() {
 
 	// Load guides
 	_, gslDesc, gslContent, gslErr := loadGuide("LLM_GUIDE.md")
-	_, queryDesc, queryContent, queryErr := loadGuide("query/QUERY_AI_GUIDE.md")
+	_, queryDesc, queryContent, queryErr := loadGuide("QUERY_AI_GUIDE.md")
 
 	// help ai command - lists available guides
 	helpAICmd := &cobra.Command{

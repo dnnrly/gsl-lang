@@ -11,6 +11,17 @@ Feature: gsl-diagram CLI validation
     Then the app exits without error
     And the app output contains "Usage:"
 
+  Scenario: Prints AI topics
+    When I run gsl-diagram with parameters "ai"
+    Then the app exits without error
+    And the app output contains "AI topics:"
+    And the app output contains "Complete reference for GSL (Graph Specification Language)"
+
+  Scenario: Prints GSL Guide
+    When I run gsl-diagram with parameters "ai gsl"
+    Then the app exits without error
+    And the app output contains "GSL Go Library - Complete Guide for LLMs"
+
   Scenario: Prints version information
     When I run gsl-diagram with parameters "version"
     Then the app exits without error
