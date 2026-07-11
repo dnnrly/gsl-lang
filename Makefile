@@ -59,6 +59,10 @@ test-integration: build ## run integration tests (skip if tools missing)
 test-integration-strict: build ## run integration tests (fail if tools missing)
 	INTEGRATION_STRICT=1 go test -tags integration -v ./cmd/gsl-diagram/... ./cmd/gsl-query/...
 
+.PHONY: test-acceptance
+test-acceptance: build ## run acceptance tests (BDD/godog feature tests)
+	go test -v -tags acceptance ./test/...
+
 .PHONY: build
 build: ## build CLI tools (gsl-diagram, gsl-query)
 	mkdir -p $(TMP_DIR)

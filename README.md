@@ -23,10 +23,10 @@ GSL **is a language** — not just a Go library. This repository is the **canoni
 |---|---|
 | [`SPEC.md`](SPEC.md) | The authoritative language specification |
 | [`GRAMMAR.md`](GRAMMAR.md) | The formal grammar (for implementing a parser) |
-| [`LLM_GUIDE.md`](LLM_GUIDE.md) | A self-contained GSL syntax & semantics reference |
+| [`GSL_GUIDE.md`](GSL_GUIDE.md) | A self-contained GSL syntax & semantics reference |
 | [`QUERY_SPEC.md`](QUERY_SPEC.md) | The query language specification |
-| [`QUERY_AI_GUIDE.md`](QUERY_AI_GUIDE.md) | A self-contained GQL syntax & semantics reference |
-| [`GO_GUIDE.md`](GO_GUIDE.md) | The Go API patterns and algorithms |
+| [`GQL_GUIDE.md`](GQL_GUIDE.md) | A self-contained GQL syntax & semantics reference |
+| [`GO_REFERENCE.md`](GO_REFERENCE.md) | The Go reference implementation guide |
 | [`AGENTS.md`](AGENTS.md) | Development instructions for contributing |
 
 ---
@@ -46,11 +46,7 @@ GSL **is a language** — not just a Go library. This repository is the **canoni
 - [Tools](#tools)
     - [gsl-diagram](#gsl-diagram)
 - [Using the Library](#using-the-library)
-  - [Installation](#installation)
-  - [Basic Usage](#basic-usage)
-  - [Common Patterns](#common-patterns)
-  - [API Reference](#api-reference)
-  - [Examples and Tests](#examples-and-tests)
+  - [Programmatic Usage (Go)](#programmatic-usage-go)
   - [Important Notes](#important-notes)
 - [Reference](#reference)
 
@@ -157,7 +153,7 @@ E1: A -> B
 E2: B -> C [weight=2]
 ```
 
-Labels are unique within a scope and enable explicit dependency references.
+Labels are globally unique and enable explicit dependency references.
 
 **Edge scoping** allows nesting edges to express implicit dependencies:
 
@@ -436,211 +432,29 @@ The GSL library provides a Go API for parsing and manipulating GSL documents pro
 
 ### For LLMs and AI Agents
 
-If you are an LLM or AI agent that needs to work with GSL, see **[LLM_GUIDE.md](LLM_GUIDE.md)**.
+If you are an LLM or AI agent that needs to work with GSL, see **[GSL_GUIDE.md](GSL_GUIDE.md)**.
 
-The LLM Guide is a self-contained reference that covers:
+The GSL Guide is a self-contained reference that covers:
 - Complete GSL syntax with examples
-- Go API reference with code patterns
-- Algorithm implementations (topological sort, cycle detection, path finding)
+- Language semantics and design notes
 - Best practices and common gotchas
 
 You can copy the entire guide and use it as context for your tasks.
 
-### Installation
+### Programmatic Usage (Go)
 
 ```bash
 go get github.com/dnnrly/gsl-lang
 ```
 
-### Basic Usage
-
 ```go
-package main
-
-import (
-	"bytes"
-	"fmt"
-	"log"
-	"os"
-
-	gsl "github.com/dnnrly/gsl-lang"
-)
-
-func main() {
-	// Read a GSL file
-	content, err := os.ReadFile("graph.gsl")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Parse the GSL
-	graph, warnings, err := gsl.Parse(bytes.NewReader(content))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Check for non-fatal warnings
-	for _, w := range warnings {
-		fmt.Printf("Warning: %v\n", w)
-	}
-
-	// Access the graph
-	fmt.Printf("Nodes: %d, Edges: %d, Sets: %d\n", 
-		len(graph.Nodes), len(graph.Edges), len(graph.Sets))
-}
-```
-
-### Common Patterns
-
-#### 1. Accessing Nodes
-
-```go
-// Get all nodes
-for nodeID, node := range graph.Nodes {
-	fmt.Printf("Node: %s\n", nodeID)
-	
-	// Access attributes
-	if text, ok := node.Attributes["text"]; ok {
-		fmt.Printf("  Text: %v\n", text)
-	}
-	
-	// Check parent relationship
-	if parent, ok := node.Attributes["parent"]; ok {
-		fmt.Printf("  Parent: %v\n", parent)
-	}
-}
-```
-
-#### 2. Traversing Edges
-
-```go
-// Find all outbound edges from a node
-for _, edge := range graph.Edges {
-	if edge.From == "NodeA" {
-		fmt.Printf("NodeA -> %s\n", edge.To)
-		
-		// Access edge attributes
-		if method, ok := edge.Attributes["method"]; ok {
-			fmt.Printf("  Method: %v\n", method)
-		}
-	}
-}
-```
-
-#### 3. Working with Sets
-
-```go
-// Find all nodes in a specific set
-for nodeID, node := range graph.Nodes {
-	if _, isMember := node.Sets["critical"]; isMember {
-		fmt.Printf("Critical node: %s\n", nodeID)
-	}
-}
-
-// Find all edges in a specific set
-for _, edge := range graph.Edges {
-	if _, isMember := edge.Sets["production"]; isMember {
-		fmt.Printf("Production edge: %s -> %s\n", edge.From, edge.To)
-	}
-}
-```
-
-#### 4. Computing Graph Statistics
-
-```go
-// Count nodes by set membership
-setCounts := make(map[string]int)
-for _, node := range graph.Nodes {
-	for setName := range node.Sets {
-		setCounts[setName]++
-	}
-}
-
-for setName, count := range setCounts {
-	fmt.Printf("%s: %d nodes\n", setName, count)
-}
-```
-
-#### 5. Round-Tripping (Parse → Modify → Serialize)
-
-```go
-// Parse
-graph, _, err := gsl.Parse(bytes.NewReader(content))
-if err != nil {
-	log.Fatal(err)
-}
-
-// Serialize back to canonical form
+graph, warnings, err := gsl.Parse(bytes.NewReader(content))
 canonical := gsl.Serialize(graph)
-fmt.Println(canonical)
-
-// The serialized form can be re-parsed to produce an identical graph
-graph2, _, _ := gsl.Parse(bytes.NewReader([]byte(canonical)))
-// graph and graph2 are semantically equivalent
 ```
 
-### API Reference
+For full API reference, code patterns, and algorithm implementations, see **[GO_REFERENCE.md](GO_REFERENCE.md)**.
 
-#### `Parse(io.Reader) (*Graph, []error, error)`
-
-Parses GSL input and returns:
-- `*Graph`: The parsed graph structure
-- `[]error`: Non-fatal warnings (implicit set creation, name collisions, etc.)
-- `error`: Fatal parse error, if any
-
-#### `Serialize(*Graph) string`
-
-Serializes a graph to canonical GSL form. The output can be re-parsed to produce an identical graph.
-
-#### Graph Structure
-
-```go
-type Graph struct {
-	Nodes map[string]*Node  // Nodes indexed by ID
-	Edges []*Edge           // All edges (allows duplicates)
-	Sets  map[string]*Set   // Named sets indexed by name
-}
-
-type Node struct {
-	ID         string                 // Node identifier
-	Attributes map[string]interface{} // Key-value attributes
-	Sets       map[string]struct{}    // Set membership
-	Parent     *string                // Cached parent reference
-}
-
-type Edge struct {
-	From       string                 // Source node ID
-	To         string                 // Target node ID
-	Label      string                 // Optional edge label for dependency targeting
-	Parent     string                 // Optional reference to parent edge label
-	Children   []*Edge                // Child edges (populated from Parent references)
-	Attributes map[string]interface{} // Key-value attributes
-	Sets       map[string]struct{}    // Set membership
-}
-
-type Set struct {
-	ID         string                 // Set identifier
-	Attributes map[string]interface{} // Key-value attributes
-}
-```
-
-### Examples and Tests
-
-The [`examples/`](examples/) directory contains:
-- 7 example GSL files demonstrating different graph patterns
-- 10 runnable Example tests showing common usage patterns
-- Documentation of warning types
-
-Run examples:
-```bash
-go test ./examples -v
-```
-
-View example code:
-- [Simple workflow parsing](examples/example_test.go#L13)
-- [Set membership queries](examples/example_test.go#L74)
-- [Edge traversal](examples/example_test.go#L106)
-- [Serialization round-trip](examples/example_test.go#L172)
+For query language usage, see the [`query/`](query/) package.
 
 ### Important Notes
 

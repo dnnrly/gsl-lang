@@ -5,8 +5,8 @@ This document provides instructions for AI agents working on the GSL-Lang projec
 **For comprehensive language specification, see [SPEC.md](SPEC.md).**  
 **For formal grammar, see [GRAMMAR.md](GRAMMAR.md).**  
 **For a description of the query language, see [QUERY_SPEC.md](QUERY_SPEC.md) and [QUERY_GRAMMAR.md](QUERY_GRAMMAR.md).**
-**LLM specific advice, see [LLM_GUIDE.md](LLM_GUIDE.md) and [QUERY_AI_GUIDE.md](QUERY_AI_GUIDE.md).**
-**See [GO_GUIDE.md](GO_GUIDE.md) for Go API patterns and algorithms.**
+**LLM specific advice, see [GSL_GUIDE.md](GSL_GUIDE.md) and [GQL_GUIDE.md](GQL_GUIDE.md).**
+**See [GO_REFERENCE.md](GO_REFERENCE.md) for Go reference implementation patterns and algorithms.**
 **For a quick LLM-oriented overview, start with [llms.txt](llms.txt) or the ["For LLMs and AI Agents"](README.md#for-llms-and-ai-agents) section in README.md.**
 
 ## Quick Commands
@@ -15,6 +15,7 @@ This document provides instructions for AI agents working on the GSL-Lang projec
 make test                       # Run all tests with coverage (query fixtures run silently; use `go test -v -run TestFixtures ./query` to watch them)
 make test-integration           # Run integration tests (skip if tools missing)
 make test-integration-strict    # Run integration tests (fail if tools missing)
+make test-acceptance            # Run acceptance tests (BDD/godog feature tests)
 make lint                       # Run linting
 make fuzz                       # Run fuzz tests
 make build                      # Build CLI tools (gsl-diagram, gsl-query)
@@ -34,6 +35,7 @@ go test -v -run TestName        # Run specific test
 - `*_test.go` files - Unit and integration tests
 - `markdown_test.go` - Validates all code blocks in `.md` files
 - `cmd/gsl-diagram/cli_integration_test.go` - CLI tool integration tests (requires `mmdc` and `plantuml`)
+- `test/` - Acceptance tests using godog (BDD/Gherkin feature files)
 
 **CLI Tools:**
 - `cmd/gsl-diagram/` - Converts GSL graphs to diagram formats (Mermaid, PlantUML)
@@ -56,7 +58,7 @@ go test -v -run TestName        # Run specific test
 
 **Documentation:**
 - `SPEC.md` - Normative spec (source of truth for language rules)
-- `LLM_GUIDE.md` - Go API patterns and algorithms aimed specifically at LLMs and AI agents
+- `GSL_GUIDE.md` - GSL language reference for LLMs and AI agents
 - `README.md` - User-facing examples
 - `GRAMMAR.md` - Formal grammar
 
@@ -91,8 +93,9 @@ make lint
 | CLI query tool | cmd/gsl-query/* |
 | LSP server | lsp/*, cmd/gsl-lsp/main.go |
 | VS Code extension | editors/vscode/* |
-| Documentation examples | README.md, SPEC.md, LLM_GUIDE.md |
+| Documentation examples | README.md, SPEC.md, GSL_GUIDE.md |
 | Query language tests | query/testdata/*, query/.test-plan.md |
+| Acceptance tests | test/features/*.feature, test/*_test.go |
 
 ## Planning & Progress Tracking
 

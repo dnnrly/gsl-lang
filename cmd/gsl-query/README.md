@@ -77,5 +77,5 @@ gsl-query 'make node.reviewed = "yes" where node.team == "payments"' < services.
 
 ## See Also
 
-- [QUERY_AI_GUIDE.md](../../query/QUERY_AI_GUIDE.md) — Complete query language reference
-- [LLM_GUIDE.md](../../LLM_GUIDE.md) — GSL syntax and semantics
+- [GQL_GUIDE.md](../../GQL_GUIDE.md) — Complete query language reference
+- [GSL_GUIDE.md](../../GSL_GUIDE.md) — GSL syntax and semantics

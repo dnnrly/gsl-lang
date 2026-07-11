@@ -262,11 +262,63 @@ Warnings are informational only—parsing continues.
 
 The following are **not** valid GSL. LLMs should not produce them.
 
-- `config layout = "LR"` — no `config` keyword exists in GSL
-- `node X: "text" [attr=1]` — text shorthand and brackets cannot combine in one declaration
-- `node X { node Y: "text" [a=1] }` — text/attr rules still apply inside blocks
-- `// comment` — use `# comment`
-- `A,B->C,D` — grouped edges on both sides is a syntax error
+**No `config` keyword — GSL has no layout directives:**
+
+```invalid-gsl
+config layout = "LR"
+```
+
+**No `graph` keyword — this is not Mermaid or Graphviz:**
+
+```invalid-gsl
+graph TD
+```
+
+```invalid-gsl
+digraph { A -> B }
+```
+
+**Text shorthand and attributes cannot combine in one declaration:**
+
+```invalid-gsl
+node X: "text" [attr=1]
+```
+
+Same rule applies inside blocks:
+
+```invalid-gsl
+node X { node Y: "text" [a=1] }
+```
+
+**No `edge` prefix on edge declarations:**
+
+```invalid-gsl
+edge A -> B
+```
+
+**No `type` keyword:**
+
+```invalid-gsl
+type A = "service"
+```
+
+**Sets cannot contain other sets:**
+
+```invalid-gsl
+set X contains Y
+```
+
+**Grouped edges on both sides is a syntax error:**
+
+```invalid-gsl
+A,B->C,D
+```
+
+**Use `#` for comments, not `//`:**
+
+```invalid-gsl
+// this is a comment
+```
 
 When you don't know the exact GSL syntax, say so rather than inventing.
 
@@ -281,7 +333,7 @@ A -> B [weight=2]
 ```
 
 **For programmatic use**, see the appropriate language guide:
-- **Go**: See `GO_GUIDE.md`
+- **Go**: See `GO_REFERENCE.md`
 - **Other languages**: Implement parser following `SPEC.md` and `GRAMMAR.md`
 
 That's everything you need to read and write GSL correctly!

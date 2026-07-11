@@ -7,7 +7,7 @@ description: Complete reference for using GSL (Graph Specification Language) in 
 
 This document contains everything needed to use GSL in Go applications.
 
-**First, read [LLM_GUIDE.md](LLM_GUIDE.md) to understand the GSL language itself.**
+**First, read [GSL_GUIDE.md](GSL_GUIDE.md) to understand the GSL language itself.**
 
 ## Go API Reference
 

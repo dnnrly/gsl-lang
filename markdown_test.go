@@ -1,4 +1,4 @@
-package gsl
+package gsl_test
 
 import (
 	"fmt"
@@ -8,11 +8,16 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/dnnrly/gsl-lang"
+	"github.com/dnnrly/gsl-lang/query"
 )
 
 // TestMarkdownCodeBlocks validates all code blocks in markdown files.
 // - "gsl" blocks must parse successfully
 // - "invalid-gsl" blocks must fail to parse
+// - "gql" blocks must parse successfully
+// - "invalid-gql" blocks must fail to parse
 func TestMarkdownCodeBlocks(t *testing.T) {
 	markdownFiles, err := filepath.Glob("*.md")
 	if err != nil {
@@ -23,8 +28,10 @@ func TestMarkdownCodeBlocks(t *testing.T) {
 		t.Fatalf("no markdown files found")
 	}
 
-	validBlocks := 0
-	invalidBlocks := 0
+	validGSLBlocks := 0
+	invalidGSLBlocks := 0
+	validGQLBlocks := 0
+	invalidGQLBlocks := 0
 
 	for _, mdFile := range markdownFiles {
 		content, err := os.ReadFile(mdFile)
@@ -37,15 +44,28 @@ func TestMarkdownCodeBlocks(t *testing.T) {
 		blocks := extractCodeBlocks(string(content))
 
 		for i, block := range blocks {
-			if block.language == "gsl" {
-				validBlocks++
+			switch block.language {
+			case "gsl":
+				validGSLBlocks++
 				if err := testValidGSL(block.code); err != nil {
 					t.Errorf("%s block %d (line %d): %v\nCode:\n%s",
 						mdFile, i+1, block.lineNumber, err, block.code)
 				}
-			} else if block.language == "invalid-gsl" {
-				invalidBlocks++
+			case "invalid-gsl":
+				invalidGSLBlocks++
 				if err := testInvalidGSL(block.code); err != nil {
+					t.Errorf("%s block %d (line %d): expected parse to fail, but got: %v\nCode:\n%s",
+						mdFile, i+1, block.lineNumber, err, block.code)
+				}
+			case "gql":
+				validGQLBlocks++
+				if err := testValidGQL(block.code); err != nil {
+					t.Errorf("%s block %d (line %d): %v\nCode:\n%s",
+						mdFile, i+1, block.lineNumber, err, block.code)
+				}
+			case "invalid-gql":
+				invalidGQLBlocks++
+				if err := testInvalidGQL(block.code); err != nil {
 					t.Errorf("%s block %d (line %d): expected parse to fail, but got: %v\nCode:\n%s",
 						mdFile, i+1, block.lineNumber, err, block.code)
 				}
@@ -53,10 +73,13 @@ func TestMarkdownCodeBlocks(t *testing.T) {
 		}
 	}
 
-	t.Logf("Validated %d valid GSL blocks and %d invalid GSL blocks", validBlocks, invalidBlocks)
+	totalGSL := validGSLBlocks + invalidGSLBlocks
+	totalGQL := validGQLBlocks + invalidGQLBlocks
+	t.Logf("Validated %d valid GSL blocks and %d invalid GSL blocks", validGSLBlocks, invalidGSLBlocks)
+	t.Logf("Validated %d valid GQL blocks and %d invalid GQL blocks", validGQLBlocks, invalidGQLBlocks)
 
-	if validBlocks == 0 && invalidBlocks == 0 {
-		t.Fatalf("no gsl or invalid-gsl code blocks found in markdown files")
+	if totalGSL == 0 && totalGQL == 0 {
+		t.Fatalf("no gsl, invalid-gsl, gql, or invalid-gql code blocks found in markdown files")
 	}
 }
 
@@ -88,7 +111,7 @@ func extractCodeBlocks(content string) []codeBlock {
 		code := content[match[4]:match[5]]
 		lastEnd = match[1]
 
-		if language == "gsl" || language == "invalid-gsl" {
+		if language == "gsl" || language == "invalid-gsl" || language == "gql" || language == "invalid-gql" {
 			blocks = append(blocks, codeBlock{
 				language:   language,
 				code:       code,
@@ -104,7 +127,7 @@ func extractCodeBlocks(content string) []codeBlock {
 
 // testValidGSL ensures the code parses successfully
 func testValidGSL(code string) error {
-	_, parseErr := Parse(io.NopCloser(strings.NewReader(code)))
+	_, parseErr := gsl.Parse(io.NopCloser(strings.NewReader(code)))
 	if parseErr != nil && parseErr.HasError() {
 		return fmt.Errorf("parse failed: %w", parseErr)
 	}
@@ -113,8 +136,26 @@ func testValidGSL(code string) error {
 
 // testInvalidGSL ensures the code fails to parse
 func testInvalidGSL(code string) error {
-	_, parseErr := Parse(io.NopCloser(strings.NewReader(code)))
+	_, parseErr := gsl.Parse(io.NopCloser(strings.NewReader(code)))
 	if parseErr == nil || !parseErr.HasError() {
+		return fmt.Errorf("expected parse to fail but it succeeded")
+	}
+	return nil
+}
+
+// testValidGQL ensures the GQL code parses successfully
+func testValidGQL(code string) error {
+	_, err := query.NewQueryParser(code).Parse()
+	if err != nil {
+		return fmt.Errorf("parse failed: %w", err)
+	}
+	return nil
+}
+
+// testInvalidGQL ensures the GQL code fails to parse
+func testInvalidGQL(code string) error {
+	_, err := query.NewQueryParser(code).Parse()
+	if err == nil {
 		return fmt.Errorf("expected parse to fail but it succeeded")
 	}
 	return nil

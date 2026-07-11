@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"runtime/debug"
-	"time"
 
+	gsl "github.com/dnnrly/gsl-lang"
 	"github.com/dnnrly/gsl-lang/cmd/gsl-diagram/formats"
+	"github.com/dnnrly/gsl-lang/cmd/internal/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -64,35 +64,22 @@ func main() {
 		Use:   "version",
 		Short: "Print version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			printVersion()
+			cli.PrintVersion("gsl-diagram", Version, Commit, BuildDate)
 		},
 	}
+
+	// Load guides and build AI command tree
+	gslDesc, _, gslErr := cli.LoadGuide(gsl.Guides, "GSL_GUIDE.md")
+	_, goGuideContent, _ := cli.LoadGuide(gsl.Guides, "GO_REFERENCE.md")
+
+	cli.BuildAICommand(rootCmd, []cli.GuideSpec{
+		{Use: "gsl", Desc: gslDesc, Content: goGuideContent, Err: gslErr},
+	}, "AI topics:", "")
 
 	rootCmd.AddCommand(helpCmd, versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
-	}
-}
-
-func printVersion() {
-	fmt.Printf("gsl-diagram version %s\n", Version)
-	fmt.Printf("Commit: %s\n", Commit)
-	
-	// Parse BuildDate if it's in a standard format
-	if BuildDate != "unknown" {
-		if t, err := time.Parse(time.RFC3339, BuildDate); err == nil {
-			fmt.Printf("Build Date: %s\n", t.Format("2006-01-02 15:04:05 MST"))
-		} else {
-			fmt.Printf("Build Date: %s\n", BuildDate)
-		}
-	} else {
-		fmt.Printf("Build Date: %s\n", BuildDate)
-	}
-	
-	// Include Go version info
-	if info, ok := debug.ReadBuildInfo(); ok {
-		fmt.Printf("Go: %s\n", info.GoVersion)
 	}
 }
