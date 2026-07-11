@@ -6,14 +6,14 @@
 
 - [SPEC.md](SPEC.md): Normative specification for GSL v1.0 (RFC 2119)
 - [GRAMMAR.md](GRAMMAR.md): Formal grammar (EBNF)
-- [LLM_GUIDE.md](LLM_GUIDE.md): Self-contained language guide for LLMs — syntax, semantics, API, gotchas
-- [GO_GUIDE.md](GO_GUIDE.md): Go API patterns and algorithms
+- [GSL_GUIDE.md](GSL_GUIDE.md): Self-contained GSL language guide — syntax, semantics, gotchas
+- [GO_REFERENCE.md](GO_REFERENCE.md): Go reference implementation guide — API, patterns, algorithms
 
 ## Query Language (GQL)
 
 - [QUERY_SPEC.md](QUERY_SPEC.md): Query language specification
 - [QUERY_GRAMMAR.md](QUERY_GRAMMAR.md): Query language formal grammar
-- [QUERY_AI_GUIDE.md](QUERY_AI_GUIDE.md): Self-contained query language guide for LLMs
+- [GQL_GUIDE.md](GQL_GUIDE.md): Self-contained GQL language guide
 
 ## Getting Started
 
@@ -22,7 +22,7 @@
 
 ## Implementation
 
-- [Go reference implementation](go/): Core parser, lexer, AST, graph model, serializer
+- [Go reference implementation](.): Core parser, lexer, AST, graph model, serializer (Go files at repository root)
 - [CLI tools](cmd/): gsl-diagram (Mermaid/PlantUML), gsl-query (query runner)
 - [LSP server](lsp/): Language server protocol implementation
 - [VS Code extension](editors/vscode/): Syntax highlighting and IDE support

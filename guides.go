@@ -4,5 +4,5 @@ import "embed"
 
 // Guides embeds the AI/LLM guide files
 //
-//go:embed LLM_GUIDE.md QUERY_AI_GUIDE.md GO_GUIDE.md
+//go:embed GSL_GUIDE.md GQL_GUIDE.md GO_REFERENCE.md
 var Guides embed.FS

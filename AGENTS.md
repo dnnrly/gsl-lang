@@ -5,8 +5,8 @@ This document provides instructions for AI agents working on the GSL-Lang projec
 **For comprehensive language specification, see [SPEC.md](SPEC.md).**  
 **For formal grammar, see [GRAMMAR.md](GRAMMAR.md).**  
 **For a description of the query language, see [QUERY_SPEC.md](QUERY_SPEC.md) and [QUERY_GRAMMAR.md](QUERY_GRAMMAR.md).**
-**LLM specific advice, see [LLM_GUIDE.md](LLM_GUIDE.md) and [QUERY_AI_GUIDE.md](QUERY_AI_GUIDE.md).**
-**See [GO_GUIDE.md](GO_GUIDE.md) for Go API patterns and algorithms.**
+**LLM specific advice, see [GSL_GUIDE.md](GSL_GUIDE.md) and [GQL_GUIDE.md](GQL_GUIDE.md).**
+**See [GO_REFERENCE.md](GO_REFERENCE.md) for Go reference implementation patterns and algorithms.**
 **For a quick LLM-oriented overview, start with [llms.txt](llms.txt) or the ["For LLMs and AI Agents"](README.md#for-llms-and-ai-agents) section in README.md.**
 
 ## Quick Commands
@@ -58,7 +58,7 @@ go test -v -run TestName        # Run specific test
 
 **Documentation:**
 - `SPEC.md` - Normative spec (source of truth for language rules)
-- `LLM_GUIDE.md` - Go API patterns and algorithms aimed specifically at LLMs and AI agents
+- `GSL_GUIDE.md` - GSL language reference for LLMs and AI agents
 - `README.md` - User-facing examples
 - `GRAMMAR.md` - Formal grammar
 
@@ -93,7 +93,7 @@ make lint
 | CLI query tool | cmd/gsl-query/* |
 | LSP server | lsp/*, cmd/gsl-lsp/main.go |
 | VS Code extension | editors/vscode/* |
-| Documentation examples | README.md, SPEC.md, LLM_GUIDE.md |
+| Documentation examples | README.md, SPEC.md, GSL_GUIDE.md |
 | Query language tests | query/testdata/*, query/.test-plan.md |
 | Acceptance tests | test/features/*.feature, test/*_test.go |
 

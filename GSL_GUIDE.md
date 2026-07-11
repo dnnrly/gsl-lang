@@ -281,7 +281,7 @@ A -> B [weight=2]
 ```
 
 **For programmatic use**, see the appropriate language guide:
-- **Go**: See `GO_GUIDE.md`
+- **Go**: See `GO_REFERENCE.md`
 - **Other languages**: Implement parser following `SPEC.md` and `GRAMMAR.md`
 
 That's everything you need to read and write GSL correctly!

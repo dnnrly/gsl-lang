@@ -23,10 +23,10 @@ GSL **is a language** — not just a Go library. This repository is the **canoni
 |---|---|
 | [`SPEC.md`](SPEC.md) | The authoritative language specification |
 | [`GRAMMAR.md`](GRAMMAR.md) | The formal grammar (for implementing a parser) |
-| [`LLM_GUIDE.md`](LLM_GUIDE.md) | A self-contained GSL syntax & semantics reference |
+| [`GSL_GUIDE.md`](GSL_GUIDE.md) | A self-contained GSL syntax & semantics reference |
 | [`QUERY_SPEC.md`](QUERY_SPEC.md) | The query language specification |
-| [`QUERY_AI_GUIDE.md`](QUERY_AI_GUIDE.md) | A self-contained GQL syntax & semantics reference |
-| [`GO_GUIDE.md`](GO_GUIDE.md) | The Go API patterns and algorithms |
+| [`GQL_GUIDE.md`](GQL_GUIDE.md) | A self-contained GQL syntax & semantics reference |
+| [`GO_REFERENCE.md`](GO_REFERENCE.md) | The Go reference implementation guide |
 | [`AGENTS.md`](AGENTS.md) | Development instructions for contributing |
 
 ---
@@ -436,12 +436,11 @@ The GSL library provides a Go API for parsing and manipulating GSL documents pro
 
 ### For LLMs and AI Agents
 
-If you are an LLM or AI agent that needs to work with GSL, see **[LLM_GUIDE.md](LLM_GUIDE.md)**.
+If you are an LLM or AI agent that needs to work with GSL, see **[GSL_GUIDE.md](GSL_GUIDE.md)**.
 
-The LLM Guide is a self-contained reference that covers:
+The GSL Guide is a self-contained reference that covers:
 - Complete GSL syntax with examples
-- Go API reference with code patterns
-- Algorithm implementations (topological sort, cycle detection, path finding)
+- Language semantics and design notes
 - Best practices and common gotchas
 
 You can copy the entire guide and use it as context for your tasks.
