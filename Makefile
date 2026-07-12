@@ -45,8 +45,8 @@ fuzz: ## run a single fuzz test (set FUZZ to match a function, e.g. make fuzz FU
 
 .PHONY: fuzz-all
 fuzz-all: ## run all fuzz tests sequentially (set FUZZTIME for per-test duration, e.g. make fuzz-all FUZZTIME=1m)
-	@for f in $$(printf '%s\n' FuzzLexer FuzzParse FuzzRoundTrip FuzzGraphQuery FuzzQueryParse FuzzQueryExecute | shuf); do \
-		case $$f in FuzzQueryParse|FuzzQueryExecute) pkg=./query ;; *) pkg=. ;; esac; \
+	@for f in $$(printf '%s\n' FuzzLexer FuzzParse FuzzRoundTrip FuzzGraphQuery FuzzQueryParse FuzzQueryExecute FuzzSequencePlantUML FuzzSequenceMermaid FuzzSequenceBoth | shuf); do \
+		case $$f in FuzzQueryParse|FuzzQueryExecute) pkg=./query ;; FuzzSequence*) pkg=./cmd/gsl-diagram ;; *) pkg=. ;; esac; \
 		echo "=== fuzzing $$f for $(FUZZTIME) ==="; \
 		go test -tags fuzz -fuzz=^$$f$$ -fuzztime=$(FUZZTIME) $$pkg; \
 	done
