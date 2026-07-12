@@ -50,7 +50,7 @@ func main() {
 	rootCmd.Flags().StringVarP(&inputFile, "input", "i", "", "Input GSL file (read from stdin if not provided)")
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output diagram file (write to stdout if not provided)")
 	rootCmd.Flags().StringVarP(&format, "format", "f", "mermaid", "Output format: mermaid, plantuml (default: mermaid)")
-	rootCmd.Flags().StringVarP(&diagramType, "type", "t", "component", "Diagram type (default: component)")
+	rootCmd.Flags().StringVarP(&diagramType, "type", "t", "component", "Diagram type: component (default), graph (mermaid), sequence (plantuml)")
 
 	helpCmd := &cobra.Command{
 		Use:   "help",

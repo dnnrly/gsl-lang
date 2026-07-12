@@ -24,6 +24,7 @@ gsl-diagram -i graph.gsl -o diagram.puml --format plantuml
 ### Specify diagram type
 ```bash
 gsl-diagram -i graph.gsl -t graph --format mermaid
+gsl-diagram -i graph.gsl -t sequence --format plantuml
 ```
 
 ### From stdin/stdout
@@ -36,7 +37,7 @@ cat graph.gsl | gsl-diagram --format mermaid > diagram.mmd
 - `-i, --input` - Input GSL file (reads from stdin if not provided)
 - `-o, --output` - Output diagram file (writes to stdout if not provided)
 - `-f, --format` - Output format: `mermaid` (default), `plantuml`
-- `-t, --type` - Diagram type: `component` (default), `graph` (mermaid only)
+- `-t, --type` - Diagram type: `component` (default), `graph` (mermaid only), `sequence` (plantuml only)
 
 ## Supported Formats
 
@@ -50,10 +51,12 @@ gsl-diagram -i workflow.gsl -f mermaid -t graph
 ```
 
 ### PlantUML
-- **component**: Component diagrams with packages (only format supported)
+- **component**: Component diagrams with packages
+- **sequence**: Sequence diagrams with participants, activations, and scoped interactions
 
 ```bash
 gsl-diagram -i arch.gsl -f plantuml
+gsl-diagram -i interactions.gsl -f plantuml -t sequence
 ```
 
 ## Examples
@@ -71,6 +74,46 @@ gsl-diagram -i process.gsl -f mermaid -t graph
 ### Component Diagram (PlantUML)
 ```bash
 gsl-diagram -i system.gsl -f plantuml
+```
+
+### Sequence Diagram (PlantUML)
+```bash
+gsl-diagram -i calls.gsl -f plantuml -t sequence
+```
+
+## Sequence Diagram Features
+
+Sequence diagrams map GSL edges to UML sequence diagram messages with activations.
+
+### Scoped Blocks → Activations
+A scoped block becomes a PlantUML activation (lifeline highlight):
+
+```gsl
+Client->Server: "Login" {
+    Server->Database: "Lookup"
+    Server->Client: "Token"
+}
+```
+
+Renders as an activation block with implicit `return`.
+
+### Arrow Styles
+The `arrow` attribute controls the message style using UML-meaningful names:
+
+| `arrow` value | UML meaning | PlantUML | Example |
+|---|---|---|---|
+| `sync` (default) | Synchronous call | `->` | `A->B: "call"` |
+| `async` | Asynchronous message | `->>` | `A->B [arrow="async"]: "event"` |
+| `return` | Return/reply | `-->` | `A->B [arrow="return"]: "ok"` |
+| `dependency` | Weak dependency | `..>` | `A->B [arrow="dependency"]` |
+| `strong` | Strong coupling | `==>` | `A->B [arrow="strong"]` |
+
+### Labeled Scopes
+Named scopes allow explicit parent-child edge relationships:
+
+```gsl
+my_scope: A->B
+B->C [parent=my_scope]
 ```
 
 ## GSL to Diagram Mapping

@@ -159,6 +159,62 @@ API -> Cache [label="cache"]
 	}
 }
 
+func TestPlantUMLSequenceDiagramOutput(t *testing.T) {
+	gslInput := `
+node Client
+node Server
+
+Client->Server: "Login" {
+    Server->Client: "Token"
+}
+
+Client->Server [arrow="async"]: "Event"
+Server->Client [arrow="return"]: "Ack"
+`
+
+	graph, parseErr := gsl.Parse(bytes.NewReader([]byte(gslInput)))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("failed to parse GSL: %v", parseErr)
+	}
+
+	factory, err := formats.GetFactory("plantuml")
+	if err != nil {
+		t.Fatalf("failed to get factory: %v", err)
+	}
+
+	conv := factory("sequence")
+	output := conv.Convert(graph)
+
+	// Validate PlantUML sequence diagram structure
+	if !contains(output, "@startuml") {
+		t.Errorf("missing @startuml directive")
+	}
+	if !contains(output, "@enduml") {
+		t.Errorf("missing @enduml directive")
+	}
+	if !contains(output, "participant Client") {
+		t.Errorf("missing Client participant")
+	}
+	if !contains(output, "participant Server") {
+		t.Errorf("missing Server participant")
+	}
+	if !contains(output, "Client -> Server") {
+		t.Errorf("missing Client -> Server edge")
+	}
+	if !contains(output, "++") {
+		t.Errorf("missing activation marker")
+	}
+	if !contains(output, "return") {
+		t.Errorf("missing return statement")
+	}
+	if !contains(output, "Client ->> Server") {
+		t.Errorf("missing async arrow style")
+	}
+	if !contains(output, "Server --> Client") {
+		t.Errorf("missing return arrow style")
+	}
+}
+
 func TestPlantUMLParentRelationships(t *testing.T) {
 	gslInput := `
 node System
@@ -358,6 +414,83 @@ func TestCLIIntegrationPlantUML(t *testing.T) {
 
 	// Verify PNG was created in temp directory
 	baseName := pumlFile.Name()[:len(pumlFile.Name())-5] // remove .puml
+	pngPath := baseName + ".png"
+	if _, err := os.Stat(pngPath); err != nil {
+		t.Fatalf("plantuml did not produce output file at %s: %v", pngPath, err)
+	}
+	defer os.Remove(pngPath)
+}
+
+func TestCLIIntegrationPlantUMLSequence(t *testing.T) {
+	checkPlantUMLCLI(t)
+
+	// Create temp files
+	inputFile, err := os.CreateTemp("", "test-seq*.gsl")
+	if err != nil {
+		t.Fatalf("failed to create temp input file: %v", err)
+	}
+	defer os.Remove(inputFile.Name())
+
+	pumlFile, err := os.CreateTemp("", "test-seq*.puml")
+	if err != nil {
+		t.Fatalf("failed to create temp puml file: %v", err)
+	}
+	defer os.Remove(pumlFile.Name())
+
+	pngFile := pumlFile.Name() + ".png"
+	defer os.Remove(pngFile)
+
+	// Write test GSL with scoped block and arrow styles
+	gslInput := `node Client
+node Server
+
+Client->Server: "Login" {
+    Server->Client: "Token"
+}
+
+Client->Server [arrow="async"]: "Event"
+`
+	if _, err := inputFile.WriteString(gslInput); err != nil {
+		t.Fatalf("failed to write test input: %v", err)
+	}
+	inputFile.Close()
+
+	// Execute conversion
+	factory, err := formats.GetFactory("plantuml")
+	if err != nil {
+		t.Fatalf("failed to get plantuml factory: %v", err)
+	}
+
+	cfg := &Config{
+		InputFile:   inputFile.Name(),
+		OutputFile:  pumlFile.Name(),
+		DiagramType: "sequence",
+		Converter:   factory,
+	}
+
+	if err := Execute(cfg); err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	// Verify output file exists and has content
+	content, err := os.ReadFile(pumlFile.Name())
+	if err != nil {
+		t.Fatalf("failed to read output file: %v", err)
+	}
+
+	if len(content) == 0 {
+		t.Fatalf("output file is empty")
+	}
+
+	// Validate with plantuml
+	tmpDir := os.TempDir()
+	cmd := exec.Command("plantuml", "-tpng", "-o", tmpDir, pumlFile.Name())
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("plantuml validation failed: %v\nOutput: %s", err, string(output))
+	}
+
+	// Verify PNG was created
+	baseName := pumlFile.Name()[:len(pumlFile.Name())-5]
 	pngPath := baseName + ".png"
 	if _, err := os.Stat(pngPath); err != nil {
 		t.Fatalf("plantuml did not produce output file at %s: %v", pngPath, err)
