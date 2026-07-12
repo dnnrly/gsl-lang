@@ -2,3 +2,4 @@ node A
 node B
 
 A->B: "Hello"
+B->C: "Goodbye"
