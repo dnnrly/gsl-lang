@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant A
+    participant B
+    participant C
+    A ->>+ B: Activated
+        B ->> C:
+    deactivate B
+    A ->>+ B:
+    deactivate B
+    A ->>+ B: Activation 3
+        B ->> C:
+    deactivate B
+    A ->>+ B: Deep
+        B ->>+ C: Deeper
+            C ->> A:
+        deactivate C
+    deactivate B
+    A ->>+ B: Self
+        B ->> B:
+    deactivate B
+    A ->>+ B: Multi
+        B ->> C:
+        C ->> A:
+    deactivate B
+    A ->>+ C:
+        C ->> B:
+        A ->>+ B:
+            B ->> C:
+            C ->> B:
+        deactivate B
+        C ->> B:
+    deactivate C

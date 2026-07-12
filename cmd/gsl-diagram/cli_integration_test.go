@@ -215,6 +215,56 @@ Server->Client [arrow="return"]: "Ack"
 	}
 }
 
+func TestMermaidSequenceDiagramOutput(t *testing.T) {
+	gslInput := `
+node Client
+node Server
+
+Client->Server: "Login" {
+    Server->Client: "Token"
+}
+
+Client->Server [arrow="async"]: "Event"
+Server->Client [arrow="return"]: "Ack"
+`
+
+	graph, parseErr := gsl.Parse(bytes.NewReader([]byte(gslInput)))
+	if parseErr != nil && parseErr.HasError() {
+		t.Fatalf("failed to parse GSL: %v", parseErr)
+	}
+
+	factory, err := formats.GetFactory("mermaid")
+	if err != nil {
+		t.Fatalf("failed to get factory: %v", err)
+	}
+
+	conv := factory("sequence")
+	output := conv.Convert(graph)
+
+	// Validate Mermaid sequence diagram structure
+	if !contains(output, "sequenceDiagram") {
+		t.Errorf("missing sequenceDiagram directive")
+	}
+	if !contains(output, "participant Client") {
+		t.Errorf("missing Client participant")
+	}
+	if !contains(output, "participant Server") {
+		t.Errorf("missing Server participant")
+	}
+	if !contains(output, "Client ->>+ Server") {
+		t.Errorf("missing Client ->>+ Server edge with activation")
+	}
+	if !contains(output, "deactivate Server") {
+		t.Errorf("missing deactivate Server statement")
+	}
+	if !contains(output, "Client -) Server") {
+		t.Errorf("missing async arrow style (-))")
+	}
+	if !contains(output, "Server -->> Client") {
+		t.Errorf("missing return arrow style (-->>)")
+	}
+}
+
 func TestPlantUMLParentRelationships(t *testing.T) {
 	gslInput := `
 node System

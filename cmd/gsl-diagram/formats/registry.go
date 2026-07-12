@@ -22,6 +22,8 @@ func GetFactory(format string) (converter.Factory, error) {
 func newMermaidFactory() converter.Factory {
 	return func(diagramType string) converter.Converter {
 		switch diagramType {
+		case "sequence":
+			return &mermaidSequenceConverter{}
 		case "graph":
 			return &mermaidGraphConverter{}
 		case "component":

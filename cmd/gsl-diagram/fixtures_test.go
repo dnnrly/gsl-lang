@@ -66,9 +66,76 @@ func TestFixtures(t *testing.T) {
 	}
 }
 
+func TestMermaidSequenceFixtures(t *testing.T) {
+	testdataDir := filepath.Join("testdata", "sequence-diagrams")
+
+	err := filepath.WalkDir(testdataDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || d.Name() != "input.gsl" {
+			return nil
+		}
+
+		testDir := filepath.Dir(path)
+		relPath, _ := filepath.Rel(testdataDir, testDir)
+
+		t.Run(relPath, func(t *testing.T) {
+			expectedPath := filepath.Join(testDir, "output.mmd")
+			if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
+				t.Skipf("no output.mmd fixture for %s", relPath)
+				return
+			}
+
+			inputPath := filepath.Join(testDir, "input.gsl")
+			requireFileExists(t, inputPath)
+
+			inputData, err := os.ReadFile(inputPath)
+			if err != nil {
+				t.Fatalf("failed to read input.gsl: %v", err)
+			}
+
+			graph, parseErr := gsl.Parse(bytes.NewReader(inputData))
+			if parseErr != nil && parseErr.HasError() {
+				t.Fatalf("failed to parse input.gsl: %v", parseErr)
+			}
+
+			expectedData, err := os.ReadFile(expectedPath)
+			if err != nil {
+				t.Fatalf("failed to read output.mmd: %v", err)
+			}
+
+			actual := convertMermaidSequenceDiagram(graph)
+			expected := string(expectedData)
+
+			actualNorm := normalizeDiagramOutput(actual)
+			expectedNorm := normalizeDiagramOutput(expected)
+
+			if actualNorm != expectedNorm {
+				t.Errorf("mermaid converter output mismatch\n--- expected ---\n%s\n--- actual ---\n%s", expected, actual)
+			}
+		})
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("failed to walk testdata directory: %v", err)
+	}
+}
+
 // convertSequenceDiagram converts a GSL graph to PlantUML sequence diagram syntax.
 func convertSequenceDiagram(graph *gsl.Graph) string {
 	factory, err := formats.GetFactory("plantuml")
+	if err != nil {
+		return ""
+	}
+	conv := factory("sequence")
+	return conv.Convert(graph)
+}
+
+// convertMermaidSequenceDiagram converts a GSL graph to Mermaid sequence diagram syntax.
+func convertMermaidSequenceDiagram(graph *gsl.Graph) string {
+	factory, err := formats.GetFactory("mermaid")
 	if err != nil {
 		return ""
 	}
