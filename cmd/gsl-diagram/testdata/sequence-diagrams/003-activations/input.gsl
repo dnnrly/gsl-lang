@@ -1,0 +1,12 @@
+node A
+node B
+node C
+
+A->B: "Activated" {
+    B->C
+}
+
+A->B [activate=true]
+
+activation3: A->B: "Activation 3"
+B->C [parent=activation3]

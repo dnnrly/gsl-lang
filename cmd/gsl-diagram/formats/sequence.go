@@ -33,16 +33,47 @@ func (c *plantUMLSequenceConverter) Convert(graph *gsl.Graph) string {
 
 	sb.WriteString("\n")
 
-	for _, edge := range graph.GetEdges() {
-		if text, ok := edge.Attributes["text"]; ok {
-			sb.WriteString(fmt.Sprintf("%s -> %s: %v\n", edge.From, edge.To, text))
+	edges := graph.GetEdges()
+	emitted := make(map[int]bool)
+
+	for i, edge := range edges {
+		if emitted[i] {
+			continue
+		}
+
+		if len(edge.Children) > 0 {
+			emitActivation(&sb, edge)
+			for _, child := range edge.Children {
+				emitIndentedEdge(&sb, child)
+			}
+			sb.WriteString("return\n\n")
+		} else if _, ok := edge.Attributes["activate"]; ok {
+			emitActivation(&sb, edge)
+			sb.WriteString("return\n\n")
+		} else if _, ok := edge.Attributes["text"]; ok {
+			hasScopedChildren := i+1 < len(edges) && isScopedChild(edges[i+1])
+			if hasScopedChildren {
+				emitActivation(&sb, edge)
+				for j := i + 1; j < len(edges); j++ {
+					if isScopedChild(edges[j]) {
+						emitIndentedEdge(&sb, edges[j])
+						emitted[j] = true
+					} else {
+						break
+					}
+				}
+				sb.WriteString("return\n\n")
+			} else {
+				emitEdge(&sb, edge)
+			}
+		} else if edge.Parent != "" {
+			continue
 		} else {
-			sb.WriteString(fmt.Sprintf("%s -> %s\n", edge.From, edge.To))
+			emitEdge(&sb, edge)
 		}
 	}
 
-	sb.WriteString("\n")
-	sb.WriteString("@enduml\n")
+	sb.WriteString("\n@enduml\n")
 
 	return sb.String()
 }
@@ -79,4 +110,44 @@ func sequenceNodeOrder(graph *gsl.Graph) []*gsl.Node {
 
 func escapeNewlines(s string) string {
 	return strings.ReplaceAll(s, "\n", "\\n")
+}
+
+func isScopedChild(edge *gsl.Edge) bool {
+	if edge.Parent != "" {
+		return false
+	}
+	if _, ok := edge.Attributes["text"]; ok {
+		return false
+	}
+	if _, ok := edge.Attributes["activate"]; ok {
+		return false
+	}
+	if edge.Label != "" {
+		return false
+	}
+	return true
+}
+
+func emitActivation(sb *strings.Builder, edge *gsl.Edge) {
+	if text, ok := edge.Attributes["text"]; ok {
+		sb.WriteString(fmt.Sprintf("%s->%s ++: %v\n", edge.From, edge.To, text))
+	} else {
+		sb.WriteString(fmt.Sprintf("%s->%s ++\n", edge.From, edge.To))
+	}
+}
+
+func emitIndentedEdge(sb *strings.Builder, edge *gsl.Edge) {
+	if text, ok := edge.Attributes["text"]; ok {
+		sb.WriteString(fmt.Sprintf("    %s->%s: %v\n", edge.From, edge.To, text))
+	} else {
+		sb.WriteString(fmt.Sprintf("    %s->%s\n", edge.From, edge.To))
+	}
+}
+
+func emitEdge(sb *strings.Builder, edge *gsl.Edge) {
+	if text, ok := edge.Attributes["text"]; ok {
+		sb.WriteString(fmt.Sprintf("%s -> %s: %v\n", edge.From, edge.To, text))
+	} else {
+		sb.WriteString(fmt.Sprintf("%s -> %s\n", edge.From, edge.To))
+	}
 }

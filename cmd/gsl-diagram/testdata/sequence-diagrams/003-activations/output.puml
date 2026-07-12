@@ -1,0 +1,18 @@
+@startuml
+
+participant A
+participant B
+participant C
+
+A->B ++: Activated
+    B->C
+return
+
+A->B ++
+return
+
+A->B ++: Activation 3
+    B->C
+return
+
+@enduml
