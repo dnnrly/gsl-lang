@@ -71,9 +71,11 @@ func main() {
 	// Load guides and build AI command tree
 	gslDesc, _, gslErr := cli.LoadGuide(gsl.Guides, "GSL_GUIDE.md")
 	_, goGuideContent, _ := cli.LoadGuide(gsl.Guides, "GO_REFERENCE.md")
+	seqDesc, seqContent, seqErr := cli.LoadGuide(gsl.Guides, "SEQUENCE_GUIDE.md")
 
 	cli.BuildAICommand(rootCmd, []cli.GuideSpec{
 		{Use: "gsl", Desc: gslDesc, Content: goGuideContent, Err: gslErr},
+		{Use: "sequence", Desc: seqDesc, Content: seqContent, Err: seqErr},
 	}, "AI topics:", "")
 
 	rootCmd.AddCommand(helpCmd, versionCmd)
