@@ -6,12 +6,12 @@ sequenceDiagram
     Client ->> Server: Login
     Server -) Database: Audit log
     Server -->> Client: Token
-    Client -->> Cache: Lookup session
+    Client -.-> Cache: Lookup session
     Server ->> Database: Write user record
     Client ->>+ Server: Request
         Server -) Database: Query
         Database -->> Server: Result set
-        Server -->> Cache: Check cache
+        Server -.-> Cache: Check cache
         Server ->> Database: Update
         Server -->> Client: Response
     deactivate Server

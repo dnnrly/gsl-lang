@@ -1,0 +1,14 @@
+node User [shape="actor"]
+node Gateway [shape="boundary"]
+node Controller [shape="control"]
+node Domain [shape="entity"]
+node Database [shape="database"]
+node Cache [shape="collections"]
+node Queue [shape="queue"]
+
+User->Gateway: "HTTP request"
+Gateway->Controller: "Route"
+Controller->Domain: "Process"
+Domain->Database: "Query"
+Domain->Cache: "Check"
+Domain->Queue: "Publish"

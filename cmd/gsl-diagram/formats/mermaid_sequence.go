@@ -38,7 +38,7 @@ func (c *mermaidSequenceConverter) Convert(graph *gsl.Graph) string {
 			}
 		} else {
 			if stereotype != "" {
-				sb.WriteString(fmt.Sprintf("    %s %s <<%s>>\n", keyword, node.ID, stereotype))
+				sb.WriteString(fmt.Sprintf("    %s %s as \"%s\" <<%s>>\n", keyword, node.ID, node.ID, stereotype))
 			} else {
 				sb.WriteString(fmt.Sprintf("    %s %s\n", keyword, node.ID))
 			}
@@ -176,11 +176,11 @@ func mermaidEmitEdge(sb *strings.Builder, edge *gsl.Edge) {
 // mermaidGetArrowStyle returns the Mermaid arrow style for the edge.
 // Maps semantic arrow names to Mermaid syntax:
 //
-//	sync     ->> (solid, arrowhead)          - synchronous call (default)
-//	async    -)  (solid, open arrow)         - asynchronous message
-//	return   -->> (dotted, arrowhead)        - return/reply
-//	dependency -->> (dotted, arrowhead)      - weak dependency
-//	strong   ->> (solid, arrowhead)          - strong coupling (no double line)
+//	sync     ->>   (solid, arrowhead)          - synchronous call (default)
+//	async    -)    (solid, open arrow)         - asynchronous message
+//	return   -->>  (dotted, arrowhead)         - return/reply
+//	dependency -.-> (dotted, open arrow)       - weak dependency
+//	strong    ->>   (solid, arrowhead)         - strong coupling (no double line in Mermaid)
 func mermaidGetArrowStyle(edge *gsl.Edge) string {
 	arrow, ok := edge.Attributes["arrow"]
 	if !ok {
@@ -192,7 +192,7 @@ func mermaidGetArrowStyle(edge *gsl.Edge) string {
 	case "return":
 		return "-->>"
 	case "dependency":
-		return "-->>"
+		return "-.->"
 	case "strong":
 		return "->>"
 	default:

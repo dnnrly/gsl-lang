@@ -37,17 +37,19 @@ cat graph.gsl | gsl-diagram --format mermaid > diagram.mmd
 - `-i, --input` - Input GSL file (reads from stdin if not provided)
 - `-o, --output` - Output diagram file (writes to stdout if not provided)
 - `-f, --format` - Output format: `mermaid` (default), `plantuml`
-- `-t, --type` - Diagram type: `component` (default), `graph` (mermaid only), `sequence` (plantuml only)
+- `-t, --type` - Diagram type: `component` (default), `graph` (mermaid), `sequence`
 
 ## Supported Formats
 
 ### Mermaid
 - **component**: Hierarchical architecture diagrams with subgraphs
 - **graph**: Flowcharts and general directed graphs
+- **sequence**: Sequence diagrams with participants, activations, and scoped interactions
 
 ```bash
 gsl-diagram -i arch.gsl -f mermaid -t component
 gsl-diagram -i workflow.gsl -f mermaid -t graph
+gsl-diagram -i calls.gsl -f mermaid -t sequence
 ```
 
 ### PlantUML
@@ -81,12 +83,17 @@ gsl-diagram -i system.gsl -f plantuml
 gsl-diagram -i calls.gsl -f plantuml -t sequence
 ```
 
+### Sequence Diagram (Mermaid)
+```bash
+gsl-diagram -i calls.gsl -f mermaid -t sequence
+```
+
 ## Sequence Diagram Features
 
-Sequence diagrams map GSL edges to UML sequence diagram messages with activations.
+Sequence diagrams map GSL edges to UML sequence diagram messages with activations. Both PlantUML and Mermaid output formats are supported.
 
 ### Scoped Blocks → Activations
-A scoped block becomes a PlantUML activation (lifeline highlight):
+A scoped block becomes an activation (lifeline highlight):
 
 ```gsl
 Client->Server: "Login" {
@@ -95,18 +102,36 @@ Client->Server: "Login" {
 }
 ```
 
-Renders as an activation block with implicit `return`.
+**PlantUML** renders with `++` and `return`:
+```plantuml
+Client -> Server ++: Login
+    Server -> Database: Lookup
+    Server -> Client: Token
+return
+```
+
+**Mermaid** renders with `+` suffix and `deactivate`:
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant Database
+    Client ->>+ Server: Login
+        Server ->> Database: Lookup
+        Server ->> Client: Token
+    deactivate Server
+```
 
 ### Arrow Styles
 The `arrow` attribute controls the message style using UML-meaningful names:
 
-| `arrow` value | UML meaning | PlantUML | Example |
-|---|---|---|---|
-| `sync` (default) | Synchronous call | `->` | `A->B: "call"` |
-| `async` | Asynchronous message | `->>` | `A->B [arrow="async"]: "event"` |
-| `return` | Return/reply | `-->` | `A->B [arrow="return"]: "ok"` |
-| `dependency` | Weak dependency | `..>` | `A->B [arrow="dependency"]` |
-| `strong` | Strong coupling | `==>` | `A->B [arrow="strong"]` |
+| `arrow` value | UML meaning | PlantUML | Mermaid | Example |
+|---|---|---|---|---|
+| `sync` (default) | Synchronous call | `->` | `->>` | `A->B: "call"` |
+| `async` | Asynchronous message | `->>` | `->)` | `A->B [arrow="async"]: "event"` |
+| `return` | Return/reply | `-->` | `-->>` | `A->B [arrow="return"]: "ok"` |
+| `dependency` | Weak dependency | `..>` | `-.->` | `A->B [arrow="dependency"]` |
+| `strong` | Strong coupling | `==>` | `->>` | `A->B [arrow="strong"]` |
 
 ### Labeled Scopes
 Named scopes allow explicit parent-child edge relationships:
