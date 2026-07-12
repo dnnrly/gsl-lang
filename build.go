@@ -3,10 +3,11 @@ package gsl
 import "fmt"
 
 type builder struct {
-	graph     *Graph
-	warnings  []error
-	errors    []error
-	edgeScope *edgeScope // current edge scope for label resolution
+	graph      *Graph
+	warnings   []error
+	errors     []error
+	edgeScope  *edgeScope // current edge scope for label resolution
+	scopeDepth int        // current nesting depth of scoped blocks
 }
 
 // edgeScope tracks edge labels and parent relationships for dependency resolution
@@ -171,6 +172,7 @@ func (b *builder) processEdgeDeclWithScope(ed *edgeDecl, insideScope bool) {
 				Label:      edgeLabel,
 				Attributes: make(AttributeMap),
 				Sets:       make(map[string]struct{}),
+				ScopeDepth: b.scopeDepth,
 			}
 
 			// Text shorthand
@@ -240,6 +242,7 @@ func (b *builder) processScopedBlock(stmts []statement, parentLabel string) {
 	// Save old scope and set new one
 	oldScope := b.edgeScope
 	b.edgeScope = newScope
+	b.scopeDepth++
 
 	// Process all statements in the block
 	for _, stmt := range stmts {
@@ -253,6 +256,7 @@ func (b *builder) processScopedBlock(stmts []statement, parentLabel string) {
 		}
 	}
 
+	b.scopeDepth--
 	// Restore outer scope
 	b.edgeScope = oldScope
 }

@@ -24,6 +24,7 @@ type Edge struct {
 	Children   []*Edge // child edges (populated after build from Parent references)
 	Attributes AttributeMap
 	Sets       map[string]struct{}
+	ScopeDepth int // nesting depth of scoped block (0 = top level)
 }
 
 // Set represents a named set/grouping.

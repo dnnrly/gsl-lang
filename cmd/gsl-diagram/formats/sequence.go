@@ -36,46 +36,148 @@ func (c *plantUMLSequenceConverter) Convert(graph *gsl.Graph) string {
 	edges := graph.GetEdges()
 	emitted := make(map[int]bool)
 
-	for i, edge := range edges {
+	for i := 0; i < len(edges); i++ {
 		if emitted[i] {
 			continue
 		}
 
-		if len(edge.Children) > 0 {
-			emitActivation(&sb, edge)
-			for _, child := range edge.Children {
-				emitIndentedEdge(&sb, child)
-			}
-			sb.WriteString("return\n\n")
-		} else if _, ok := edge.Attributes["activate"]; ok {
-			emitActivation(&sb, edge)
-			sb.WriteString("return\n\n")
-		} else if _, ok := edge.Attributes["text"]; ok {
-			hasScopedChildren := i+1 < len(edges) && isScopedChild(edges[i+1])
-			if hasScopedChildren {
-				emitActivation(&sb, edge)
-				for j := i + 1; j < len(edges); j++ {
-					if isScopedChild(edges[j]) {
-						emitIndentedEdge(&sb, edges[j])
-						emitted[j] = true
-					} else {
-						break
-					}
-				}
-				sb.WriteString("return\n\n")
-			} else {
-				emitEdge(&sb, edge)
-			}
-		} else if edge.Parent != "" {
+		edge := edges[i]
+
+		switch {
+		case edge.Label != "":
+			emitLabeledScope(&sb, edges, i, emitted, 0)
+		case edge.Parent != "":
 			continue
-		} else {
+		case isScopeRoot(edges, i):
+			emitUnlabeledScope(&sb, edges, i, emitted, 0)
+		case hasActivateAttr(edge):
+			emitActivationAt(&sb, edge, 0)
+			sb.WriteString("return\n\n")
+			emitted[i] = true
+		default:
 			emitEdge(&sb, edge)
+			emitted[i] = true
 		}
 	}
 
 	sb.WriteString("\n@enduml\n")
 
 	return sb.String()
+}
+
+// isScopeRoot checks if the edge at idx starts a scoped block.
+// An edge is a scope root if its next non-explicit-child edge has a greater ScopeDepth.
+func isScopeRoot(edges []*gsl.Edge, idx int) bool {
+	depth := edges[idx].ScopeDepth
+	for j := idx + 1; j < len(edges); j++ {
+		if edges[j].Parent != "" {
+			continue
+		}
+		return edges[j].ScopeDepth > depth
+	}
+	return false
+}
+
+// emitLabeledScope emits a labeled activation scope and all edges within it.
+func emitLabeledScope(sb *strings.Builder, edges []*gsl.Edge, startIdx int, emitted map[int]bool, indent int) {
+	edge := edges[startIdx]
+	emitted[startIdx] = true
+
+	emitActivationAt(sb, edge, indent)
+
+	scopeEnd := findLabelScopeEnd(edges, startIdx)
+
+	for j := startIdx + 1; j < scopeEnd; j++ {
+		child := edges[j]
+		if emitted[j] {
+			continue
+		}
+		if child.Parent != "" {
+			continue
+		}
+
+		if isScopeRoot(edges, j) {
+			emitUnlabeledScope(sb, edges, j, emitted, indent+1)
+		} else {
+			emitIndentedEdgeAt(sb, child, indent+1)
+			emitted[j] = true
+		}
+	}
+
+	for _, child := range edge.Children {
+		emitIndentedEdgeAt(sb, child, indent+1)
+	}
+
+	indentStr := indentPrefix(indent)
+	sb.WriteString(fmt.Sprintf("%sreturn\n\n", indentStr))
+}
+
+// emitUnlabeledScope emits a scoped-block activation and all edges within it.
+func emitUnlabeledScope(sb *strings.Builder, edges []*gsl.Edge, startIdx int, emitted map[int]bool, indent int) {
+	edge := edges[startIdx]
+	emitted[startIdx] = true
+
+	emitActivationAt(sb, edge, indent)
+
+	scopeEnd := findDepthScopeEnd(edges, startIdx)
+
+	for j := startIdx + 1; j < scopeEnd; j++ {
+		child := edges[j]
+		if emitted[j] {
+			continue
+		}
+		if child.Parent != "" {
+			continue
+		}
+
+		if isScopeRoot(edges, j) {
+			emitUnlabeledScope(sb, edges, j, emitted, indent+1)
+		} else {
+			emitIndentedEdgeAt(sb, child, indent+1)
+			emitted[j] = true
+		}
+	}
+
+	indentStr := indentPrefix(indent)
+	if indent == 0 {
+		sb.WriteString(fmt.Sprintf("%sreturn\n\n", indentStr))
+	} else {
+		sb.WriteString(fmt.Sprintf("%sreturn\n", indentStr))
+	}
+}
+
+// findLabelScopeEnd returns the index where a labeled scope ends.
+// Scope ends at the next edge with text, the next labeled edge, or end of input.
+func findLabelScopeEnd(edges []*gsl.Edge, startIdx int) int {
+	for j := startIdx + 1; j < len(edges); j++ {
+		child := edges[j]
+		if child.Parent != "" {
+			continue
+		}
+		if child.Label != "" {
+			return j
+		}
+		if _, ok := child.Attributes["text"]; ok {
+			return j
+		}
+	}
+	return len(edges)
+}
+
+// findDepthScopeEnd returns the index where a depth-based scope ends.
+// Scope ends at the next edge with ScopeDepth <= the current edge's ScopeDepth.
+func findDepthScopeEnd(edges []*gsl.Edge, startIdx int) int {
+	depth := edges[startIdx].ScopeDepth
+	for j := startIdx + 1; j < len(edges); j++ {
+		child := edges[j]
+		if child.Parent != "" {
+			continue
+		}
+		if child.ScopeDepth <= depth {
+			return j
+		}
+	}
+	return len(edges)
 }
 
 func sequenceNodeOrder(graph *gsl.Graph) []*gsl.Node {
@@ -112,35 +214,30 @@ func escapeNewlines(s string) string {
 	return strings.ReplaceAll(s, "\n", "\\n")
 }
 
-func isScopedChild(edge *gsl.Edge) bool {
-	if edge.Parent != "" {
-		return false
-	}
-	if _, ok := edge.Attributes["text"]; ok {
-		return false
-	}
-	if _, ok := edge.Attributes["activate"]; ok {
-		return false
-	}
-	if edge.Label != "" {
-		return false
-	}
-	return true
+func hasActivateAttr(edge *gsl.Edge) bool {
+	_, ok := edge.Attributes["activate"]
+	return ok
 }
 
-func emitActivation(sb *strings.Builder, edge *gsl.Edge) {
+func indentPrefix(level int) string {
+	return strings.Repeat("    ", level)
+}
+
+func emitActivationAt(sb *strings.Builder, edge *gsl.Edge, indent int) {
+	prefix := indentPrefix(indent)
 	if text, ok := edge.Attributes["text"]; ok {
-		sb.WriteString(fmt.Sprintf("%s->%s ++: %v\n", edge.From, edge.To, text))
+		sb.WriteString(fmt.Sprintf("%s%s->%s ++: %v\n", prefix, edge.From, edge.To, text))
 	} else {
-		sb.WriteString(fmt.Sprintf("%s->%s ++\n", edge.From, edge.To))
+		sb.WriteString(fmt.Sprintf("%s%s->%s ++\n", prefix, edge.From, edge.To))
 	}
 }
 
-func emitIndentedEdge(sb *strings.Builder, edge *gsl.Edge) {
+func emitIndentedEdgeAt(sb *strings.Builder, edge *gsl.Edge, indent int) {
+	prefix := indentPrefix(indent)
 	if text, ok := edge.Attributes["text"]; ok {
-		sb.WriteString(fmt.Sprintf("    %s->%s: %v\n", edge.From, edge.To, text))
+		sb.WriteString(fmt.Sprintf("%s%s->%s: %v\n", prefix, edge.From, edge.To, text))
 	} else {
-		sb.WriteString(fmt.Sprintf("    %s->%s\n", edge.From, edge.To))
+		sb.WriteString(fmt.Sprintf("%s%s->%s\n", prefix, edge.From, edge.To))
 	}
 }
 

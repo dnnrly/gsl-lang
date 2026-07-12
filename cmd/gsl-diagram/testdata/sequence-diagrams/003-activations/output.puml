@@ -16,7 +16,7 @@ A->B ++: Activation 3
 return
 
 A->B ++: Deep
-    B->C ++
+    B->C ++: Deeper
         C->A
     return
 return
@@ -28,6 +28,15 @@ return
 A->B ++: Multi
     B->C
     C->A
+return
+
+A->C ++
+    C->B
+    A->B ++
+        B->C
+        C->B
+    return
+    C->B
 return
 
 @enduml

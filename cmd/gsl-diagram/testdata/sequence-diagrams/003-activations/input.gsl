@@ -25,3 +25,17 @@ A->B: "Multi" {
     B->C
     C->A
 }
+
+# Labeled scope - events occur in order, last item with matching scope encapsulates all above:
+# - labeled_parent: A->C (opens the scope)
+# - C->B (plain edge within scope)
+# - A->B { B->C; C->B } (nested scoped block)
+# - C->B [parent=labeled_parent] (closes scope, all prior edges are children)
+
+labeled_parent: A->C
+C->B
+A->B {
+    B->C
+    C->B
+}
+C->B [parent=labeled_parent]
