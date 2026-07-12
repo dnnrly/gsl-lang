@@ -1,0 +1,34 @@
+node Client
+node Server
+node Database
+
+# Solid arrow (default) - synchronous request
+Client->Server: "Request"
+
+# Dashed arrow - async response / return message
+Server->Client [arrow="-->"]: "Response"
+
+# Open arrow - asynchronous message
+Server->Database [arrow="->>"]: "Query"
+
+# Open dashed arrow - async return
+Database->Server [arrow="-->>"]: "Result"
+
+# Activation with solid arrow (default)
+Client->Server: "Login" {
+    Server->Database: "Lookup"
+    Database->Server [arrow="-->"]: "User data"
+    Server->Client [arrow="-->"]: "Token"
+}
+
+# Activation with custom arrow style
+Client->Server [arrow="->>"]: "Async call" {
+    Server->Database [arrow="->>"]: "Async query"
+    Database->Server [arrow="-->>"]: "Stream"
+    Server->Client [arrow="-->"]: "Done"
+}
+
+# Mixed styles in scope
+Server->Database: "Sync query" {
+    Database->Server [arrow="-->"]: "Cached"
+}

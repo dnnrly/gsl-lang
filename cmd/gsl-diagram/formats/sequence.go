@@ -60,9 +60,12 @@ func (c *plantUMLSequenceConverter) Convert(graph *gsl.Graph) string {
 		}
 	}
 
-	sb.WriteString("\n@enduml\n")
+	// Trim trailing whitespace and ensure single blank line before @enduml
+	result := sb.String()
+	result = strings.TrimRight(result, "\n")
+	result += "\n\n@enduml\n"
 
-	return sb.String()
+	return result
 }
 
 // isScopeRoot checks if the edge at idx starts a scoped block.
@@ -223,28 +226,40 @@ func indentPrefix(level int) string {
 	return strings.Repeat("    ", level)
 }
 
+// getArrowStyle returns the PlantUML arrow style for the edge.
+// Checks the "arrow" attribute first, then defaults to "->" (solid).
+func getArrowStyle(edge *gsl.Edge) string {
+	if arrow, ok := edge.Attributes["arrow"]; ok {
+		return fmt.Sprintf("%v", arrow)
+	}
+	return "->"
+}
+
 func emitActivationAt(sb *strings.Builder, edge *gsl.Edge, indent int) {
 	prefix := indentPrefix(indent)
+	arrow := getArrowStyle(edge)
 	if text, ok := edge.Attributes["text"]; ok {
-		sb.WriteString(fmt.Sprintf("%s%s->%s ++: %v\n", prefix, edge.From, edge.To, text))
+		sb.WriteString(fmt.Sprintf("%s%s %s %s ++: %v\n", prefix, edge.From, arrow, edge.To, text))
 	} else {
-		sb.WriteString(fmt.Sprintf("%s%s->%s ++\n", prefix, edge.From, edge.To))
+		sb.WriteString(fmt.Sprintf("%s%s %s %s ++\n", prefix, edge.From, arrow, edge.To))
 	}
 }
 
 func emitIndentedEdgeAt(sb *strings.Builder, edge *gsl.Edge, indent int) {
 	prefix := indentPrefix(indent)
+	arrow := getArrowStyle(edge)
 	if text, ok := edge.Attributes["text"]; ok {
-		sb.WriteString(fmt.Sprintf("%s%s->%s: %v\n", prefix, edge.From, edge.To, text))
+		sb.WriteString(fmt.Sprintf("%s%s %s %s: %v\n", prefix, edge.From, arrow, edge.To, text))
 	} else {
-		sb.WriteString(fmt.Sprintf("%s%s->%s\n", prefix, edge.From, edge.To))
+		sb.WriteString(fmt.Sprintf("%s%s %s %s\n", prefix, edge.From, arrow, edge.To))
 	}
 }
 
 func emitEdge(sb *strings.Builder, edge *gsl.Edge) {
+	arrow := getArrowStyle(edge)
 	if text, ok := edge.Attributes["text"]; ok {
-		sb.WriteString(fmt.Sprintf("%s -> %s: %v\n", edge.From, edge.To, text))
+		sb.WriteString(fmt.Sprintf("%s %s %s: %v\n", edge.From, arrow, edge.To, text))
 	} else {
-		sb.WriteString(fmt.Sprintf("%s -> %s\n", edge.From, edge.To))
+		sb.WriteString(fmt.Sprintf("%s %s %s\n", edge.From, arrow, edge.To))
 	}
 }

@@ -4,39 +4,39 @@ participant A
 participant B
 participant C
 
-A->B ++: Activated
-    B->C
+A -> B ++: Activated
+    B -> C
 return
 
-A->B ++
+A -> B ++
 return
 
-A->B ++: Activation 3
-    B->C
+A -> B ++: Activation 3
+    B -> C
 return
 
-A->B ++: Deep
-    B->C ++: Deeper
-        C->A
+A -> B ++: Deep
+    B -> C ++: Deeper
+        C -> A
     return
 return
 
-A->B ++: Self
-    B->B
+A -> B ++: Self
+    B -> B
 return
 
-A->B ++: Multi
-    B->C
-    C->A
+A -> B ++: Multi
+    B -> C
+    C -> A
 return
 
-A->C ++
-    C->B
-    A->B ++
-        B->C
-        C->B
+A -> C ++
+    C -> B
+    A -> B ++
+        B -> C
+        C -> B
     return
-    C->B
+    C -> B
 return
 
 @enduml
