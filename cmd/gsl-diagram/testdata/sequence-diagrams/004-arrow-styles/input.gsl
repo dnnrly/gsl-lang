@@ -1,34 +1,28 @@
 node Client
 node Server
 node Database
+node Cache
 
-# Solid arrow (default) - synchronous request
-Client->Server: "Request"
+# sync (default) - synchronous call, caller blocks
+Client->Server: "Login"
 
-# Dashed arrow - async response / return message
-Server->Client [arrow="-->"]: "Response"
+# async - asynchronous message, fire-and-forget
+Server->Database [arrow="async"]: "Audit log"
 
-# Open arrow - asynchronous message
-Server->Database [arrow="->>"]: "Query"
+# return - reply from a synchronous call
+Server->Client [arrow="return"]: "Token"
 
-# Open dashed arrow - async return
-Database->Server [arrow="-->>"]: "Result"
+# dependency - weak "uses" relationship
+Client->Cache [arrow="dependency"]: "Lookup session"
 
-# Activation with solid arrow (default)
-Client->Server: "Login" {
-    Server->Database: "Lookup"
-    Database->Server [arrow="-->"]: "User data"
-    Server->Client [arrow="-->"]: "Token"
-}
+# strong - tightly coupled, composition
+Server->Database [arrow="strong"]: "Write user record"
 
-# Activation with custom arrow style
-Client->Server [arrow="->>"]: "Async call" {
-    Server->Database [arrow="->>"]: "Async query"
-    Database->Server [arrow="-->>"]: "Stream"
-    Server->Client [arrow="-->"]: "Done"
-}
-
-# Mixed styles in scope
-Server->Database: "Sync query" {
-    Database->Server [arrow="-->"]: "Cached"
+# All five styles in a scoped activation
+Client->Server: "Request" {
+    Server->Database [arrow="async"]: "Query"
+    Database->Server [arrow="return"]: "Result set"
+    Server->Cache [arrow="dependency"]: "Check cache"
+    Server->Database [arrow="strong"]: "Update"
+    Server->Client [arrow="return"]: "Response"
 }

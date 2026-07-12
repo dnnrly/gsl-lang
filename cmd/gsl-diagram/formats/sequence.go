@@ -227,12 +227,30 @@ func indentPrefix(level int) string {
 }
 
 // getArrowStyle returns the PlantUML arrow style for the edge.
-// Checks the "arrow" attribute first, then defaults to "->" (solid).
+// Maps semantic arrow names to PlantUML syntax:
+//
+//	sync     ->  (solid, filled)     - synchronous call (default)
+//	async    ->> (solid, open)       - asynchronous message
+//	return   --> (dashed, open)      - return/reply
+//	dependency ..> (dotted, open)    - weak dependency
+//	strong   ==> (double, filled)    - strong coupling
 func getArrowStyle(edge *gsl.Edge) string {
-	if arrow, ok := edge.Attributes["arrow"]; ok {
-		return fmt.Sprintf("%v", arrow)
+	arrow, ok := edge.Attributes["arrow"]
+	if !ok {
+		return "->"
 	}
-	return "->"
+	switch fmt.Sprintf("%v", arrow) {
+	case "async":
+		return "->>"
+	case "return":
+		return "-->"
+	case "dependency":
+		return "..>"
+	case "strong":
+		return "==>"
+	default:
+		return "->"
+	}
 }
 
 func emitActivationAt(sb *strings.Builder, edge *gsl.Edge, indent int) {

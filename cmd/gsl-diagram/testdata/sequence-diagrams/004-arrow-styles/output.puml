@@ -3,25 +3,19 @@
 participant Client
 participant Server
 participant Database
+participant Cache
 
-Client -> Server: Request
-Server --> Client: Response
-Server ->> Database: Query
-Database -->> Server: Result
-Client -> Server ++: Login
-    Server -> Database: Lookup
-    Database --> Server: User data
-    Server --> Client: Token
-return
-
-Client ->> Server ++: Async call
-    Server ->> Database: Async query
-    Database -->> Server: Stream
-    Server --> Client: Done
-return
-
-Server -> Database ++: Sync query
-    Database --> Server: Cached
+Client -> Server: Login
+Server ->> Database: Audit log
+Server --> Client: Token
+Client ..> Cache: Lookup session
+Server ==> Database: Write user record
+Client -> Server ++: Request
+    Server ->> Database: Query
+    Database --> Server: Result set
+    Server ..> Cache: Check cache
+    Server ==> Database: Update
+    Server --> Client: Response
 return
 
 @enduml
