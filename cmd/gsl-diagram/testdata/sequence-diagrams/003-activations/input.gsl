@@ -10,3 +10,18 @@ A->B [activate=true]
 
 activation3: A->B: "Activation 3"
 B->C [parent=activation3]
+
+A->B: "Deep" {
+    B->C: "Deeper" {
+        C->A
+    }
+}
+
+A->B: "Self" {
+    B->B
+}
+
+A->B: "Multi" {
+    B->C
+    C->A
+}

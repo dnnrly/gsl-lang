@@ -15,4 +15,19 @@ A->B ++: Activation 3
     B->C
 return
 
+A->B ++: Deep
+    B->C ++
+        C->A
+    return
+return
+
+A->B ++: Self
+    B->B
+return
+
+A->B ++: Multi
+    B->C
+    C->A
+return
+
 @enduml
