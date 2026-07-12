@@ -1,0 +1,3 @@
+node A [text="Name for\ncomponent A"]
+node B [text="Component B", shape="actor"]
+node C [text="DB", shape="database"]

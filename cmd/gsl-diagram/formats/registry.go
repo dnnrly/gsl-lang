@@ -22,6 +22,8 @@ func GetFactory(format string) (converter.Factory, error) {
 func newMermaidFactory() converter.Factory {
 	return func(diagramType string) converter.Converter {
 		switch diagramType {
+		case "sequence":
+			return &mermaidSequenceConverter{}
 		case "graph":
 			return &mermaidGraphConverter{}
 		case "component":
@@ -35,7 +37,11 @@ func newMermaidFactory() converter.Factory {
 // PlantUML factory
 func newPlantUMLFactory() converter.Factory {
 	return func(diagramType string) converter.Converter {
-		// PlantUML only supports component for now
-		return &plantUMLComponentConverter{}
+		switch diagramType {
+		case "sequence":
+			return &plantUMLSequenceConverter{}
+		default:
+			return &plantUMLComponentConverter{}
+		}
 	}
 }

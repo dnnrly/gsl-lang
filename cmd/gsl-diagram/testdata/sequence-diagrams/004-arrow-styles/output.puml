@@ -1,0 +1,21 @@
+@startuml
+
+participant Client
+participant Server
+participant Database
+participant Cache
+
+Client -> Server: Login
+Server ->> Database: Audit log
+Server --> Client: Token
+Client ..> Cache: Lookup session
+Server ==> Database: Write user record
+Client -> Server ++: Request
+    Server ->> Database: Query
+    Database --> Server: Result set
+    Server ..> Cache: Check cache
+    Server ==> Database: Update
+    Server --> Client: Response
+return
+
+@enduml

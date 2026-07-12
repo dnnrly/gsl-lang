@@ -1,0 +1,7 @@
+@startuml
+
+participant A as "Name for\ncomponent A"
+actor B as "Component B"
+database C as "DB"
+
+@enduml

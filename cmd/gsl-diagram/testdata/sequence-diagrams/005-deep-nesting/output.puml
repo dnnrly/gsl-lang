@@ -1,0 +1,30 @@
+@startuml
+
+participant Gateway
+participant Service
+participant Auth
+participant DB
+
+Gateway -> Service ++: Request
+    Service -> Auth ++: Validate
+        Auth -> DB ++: Lookup
+            DB -> Auth: Record
+        return
+        Auth -> Service: Token
+    return
+    Service -> DB ++: Fetch
+        DB -> Service: Data
+    return
+    Service -> Gateway: Response
+return
+
+Gateway -> Service ++: Labeled
+return
+
+Service -> Auth ++: Check
+    Auth -> DB: Verify
+return
+
+Service -> Gateway: Reply
+
+@enduml

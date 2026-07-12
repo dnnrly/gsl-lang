@@ -1,0 +1,28 @@
+node Client
+node Server
+node Database
+node Cache
+
+# sync (default) - synchronous call, caller blocks
+Client->Server: "Login"
+
+# async - asynchronous message, fire-and-forget
+Server->Database [arrow="async"]: "Audit log"
+
+# return - reply from a synchronous call
+Server->Client [arrow="return"]: "Token"
+
+# dependency - weak "uses" relationship
+Client->Cache [arrow="dependency"]: "Lookup session"
+
+# strong - tightly coupled, composition
+Server->Database [arrow="strong"]: "Write user record"
+
+# All five styles in a scoped activation
+Client->Server: "Request" {
+    Server->Database [arrow="async"]: "Query"
+    Database->Server [arrow="return"]: "Result set"
+    Server->Cache [arrow="dependency"]: "Check cache"
+    Server->Database [arrow="strong"]: "Update"
+    Server->Client [arrow="return"]: "Response"
+}

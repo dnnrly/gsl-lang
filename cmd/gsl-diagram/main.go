@@ -50,7 +50,7 @@ func main() {
 	rootCmd.Flags().StringVarP(&inputFile, "input", "i", "", "Input GSL file (read from stdin if not provided)")
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output diagram file (write to stdout if not provided)")
 	rootCmd.Flags().StringVarP(&format, "format", "f", "mermaid", "Output format: mermaid, plantuml (default: mermaid)")
-	rootCmd.Flags().StringVarP(&diagramType, "type", "t", "component", "Diagram type (default: component)")
+	rootCmd.Flags().StringVarP(&diagramType, "type", "t", "component", "Diagram type: component (default), graph, sequence")
 
 	helpCmd := &cobra.Command{
 		Use:   "help",
@@ -71,9 +71,11 @@ func main() {
 	// Load guides and build AI command tree
 	gslDesc, _, gslErr := cli.LoadGuide(gsl.Guides, "GSL_GUIDE.md")
 	_, goGuideContent, _ := cli.LoadGuide(gsl.Guides, "GO_REFERENCE.md")
+	seqDesc, seqContent, seqErr := cli.LoadGuide(gsl.Guides, "SEQUENCE_GUIDE.md")
 
 	cli.BuildAICommand(rootCmd, []cli.GuideSpec{
 		{Use: "gsl", Desc: gslDesc, Content: goGuideContent, Err: gslErr},
+		{Use: "sequence", Desc: seqDesc, Content: seqContent, Err: seqErr},
 	}, "AI topics:", "")
 
 	rootCmd.AddCommand(helpCmd, versionCmd)

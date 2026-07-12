@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant Gateway
+    participant Service
+    participant Auth
+    participant DB
+    Gateway ->>+ Service: Request
+        Service ->>+ Auth: Validate
+            Auth ->>+ DB: Lookup
+                DB ->> Auth: Record
+            deactivate DB
+            Auth ->> Service: Token
+        deactivate Auth
+        Service ->>+ DB: Fetch
+            DB ->> Service: Data
+        deactivate DB
+        Service ->> Gateway: Response
+    deactivate Service
+    Gateway ->>+ Service: Labeled
+    deactivate Service
+    Service ->>+ Auth: Check
+        Auth ->> DB: Verify
+    deactivate Auth
+    Service ->> Gateway: Reply

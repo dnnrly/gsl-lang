@@ -1,0 +1,23 @@
+node Gateway
+node Service
+node Auth
+node DB
+
+Gateway->Service: "Request" {
+    Service->Auth: "Validate" {
+        Auth->DB: "Lookup" {
+            DB->Auth: "Record"
+        }
+        Auth->Service: "Token"
+    }
+    Service->DB: "Fetch" {
+        DB->Service: "Data"
+    }
+    Service->Gateway: "Response"
+}
+
+my_scope: Gateway->Service: "Labeled"
+    Service->Auth: "Check" {
+        Auth->DB: "Verify"
+    }
+    Service->Gateway: "Reply"

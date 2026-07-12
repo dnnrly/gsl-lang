@@ -1,0 +1,41 @@
+node A
+node B
+node C
+
+A->B: "Activated" {
+    B->C
+}
+
+A->B [activate=true]
+
+activation3: A->B: "Activation 3"
+B->C [parent=activation3]
+
+A->B: "Deep" {
+    B->C: "Deeper" {
+        C->A
+    }
+}
+
+A->B: "Self" {
+    B->B
+}
+
+A->B: "Multi" {
+    B->C
+    C->A
+}
+
+# Labeled scope - events occur in order, last item with matching scope encapsulates all above:
+# - labeled_parent: A->C (opens the scope)
+# - C->B (plain edge within scope)
+# - A->B { B->C; C->B } (nested scoped block)
+# - C->B [parent=labeled_parent] (closes scope, all prior edges are children)
+
+labeled_parent: A->C
+C->B
+A->B {
+    B->C
+    C->B
+}
+C->B [parent=labeled_parent]

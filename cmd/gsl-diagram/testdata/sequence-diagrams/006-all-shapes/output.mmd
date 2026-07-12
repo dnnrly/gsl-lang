@@ -1,0 +1,14 @@
+sequenceDiagram
+    actor User
+    participant Gateway as "Gateway" <<boundary>>
+    participant Controller as "Controller" <<control>>
+    participant Domain as "Domain" <<entity>>
+    participant Database as "Database" <<database>>
+    participant Cache as "Cache" <<collections>>
+    participant Queue as "Queue" <<queue>>
+    User ->> Gateway: HTTP request
+    Gateway ->> Controller: Route
+    Controller ->> Domain: Process
+    Domain ->> Database: Query
+    Domain ->> Cache: Check
+    Domain ->> Queue: Publish
