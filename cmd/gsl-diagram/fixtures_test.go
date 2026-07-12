@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	gsl "github.com/dnnrly/gsl-lang"
+	"github.com/dnnrly/gsl-lang/cmd/gsl-diagram/formats"
 )
 
 func TestFixtures(t *testing.T) {
@@ -66,9 +67,13 @@ func TestFixtures(t *testing.T) {
 }
 
 // convertSequenceDiagram converts a GSL graph to PlantUML sequence diagram syntax.
-// TODO: replace stub with real sequence diagram algorithm.
 func convertSequenceDiagram(graph *gsl.Graph) string {
-	return ""
+	factory, err := formats.GetFactory("plantuml")
+	if err != nil {
+		return ""
+	}
+	conv := factory("sequence")
+	return conv.Convert(graph)
 }
 
 func requireFileExists(t *testing.T, path string) {
