@@ -1,0 +1,4 @@
+node A
+node B
+
+A->B: "Hello"
