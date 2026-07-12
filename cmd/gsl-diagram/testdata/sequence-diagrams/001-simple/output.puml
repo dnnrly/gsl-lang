@@ -2,8 +2,9 @@
 
 participant A
 participant B
+participant C
 
 A -> B: Hello
-B -> C: Goodbye
+B -> C: Implicit creation
 
 @enduml
