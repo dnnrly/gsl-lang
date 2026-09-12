@@ -11,6 +11,12 @@ Feature: gsl-query CLI validation
     Then the app exits without error
     And the app output contains "Usage:"
 
+  Scenario: Help command is listed exactly once
+    When I run gsl-query with parameters "help"
+    Then the app exits without error
+    And the app output contains "Help about any command"
+    And the app output does not contain "Show help for gsl-query"
+
   Scenario: Prints AI topics
     When I run gsl-query with parameters "ai"
     Then the app exits without error

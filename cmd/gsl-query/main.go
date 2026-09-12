@@ -23,7 +23,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "gsl-query [query]",
 		Short: "Query GSL graphs",
-		Long:  "Execute queries against GSL (Graph Specification Language) graphs and output filtered/transformed results.\n\nFor AI/LLM guidance, use: gsl-query help ai",
+		Long:  "Execute queries against GSL (Graph Specification Language) graphs and output filtered/transformed results.\n\nFor AI/LLM guidance, use: gsl-query ai",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Determine query source
@@ -61,14 +61,6 @@ func main() {
 	rootCmd.Flags().StringVarP(&outputFile, "output", "o", "", "Output GSL file (write to stdout if not provided)")
 	rootCmd.Flags().StringVarP(&queryFile, "query-file", "f", "", "Read query from file")
 
-	helpCmd := &cobra.Command{
-		Use:   "help",
-		Short: "Show help for gsl-query",
-		Run: func(cmd *cobra.Command, args []string) {
-			_ = rootCmd.Help()
-		},
-	}
-
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
@@ -86,11 +78,10 @@ func main() {
 		{Use: "query", Desc: queryDesc, Content: queryContent, Err: queryErr},
 	}
 
-	// Build AI command trees
+	// Build AI command tree
 	cli.BuildAICommand(rootCmd, guides, "Available AI/LLM guides:", "Run 'gsl-query ai <guide>' to view a guide")
-	cli.BuildAICommand(helpCmd, guides, "Available AI/LLM guides:", "Run 'gsl-query help ai <guide>' to view a guide")
 
-	rootCmd.AddCommand(helpCmd, versionCmd)
+	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

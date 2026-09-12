@@ -141,6 +141,13 @@ func (tc *testContext) theAppOutputContains(expected string) error {
 	return nil
 }
 
+func (tc *testContext) theAppOutputDoesNotContain(unexpected string) error {
+	if strings.Contains(tc.cmdOutput, unexpected) {
+		return fmt.Errorf("expected output to NOT contain %q, got:\n%s", unexpected, tc.cmdOutput)
+	}
+	return nil
+}
+
 func (tc *testContext) aGslInputFileWithContent(docString *godog.DocString) error {
 	content := docString.Content
 	_, err := tc.createTempFile(".gsl", content)

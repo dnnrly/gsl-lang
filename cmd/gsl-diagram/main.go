@@ -30,6 +30,10 @@ func main() {
 				return err
 			}
 
+			if err := formats.ValidateDiagramType(format, diagramType); err != nil {
+				return err
+			}
+
 			inputName := inputFile
 			if inputName == "" {
 				inputName = "<stdin>"
@@ -52,14 +56,6 @@ func main() {
 	rootCmd.Flags().StringVarP(&format, "format", "f", "mermaid", "Output format: mermaid, plantuml (default: mermaid)")
 	rootCmd.Flags().StringVarP(&diagramType, "type", "t", "component", "Diagram type: component (default), graph, sequence")
 
-	helpCmd := &cobra.Command{
-		Use:   "help",
-		Short: "Show help for gsl-diagram",
-		Run: func(cmd *cobra.Command, args []string) {
-			_ = rootCmd.Help()
-		},
-	}
-
 	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print version information",
@@ -78,7 +74,7 @@ func main() {
 		{Use: "sequence", Desc: seqDesc, Content: seqContent, Err: seqErr},
 	}, "AI topics:", "")
 
-	rootCmd.AddCommand(helpCmd, versionCmd)
+	rootCmd.AddCommand(versionCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
