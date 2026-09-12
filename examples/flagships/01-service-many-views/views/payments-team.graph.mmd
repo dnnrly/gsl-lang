@@ -1,0 +1,11 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q4-payments-team.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  card_network["card_network"]
+  fraud --> payments_db
+  fraud["fraud"]
+  payments --> card_network
+  payments --> fraud
+  payments --> payments_db
+  payments["payments"]
+  payments_db["PostgreSQL"]

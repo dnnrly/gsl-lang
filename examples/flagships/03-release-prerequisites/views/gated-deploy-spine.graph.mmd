@@ -1,0 +1,12 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q2-gated-deploy-spine.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  canary --> prod
+  canary["canary"]
+  image --> registry
+  image["image"]
+  prod --> smoke
+  prod["prod"]
+  registry --> canary
+  registry["registry"]
+  smoke["smoke"]

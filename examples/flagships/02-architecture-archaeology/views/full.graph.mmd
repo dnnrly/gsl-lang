@@ -1,0 +1,30 @@
+graph TD
+%% Generated: gsl-query 'from *' < model.gsl | gsl-diagram -f mermaid -t graph
+
+  archive_storage["archive_storage"]
+  emailer["emailer"]
+  ftp_outbox["ftp_outbox"]
+  legacy_monolith --> orders_db
+  legacy_monolith --> payment_gateway
+  legacy_monolith --> queue
+  legacy_monolith["legacy_monolith"]
+  orders_db["orders_db"]
+  orders_ui --> legacy_monolith
+  orders_ui["orders_ui"]
+  payment_gateway["payment_gateway"]
+  queue --> worker
+  queue["queue"]
+  reporting_job --> emailer
+  reporting_job --> staging_db
+  reporting_job["reporting_job"]
+  scheduler --> legacy_monolith
+  scheduler --> reporting_job
+  scheduler --> staging_db
+  scheduler["scheduler"]
+  staging_db --> orders_db
+  staging_db["staging_db"]
+  worker --> archive_storage
+  worker --> emailer
+  worker --> ftp_outbox
+  worker --> orders_db
+  worker["worker"]

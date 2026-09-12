@@ -1,0 +1,16 @@
+node config
+node controlplane
+node approve
+node canary
+node registry
+node prod
+node smoke
+
+CONFIG: config->controlplane [stage="apply"] {
+    GATE: controlplane->approve [stage="gate"] {
+        PROMOTE: registry->canary [stage="promote"] {
+            CANARY: canary->prod [stage="ship"]
+            SMOKE: prod->smoke [stage="smoke"]
+        }
+    }
+}

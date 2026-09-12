@@ -1,0 +1,11 @@
+node image
+node registry
+node canary
+node prod
+node smoke
+
+PUSH: image->registry [stage="push"]
+PROMOTE: registry->canary [stage="promote"] {
+    CANARY: canary->prod [stage="ship"]
+    SMOKE: prod->smoke [stage="smoke"]
+}

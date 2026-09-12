@@ -1,0 +1,12 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q4-worker-drives.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  archive_storage["archive_storage"]
+  emailer["emailer"]
+  ftp_outbox["ftp_outbox"]
+  orders_db["orders_db"]
+  worker --> archive_storage
+  worker --> emailer
+  worker --> ftp_outbox
+  worker --> orders_db
+  worker["worker"]

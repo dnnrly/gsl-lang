@@ -1,0 +1,9 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q2-suspected-feeding-critical.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  reporting_job --> staging_db
+  reporting_job["reporting_job"]
+  scheduler --> reporting_job
+  scheduler --> staging_db
+  scheduler["scheduler"]
+  staging_db["staging_db"]

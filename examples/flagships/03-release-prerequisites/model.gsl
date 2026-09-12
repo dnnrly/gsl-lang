@@ -1,0 +1,39 @@
+# Production release with parallel tracks and edge prerequisites.
+#
+# Two tracks advance in parallel and must rejoin before production:
+#
+#   build track:   checkout -> build -> test / scan / image -> registry
+#   config track:  config -> controlplane -> approve
+#
+# The cross-track prerequisite is a relationship BETWEEN EDGES:
+# PROMOTE (registry -> canary) cannot run until GATE (controlplane -> approve)
+# has completed. GSL models this directly as an edge dependency, while the
+# change approval is still a first-class edge in the graph.
+#
+# stage values drive the queries in this example (edge.stage == "gate" etc.).
+
+node checkout
+node build
+node test
+node scan
+node image
+node registry
+node config
+node controlplane
+node approve
+node canary
+node prod
+node smoke
+
+CHECKOUT: checkout -> build [stage="build"] {
+    TEST: build -> test [stage="test"]
+    SCAN: build -> scan [stage="scan"]
+    PKG: build -> image [stage="package"]
+}
+PUSH: image -> registry [stage="push", parent=PKG]
+CONFIG: config -> controlplane [stage="apply"]
+GATE: controlplane -> approve [stage="gate", parent=CONFIG]
+PROMOTE: registry -> canary [stage="promote", parent=GATE] {
+    CANARY: canary -> prod [stage="ship"]
+    SMOKE: prod -> smoke [stage="smoke"]
+}

@@ -1,0 +1,31 @@
+set critical
+set deprecated
+set external
+
+node team_gateway [replicas="4", team="gateway", zone="A"]
+node team_orders [replicas="6", team="orders", zone="B"]
+node team_payments [replicas="4", team="payments", zone="B"]
+node team_identity [replicas="3", team="identity", zone="A"]
+node team_storefront [replicas="2", team="storefront", zone="A"]
+node team_fulfilment [replicas="2", team="fulfilment", zone="C"]
+node team_platform [team="platform", text="Redis", zone="A"]
+node team_legacy [team="legacy", zone="B"]
+node card_network [team="external", zone="external"] @external
+
+team_gateway->team_orders [protocol="http"]
+team_gateway->team_payments [protocol="http"]
+team_gateway->team_identity [protocol="http"]
+team_gateway->team_storefront [protocol="http"]
+team_orders->team_payments [protocol="grpc"]
+team_orders->team_identity [protocol="grpc"]
+team_orders->team_fulfilment [protocol="grpc"]
+team_orders->team_platform [protocol="sql"]
+team_orders->team_platform [kind="async", protocol="pub"]
+team_orders->team_legacy [protocol="soap"]
+team_payments->team_platform [protocol="sql"]
+team_payments->card_network [protocol="https"]
+team_fulfilment->team_platform [kind="async", protocol="pub"]
+team_platform->team_fulfilment [kind="async", protocol="sub"]
+team_identity->team_platform [protocol="sql"]
+team_identity->team_platform [protocol="tcp"]
+team_storefront->team_platform [protocol="tcp"]

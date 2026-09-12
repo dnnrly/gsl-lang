@@ -1,0 +1,22 @@
+node build
+node test
+node scan
+node image
+node registry
+node approve
+node controlplane
+node canary
+node prod
+node smoke
+
+TEST: build->test [stage="test"]
+SCAN: build->scan [stage="scan"]
+PKG: build->image [stage="package"] {
+    PUSH: image->registry [stage="push"]
+}
+GATE: controlplane->approve [stage="gate"] {
+    PROMOTE: registry->canary [stage="promote"] {
+        CANARY: canary->prod [stage="ship"]
+        SMOKE: prod->smoke [stage="smoke"]
+    }
+}

@@ -1,0 +1,28 @@
+set critical
+
+node alpha_bank [territory="home", type="bank"] @critical
+node swift [territory="international", type="payment_rail"] @critical
+node beta_bank [territory="home", type="bank"]
+node chaps [territory="home", type="payment_rail"] @critical
+node gamma_bank [territory="offshore", type="bank"]
+node delta_bank [territory="home", type="bank"]
+node treasury [territory="home", type="settlement"] @critical
+node ccp [territory="international", type="central_counterparty"] @critical
+node brokerage [territory="home", type="broker"]
+node exchange [territory="home", type="exchange"] @critical
+
+alpha_bank->swift [instrument="payments", member]
+beta_bank->swift [instrument="payments", member]
+gamma_bank->chaps [instrument="payments", member]
+alpha_bank->chaps [direct, instrument="payments"]
+delta_bank->treasury [instrument="settlement", member]
+alpha_bank->ccp [clears, instrument="derivatives", notional="400"]
+beta_bank->ccp [clears, instrument="derivatives", notional="180"]
+brokerage->exchange [clears, instrument="equities"]
+brokerage->ccp [clears, instrument="derivatives", notional="60"]
+alpha_bank->beta_bank [instrument="lending", lending, notional="150"]
+beta_bank->gamma_bank [instrument="lending", lending, notional="80"]
+gamma_bank->delta_bank [instrument="lending", lending, notional="45"]
+delta_bank->alpha_bank [instrument="lending", lending, notional="30"]
+exchange->treasury [instrument="settlement", settles]
+chaps->treasury [instrument="settlement", settles]

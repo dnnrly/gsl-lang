@@ -1,0 +1,1 @@
+subgraph edge.stage == "gate" scope | make edge.prereq = "approval" where edge.stage exists

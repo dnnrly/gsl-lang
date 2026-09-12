@@ -1,0 +1,1 @@
+(subgraph node in @critical traverse out all) as REACH | from REACH

@@ -1,0 +1,32 @@
+@startuml
+
+component emailer
+component archive_storage
+component payment_gateway
+component reporting_job
+component worker
+component ftp_outbox
+component scheduler
+component staging_db
+component legacy_monolith
+component orders_ui
+component orders_db
+component queue
+
+orders_ui --> legacy_monolith
+legacy_monolith --> orders_db
+legacy_monolith --> queue
+legacy_monolith --> payment_gateway
+queue --> worker
+worker --> orders_db
+worker --> ftp_outbox
+worker --> emailer
+worker --> archive_storage
+scheduler --> legacy_monolith
+scheduler --> reporting_job
+scheduler --> staging_db
+staging_db --> orders_db
+reporting_job --> staging_db
+reporting_job --> emailer
+
+@enduml

@@ -1,0 +1,11 @@
+set confirmed
+set critical
+set suspected
+
+node reporting_job [confidence="medium", source="interview"] @suspected
+node scheduler [confidence="low", source="deploy"] @suspected
+node staging_db [confidence="low", source="deploy"] @suspected
+
+scheduler->reporting_job [confidence="medium", protocol="cron"]
+scheduler->staging_db [confidence="low", protocol="sql"]
+reporting_job->staging_db [confidence="medium", protocol="sql"]

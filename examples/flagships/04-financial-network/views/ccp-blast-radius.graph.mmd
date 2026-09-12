@@ -1,0 +1,16 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q2-ccp-blast-radius.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  alpha_bank --> beta_bank
+  alpha_bank --> ccp
+  alpha_bank["alpha_bank"]
+  beta_bank --> ccp
+  beta_bank --> gamma_bank
+  beta_bank["beta_bank"]
+  brokerage --> ccp
+  brokerage["brokerage"]
+  ccp["ccp"]
+  delta_bank --> alpha_bank
+  delta_bank["delta_bank"]
+  gamma_bank --> delta_bank
+  gamma_bank["gamma_bank"]

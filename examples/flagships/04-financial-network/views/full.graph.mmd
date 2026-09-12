@@ -1,0 +1,28 @@
+graph TD
+%% Generated: gsl-query 'from *' < model.gsl | gsl-diagram -f mermaid -t graph
+
+  alpha_bank --> beta_bank
+  alpha_bank --> ccp
+  alpha_bank --> chaps
+  alpha_bank --> swift
+  alpha_bank["alpha_bank"]
+  beta_bank --> ccp
+  beta_bank --> gamma_bank
+  beta_bank --> swift
+  beta_bank["beta_bank"]
+  brokerage --> ccp
+  brokerage --> exchange
+  brokerage["brokerage"]
+  ccp["ccp"]
+  chaps --> treasury
+  chaps["chaps"]
+  delta_bank --> alpha_bank
+  delta_bank --> treasury
+  delta_bank["delta_bank"]
+  exchange --> treasury
+  exchange["exchange"]
+  gamma_bank --> chaps
+  gamma_bank --> delta_bank
+  gamma_bank["gamma_bank"]
+  swift["swift"]
+  treasury["treasury"]

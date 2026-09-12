@@ -1,0 +1,21 @@
+set critical
+set deprecated
+
+node offer_db [team="merchandising"]
+node promo_service [team="promo"] @critical
+node rules_service [team="merchandising"] @critical
+node reward_ledger [team="accounting"]
+node event_bus [team="platform", text="Kafka"]
+node legacy_promo_calc [team="promo"] @deprecated
+node main_product_db [team="platform", text="PostgreSQL"]
+node catalog_cache [team="storefront", text="Redis"] @deprecated
+node returns_system [team="fulfilment"]
+node catalog_service [team="storefront"]
+
+promo_service->offer_db [confidence="high", protocol="sql", source="email"]
+promo_service->rules_service [confidence="high", protocol="grpc", source="email"]
+promo_service->reward_ledger [confidence="high", instrument="settlement", source="email"]
+promo_service->event_bus [confidence="high", instrument="settlement", protocol="pub", source="email"]
+legacy_promo_calc->main_product_db [confidence="high", protocol="sql", source="email"]
+legacy_promo_calc->catalog_cache [confidence="low", protocol="tcp", source="email_readme"]
+returns_system->legacy_promo_calc [confidence="medium", protocol="internal", source="email"]

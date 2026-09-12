@@ -1,0 +1,18 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q5-type-collapse.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  banks --> counterparties
+  banks --> counterparties
+  banks --> rail_systems
+  banks --> rail_systems
+  banks --> treasury
+  banks["banks"]
+  brokerage --> counterparties
+  brokerage --> exchange
+  brokerage["brokerage"]
+  counterparties["counterparties"]
+  exchange --> treasury
+  exchange["exchange"]
+  rail_systems --> treasury
+  rail_systems["rail_systems"]
+  treasury["treasury"]

@@ -4,6 +4,24 @@ This directory contains example GSL graph definitions organized as a learning pa
 
 ---
 
+## Flagship Examples — the GSL story, end to end
+
+The [flagship examples](flagships/) are complete, runnable narratives: **problem → model → query → derived view** — each with a virtual "two-minute test". They are the best place to understand *why* GSL exists.
+
+- [`01-service-many-views`](flagships/01-service-many-views/) — one graph, many views: blast radius, team-level collapse, critical reach, migration backlog from a single 20-service model.
+- [`02-architecture-archaeology`](flagships/02-architecture-archaeology/) — reconstructing an undocumented monolith; facts carry provenance (`source`/`confidence`) and risk lists are queries.
+- [`03-release-prerequisites`](flagships/03-release-prerequisites/) — a relationship between relationships: a deploy edge gated on an approval edge.
+- [`04-financial-network`](flagships/04-financial-network/) — the same operations as #1 in a non-software domain: GSL is graph-shaped knowledge, not software-shaped.
+- [`05-llm-assisted-modelling`](flagships/05-llm-assisted-modelling/) — an honest experiment: agent drafts → parser gate → canonical diff → human review.
+
+All flagship models, queries, committed canonical results, diagram conversions and README code blocks are exercised by `flagship_test.go`:
+
+```bash
+go test ./examples -run Flagship -v
+```
+
+---
+
 ## 01-basics — Core Graph Patterns
 
 Simple graph definitions demonstrating fundamental GSL concepts.

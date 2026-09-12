@@ -1,0 +1,52 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q1-full.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  card_network["card_network"]
+  catalog --> redis_cache
+  catalog --> search
+  catalog["catalog"]
+  fraud --> payments_db
+  fraud["fraud"]
+  gateway --> catalog
+  gateway --> orders
+  gateway --> payments
+  gateway --> users
+  gateway["gateway"]
+  inventory --> orders_db
+  inventory["inventory"]
+  kafka --> notifications
+  kafka --> reporting
+  kafka["Kafka"]
+  legacy_db["legacy_db"]
+  legacy_orders --> legacy_db
+  legacy_orders["legacy_orders"]
+  mobile --> gateway
+  mobile["mobile"]
+  notifications["notifications"]
+  orders --> inventory
+  orders --> kafka
+  orders --> legacy_orders
+  orders --> orders_db
+  orders --> payments
+  orders --> shipping
+  orders --> users
+  orders["orders"]
+  orders_db["PostgreSQL"]
+  payments --> card_network
+  payments --> fraud
+  payments --> payments_db
+  payments["payments"]
+  payments_db["PostgreSQL"]
+  redis_cache["Redis"]
+  reporting --> orders_db
+  reporting["reporting"]
+  search --> redis_cache
+  search["search"]
+  shipping --> kafka
+  shipping --> notifications
+  shipping["shipping"]
+  users --> orders_db
+  users --> redis_cache
+  users["users"]
+  web --> gateway
+  web["web"]

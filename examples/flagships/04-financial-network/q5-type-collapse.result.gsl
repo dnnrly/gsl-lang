@@ -1,0 +1,18 @@
+set critical
+
+node banks [territory="offshore", type="bank"]
+node rail_systems [territory="international", type="payment_rail"]
+node treasury [territory="home", type="settlement"] @critical
+node counterparties [territory="international", type="central_counterparty"]
+node brokerage [territory="home", type="broker"]
+node exchange [territory="home", type="exchange"] @critical
+
+banks->rail_systems [instrument="payments", member]
+banks->rail_systems [direct, instrument="payments"]
+banks->treasury [instrument="settlement", member]
+banks->counterparties [clears, instrument="derivatives", notional="400"]
+banks->counterparties [clears, instrument="derivatives", notional="180"]
+brokerage->exchange [clears, instrument="equities"]
+brokerage->counterparties [clears, instrument="derivatives", notional="60"]
+exchange->treasury [instrument="settlement", settles]
+rail_systems->treasury [instrument="settlement", settles]

@@ -1,0 +1,16 @@
+set confirmed
+set critical
+set suspected
+
+node legacy_monolith [confidence="high", source="logs"] @confirmed @critical
+node orders_ui [confidence="high", source="deploy"] @confirmed
+node orders_db [confidence="high", source="logs"] @confirmed @critical
+node queue [confidence="high", source="logs"] @confirmed @critical
+node payment_gateway [confidence="high", source="logs"] @confirmed
+node scheduler [confidence="low", source="deploy"] @suspected
+
+orders_ui->legacy_monolith [confidence="high", protocol="http"]
+legacy_monolith->orders_db [confidence="high", protocol="sql"]
+legacy_monolith->queue [confidence="high", protocol="amqp"]
+legacy_monolith->payment_gateway [confidence="high", protocol="https"]
+scheduler->legacy_monolith [confidence="low", protocol="internal"]

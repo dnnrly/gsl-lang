@@ -1,0 +1,8 @@
+set critical
+set deprecated
+set external
+
+node gateway [replicas="4", team="gateway", zone="A"] @critical
+node orders [replicas="6", team="orders", zone="B"] @critical
+
+gateway->orders [protocol="http"]

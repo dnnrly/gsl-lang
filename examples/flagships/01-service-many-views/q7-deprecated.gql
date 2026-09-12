@@ -1,0 +1,1 @@
+(subgraph node in @deprecated traverse in all) as DEP | from DEP

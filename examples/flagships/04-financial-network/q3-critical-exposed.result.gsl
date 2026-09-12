@@ -1,0 +1,6 @@
+set critical
+
+node alpha_bank [territory="home", type="bank"] @critical
+node ccp [territory="international", type="central_counterparty"] @critical
+
+alpha_bank->ccp [clears, instrument="derivatives", notional="400"]

@@ -1,0 +1,21 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q1-edges-with-prerequisites.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  approve["approve"]
+  build --> image
+  build --> scan
+  build --> test
+  build["build"]
+  canary --> prod
+  canary["canary"]
+  controlplane --> approve
+  controlplane["controlplane"]
+  image --> registry
+  image["image"]
+  prod --> smoke
+  prod["prod"]
+  registry --> canary
+  registry["registry"]
+  scan["scan"]
+  smoke["smoke"]
+  test["test"]
