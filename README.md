@@ -1,475 +1,240 @@
-# GSL (GSL-Lang)
+# GSL
 
-**GSL** is a small, declarative language for describing directed graphs with attributes and set-based grouping.
+> **The source of truth for the graphs behind your diagrams.**
 
-It is designed to be:
+GSL is a canonical, diffable text format for modelling graph-shaped knowledge — architectures, dependencies, workflows, organisational and relationship structures — from which you derive the views you need.
 
-* Human-readable
-* Deterministic
-* Canonicalisable
-* Easy to parse
-* Easy to diff
+Keep the graph in version control. Every diagram, subset, report or analysis is a *view* derived from that one source:
 
-GSL is not a visual graph language.
-It is a textual graph representation designed for tooling, transformation, and programmatic analysis.
+> **One graph, many views.** The diagram is a view; the graph is the asset.
 
 ---
 
-## For LLMs and AI Agents
+## Try it in 30 seconds
 
-GSL **is a language** — not just a Go library. This repository is the **canonical home** of the language: normative specification, reference implementation, CLI tools, LSP server, query language, and VS Code extension.
-
-| Start with this file | If you need... |
-|---|---|
-| [`SPEC.md`](SPEC.md) | The authoritative language specification |
-| [`GRAMMAR.md`](GRAMMAR.md) | The formal grammar (for implementing a parser) |
-| [`GSL_GUIDE.md`](GSL_GUIDE.md) | A self-contained GSL syntax & semantics reference |
-| [`QUERY_SPEC.md`](QUERY_SPEC.md) | The query language specification |
-| [`GQL_GUIDE.md`](GQL_GUIDE.md) | A self-contained GQL syntax & semantics reference |
-| [`GO_REFERENCE.md`](GO_REFERENCE.md) | The Go reference implementation guide |
-| [`AGENTS.md`](AGENTS.md) | Development instructions for contributing |
-
----
-
-## Table of Contents
-
-- [What GSL Describes](#what-gsl-describes)
-- [Quick Example](#quick-example)
-- [Core Features](#core-features)
-  - [Nodes](#nodes)
-  - [Edges](#edges)
-  - [Sets and Membership](#sets-and-membership)
-  - [Parent Relationships](#parent-relationships)
-  - [Edge Labels and Scoping](#edge-labels-and-scoping)
-- [Design Goals](#design-goals)
-- [Canonical Behaviour](#canonical-behaviour)
-- [Tools](#tools)
-    - [gsl-diagram](#gsl-diagram)
-- [Using the Library](#using-the-library)
-  - [Programmatic Usage (Go)](#programmatic-usage-go)
-  - [Important Notes](#important-notes)
-- [Reference](#reference)
-
----
-
-## What GSL Describes
-
-A GSL document defines:
-
-* Nodes
-* Directed edges
-* Sets (groupings)
-* Arbitrary attributes on all of the above
-
----
-
-## Quick Example
+Suppose you model a small retail platform. One file, `model.gsl`, is the whole story:
 
 ```gsl
-# Declare sets
-set flow [color="blue"]
+set critical
 
-# Declare nodes
-node A: "Start" @flow
-node B [flag]
+node gateway [team="gateway"] @critical
+node orders [team="orders"] @critical
+node orders_db [text="PostgreSQL", team="platform"] @critical
+node payments [team="payments"]
+node users [team="identity"]
 
-# Declare edges
-A->B [weight=1.2] @flow
+gateway -> orders [protocol="http"]
+orders -> payments [protocol="grpc"]
+orders -> users [protocol="grpc"]
+orders -> orders_db [protocol="sql"]
 ```
 
-This defines:
+Now ask the graph a question: *"If we retire `orders`, which `@critical` parts are affected?"*
 
-* 2 nodes
-* 1 directed edge
-* 1 set
-* Attributes on nodes, edges, and sets
+```gql
+(subgraph node.id == "orders" traverse in all) as BLAST | from * | (subgraph node in @critical) as CRIT | BLAST & CRIT
+```
+
+The answer comes back as canonical, diffable GSL:
+
+```gsl
+set critical
+
+node gateway [team="gateway"] @critical
+node orders [team="orders"] @critical
+
+gateway->orders [protocol="http"]
+```
+
+Retiring `orders` breaks the `@critical` gateway — a fact you derived from the model, not from gut feel. Re-run it any time the model changes; the answer stays in sync.
+
+This is the whole idea. Everything below shows it at scale.
 
 ---
 
-## Core Features
+## Why GSL?
 
-### Nodes
+Most teams draw diagrams and let them rot. The diagram is a picture of a system from one point in time; *N* diagrams mean *N* versions of the truth to maintain by hand.
 
-```gsl
-node A
-node B [flag, weight=2]
-node C: "Hello"
-```
+GSL reverses that. The graph is the asset — a text file with a deterministic canonical form that version control can diff, review and merge. Questions about your system become queries, and all the pictures you need are derived from the same source:
 
-### Edges
+- A component diagram for each audience
+- The blast radius of retiring a service
+- A per-team dependency view
+- A migration backlog for deprecated components
+- A text report consumed by other tooling
 
-```gsl
-A->B
-A,B->C
-C->D,E
-```
+The same graph answers all of them. Nothing to hand-maintain.
 
-Grouped edges expand automatically.
+Concretely, GSL gives you:
 
-Duplicate edges are allowed.
+- **Truth you can diff.** Deterministic serialisation means small, reviewable diffs in git — a PR that renames a dependency is one line, not a picture you redraw.
+- **Answers, not eyeballing.** Ask "what depends on this?" and get a canonical subgraph back, not a path traced by a human.
+- **One source, many views.** Derive whatever subset, summary or diagram you need from a single graph — no duplicated structure, no drift.
+- **Relationships between relationships.** Edges can declare dependencies on other edges (a promotion that waits on an approval), so workflow prerequisites are data, not a hand-drawn arrow.
+- **Structure without a schema.** Carry arbitrary attributes (`team`, `protocol`, `owner`, `confidence`) and query on them. No schema step, no database to stand up.
 
----
-
-### Sets and Membership
-
-```gsl
-set cluster [visible]
-
-node A @cluster
-A->B @cluster
-```
-
-Sets are named groupings.
-Membership accumulates across declarations.
+Honest boundaries: GSL is a file format and a derivation tool. It does not do graph layout, schema validation, persistence or database-scale querying — and it does not try to. See [Project status](#project-status) and [Compared with alternatives](#gsl-compared-with-alternatives) for where that is a feature and where someone else is the better fit.
 
 ---
 
-### Parent Relationships
+## What can I use it for?
 
-```gsl
-node C {
-    node D
-}
-```
-
-This is syntactic sugar for:
-
-```gsl
-node D [parent=C]
-```
-
-`parent` is treated as a normal attribute.
-
----
-
-### Edge Labels and Scoping
-
-GSL supports **edge labels** and **scoped edges** for expressing explicit dependencies between edges.
-
-**Edge labels** assign a name to an edge:
-
-```gsl
-E1: A -> B
-E2: B -> C [weight=2]
-```
-
-Labels are globally unique and enable explicit dependency references.
-
-**Edge scoping** allows nesting edges to express implicit dependencies:
-
-```gsl
-# B -> C implicitly depends on A -> B
-A -> B {
-    B -> C
-}
-```
-
-This is syntactic sugar for:
-
-```gsl
-E1: A -> B
-B -> C [parent=E1]
-```
-
-Scoped edges flatten to explicit `parent` attributes during canonicalization.
-
-**Explicit `parent`** references any labeled edge:
-
-```gsl
-E1: A -> B
-C -> D [parent=E1]
-```
-
-Scoped edges automatically get implicit `parent` on their parent edge. You cannot use explicit `parent` inside a scoped edge - use labels on the parent edge instead:
-
-Use cases:
-- Dependency graphs where edges represent tasks
-- Data pipelines with explicit stage ordering
-- Workflow orchestration with explicit prerequisites
-
----
-
-## Design Goals
-
-GSL is designed to:
-
-* Round-trip cleanly
-* Produce a canonical internal representation
-* Merge repeated declarations
-* Preserve duplicate edges
-* Keep semantics simple and explicit
-
-It intentionally avoids:
-
-* Edge identity
-* Schema enforcement
-* Graph correctness constraints (acyclicity, tree validity, etc.)
-
----
-
-## Canonical Behaviour
-
-A compliant parser must ensure:
-
-```
-parse(serialize(parse(input))) == parse(input)
-```
-
-Grouped edges expand.
-Blocks become explicit `parent` attributes.
-Implicit sets are materialised.
-
----
-
-## Tools
-
-### gsl-diagram
-
-Convert GSL graphs to visual diagram formats (Mermaid, PlantUML).
-
-#### Installation
-
-```bash
-go build -o gsl-diagram ./cmd/gsl-diagram
-```
-
-#### Usage
-
-```bash
-gsl-diagram -i graph.gsl -f mermaid -t component
-gsl-diagram -i graph.gsl -f plantuml
-cat graph.gsl | gsl-diagram -f mermaid > diagram.mmd
-```
-
-**Supported formats:**
-- **Mermaid**: Component diagrams and flowcharts
-- **PlantUML**: Component diagrams
-
-See [cmd/gsl-diagram/README.md](cmd/gsl-diagram/README.md) for full documentation and examples.
-
----
-
-## GSL Query Language
-
-GSL includes a **query language** for selecting, filtering, and transforming graphs using a pipeline-based syntax.
-
-Queries enable you to:
-
-* Extract subgraphs by filtering nodes and edges
-* Traverse graph neighbourhoods (incoming, outgoing, bidirectional)
-* Assign and remove attributes
-* Merge (collapse) nodes
-* Combine multiple graphs using set operations (union, intersection, difference)
-
-### Query Concepts
-
-The core idea is a **pipeline of expressions** where each expression receives a graph and produces a new graph:
-
-```
-input graph → expr₁ → expr₂ → … → result graph
-```
-
-Expressions are separated by `|` and evaluated left-to-right, similar to a Unix shell pipeline but for graphs.
-
-### Pipeline Expressions
-
-| Expression | Syntax | Purpose |
+| Job | What it looks like | Full example |
 |---|---|---|
-| **Source** | `from *` or `from NAME` | Switch the working graph |
-| **Subgraph** | `subgraph <predicate> [traverse <dir> <depth>]` | Filter nodes or edges, optionally traverse |
-| **Make** | `make <path> = <value> where <predicate>` | Assign attributes to matching elements |
-| **Remove** | `remove edge where <predicate>` | Delete matching edges |
-| **Remove** | `remove node.<attr> where <predicate>` | Delete attributes from matching nodes |
-| **Remove** | `remove orphans` | Delete nodes with no incident edges |
-| **Collapse** | `collapse into <id> where <predicate>` | Merge matching nodes into one |
-| **Binding** | `(<pipeline>) as NAME` | Save pipeline result as a named graph |
-| **Algebra** | `NAME + NAME2`, `NAME & NAME2`, etc. | Combine named graphs (union, intersection, etc.) |
+| **Keep architecture docs truthful** | One canonical model; diagrams, team views and impact answers derived from it | [01 — one graph, many views](examples/flagships/01-service-many-views/README.md) |
+| **Reconstruct an undocumented system** | Record recovered facts with provenance (`source`, `confidence`) while you dig; risk lists become queries | [02 — architecture archaeology](examples/flagships/02-architecture-archaeology/README.md) |
+| **Model workflow prerequisites** | A deploy edge that depends on an approval edge; query "what does the gate unlock?" | [03 — release prerequisites](examples/flagships/03-release-prerequisites/README.md) |
+| **Model relationship networks of any kind** | Financial exposure, org structures, relationship graphs — the same operations, a different domain | [04 — financial relationships](examples/flagships/04-financial-network/README.md) |
 
-### Subgraph Filtering (Most Common)
+GSL is a *graph* language. It is not software-only: the same text format, query language and derived views describe financial networks, organisational structures and any other relationship-shaped knowledge. The domain note is this one — the graph is the asset, whatever domain it lives in.
 
-Extract subgraphs by matching nodes or edges:
+---
 
-#### Node Matching
+## Flagship examples
 
-```
-subgraph node.team == "payments"
-```
+Five complete, runnable narratives — **problem → model → query → derived view** — each with a two-minute test you can run. They are the best place to understand why GSL exists, end to end. See the [flagships index](examples/flagships/README.md).
 
-Selects all nodes where `team` equals `"payments"` and includes edges between matched nodes only.
-
-#### Edge Matching
-
-```
-subgraph edge.protocol == "grpc"
-```
-
-Selects all edges where `protocol` is `"grpc"` and includes their source and target nodes.
-
-#### Traversal
-
-After matching, optionally explore the graph neighbourhood:
-
-```
-subgraph node.team == "payments" traverse out 1
-subgraph node.team == "payments" traverse in all
-```
-
-**Directions:** `in`, `out`, `both`  
-**Depths:** `1`, `2`, `N` (hops), or `all` (unlimited)
-
-### Predicates
-
-Predicates filter by attributes, set membership, or existence:
-
-| Form | Example | Meaning |
+| Example | The question it answers | The distinctive idea |
 |---|---|---|
-| Equality | `node.team == "payments"` | Attribute equals value |
-| Inequality | `node.zone != "C"` | Attribute does not equal value |
-| Exists | `node.team exists` | Attribute is present |
-| Not exists | `edge.debug not exists` | Attribute is absent |
-| Set membership | `node in @critical` | Node belongs to set |
-| Set non-membership | `edge not in @deprecated` | Node does not belong to set |
-| Compound | `node.team == "payments" AND node.zone == "B"` | Both conditions true |
+| [01 — one graph, many views](examples/flagships/01-service-many-views/README.md) | "Retire this service — who breaks?" | One 20-service model, seven derived views (blast radius, team-level, critical reach, migration). |
+| [02 — architecture archaeology](examples/flagships/02-architecture-archaeology/README.md) | "We inherited an undocumented monolith" | The model carries provenance; risk lists are queries, not guesses. |
+| [03 — release prerequisites](examples/flagships/03-release-prerequisites/README.md) | "When can we promote?" | A relationship *between edges* — a promotion gated on an approval. Workflow as a graph. |
+| [04 — financial relationships](examples/flagships/04-financial-network/README.md) | "If the CCP fails, who is exposed?" | The same operations as 01, in a non-software domain. |
+| [05 — LLM-assisted modelling](examples/flagships/05-llm-assisted-modelling/README.md) | "Can an agent turn prose into a model?" | An honest experiment: parser + canonical diff + queries make agent output reviewable. |
 
-**Important:** Cannot mix `node.` and `edge.` in one predicate. Only `AND` is supported (no `OR`).
+[**01 — one graph, many views**](examples/flagships/01-service-many-views/README.md) is the hero example: a single `model.gsl` for a retail platform.
 
-### Transformation Examples
+![The full architecture, derived from one graph](examples/flagships/01-service-many-views/views/full.component.mmd)
 
-#### Example 1: Basic Filtering
-
-```
-subgraph node.team == "payments"
-```
-
-Result: All nodes from the payments team and edges between them.
-
-#### Example 2: Filtering + Cleanup
-
-```
-subgraph node.team == "payments" | remove orphans
-```
-
-Result: Payments team nodes with any orphaned nodes removed.
-
-#### Example 3: Traversal + Removal
-
-```
-subgraph node.team == "payments" traverse out 1 | remove edge where edge.protocol == "tcp"
-```
-
-Result: Payments team and their direct outbound neighbours, excluding TCP edges.
-
-#### Example 4: Node Collapse
-
-```
-subgraph node.zone == "A" | collapse into zone_a_cluster where node.team == "platform"
-```
-
-Result: All nodes in zone A, with platform team nodes merged into a single `zone_a_cluster` node.
-
-#### Example 5: Named Graphs + Set Operations
-
-```
-(subgraph node.team == "payments") as PAY
-| from *
-| (subgraph node.team == "identity") as ID
-| PAY + ID
-```
-
-Result: Union of payments team and identity team nodes.
-
-### Query Combinators (Graph Algebra)
-
-After binding named graphs, combine them:
-
-```
-GRAPH1 + GRAPH2    # Union: all nodes and edges from both
-GRAPH1 & GRAPH2    # Intersection: only shared elements
-GRAPH1 - GRAPH2    # Difference: in GRAPH1 but not GRAPH2
-GRAPH1 ^ GRAPH2    # Symmetric difference: in exactly one
-```
-
-When the same node appears in both graphs, attributes from the right-hand side overwrite conflicts.
-
-### More Examples
-
-For additional examples and detailed explanations, see:
-
-* [QUERY_TUTORIAL.md](QUERY_TUTORIAL.md) — Step-by-step learning guide  
-* [QUERY_SPEC.md](QUERY_SPEC.md) — Complete formal specification  
-* [query/](query/) — Go package documentation
+![The critical blast radius of retiring the legacy order service](examples/flagships/01-service-many-views/views/critical-blast.graph.mmd)
 
 ---
 
-### Go API Reference
+## Try it
 
-Parse and serialize queries programmatically:
-
-```go
-import "github.com/dnnrly/gsl-lang/query"
-
-// Parse a query string
-q, errs := query.ParseQuery(`subgraph node.team == "payments" | remove orphans`)
-
-// Serialize back to a query string
-queryStr := query.SerializeQuery(q)
-```
-
-**Functions:**
-
-| Function | Description |
-|---|---|
-| `query.ParseQuery(input string) (*Query, []error)` | Parse a GQL query string into an AST |
-| `query.SerializeQuery(q *Query) string` | Serialize a query AST back to a string |
-
-**AST Types:** `Query`, `Pipeline`, `StartStep`, `FlowStep`, `FilterStep`, `MinusStep`, `CombinatorExpr`, `FilterSpec` — see `query/` package for full definitions.
-
----
-
-## Using the Library
-
-The GSL library provides a Go API for parsing and manipulating GSL documents programmatically.
-
-### For LLMs and AI Agents
-
-If you are an LLM or AI agent that needs to work with GSL, see **[GSL_GUIDE.md](GSL_GUIDE.md)**.
-
-The GSL Guide is a self-contained reference that covers:
-- Complete GSL syntax with examples
-- Language semantics and design notes
-- Best practices and common gotchas
-
-You can copy the entire guide and use it as context for your tasks.
-
-### Programmatic Usage (Go)
+You need **Go 1.26 or newer** to install from source. The reference implementation has no build-time magic — standard compiler, single step.
 
 ```bash
-go get github.com/dnnrly/gsl-lang
+go install github.com/dnnrly/gsl-lang/cmd/gsl-query@latest
+go install github.com/dnnrly/gsl-lang/cmd/gsl-diagram@latest
 ```
 
-```go
-graph, warnings, err := gsl.Parse(bytes.NewReader(content))
-canonical := gsl.Serialize(graph)
+Prebuilt binaries for Linux, macOS and Windows are attached to the [GitHub releases](https://github.com/dnnrly/gsl-lang/releases) page (no Go required).
+
+### Thirty seconds with a real example
+
+Clone the repository (or copy the examples from it) and point the tools at a flagship model:
+
+```bash
+git clone https://github.com/dnnrly/gsl-lang
+cd gsl-lang/examples/flagships/01-service-many-views
+
+# 1. The graph, as durable text — canonicalised for stable git diffs
+gsl-query "" < model.gsl
+
+# 2. A derived view: "what breaks if we retire legacy-orders?"
+gsl-query '(subgraph node.id == "legacy_orders" traverse in all) as BLAST | from * | (subgraph node in @critical) as CRIT | BLAST & CRIT' < model.gsl
+
+# 3. A diagram of the full model (Mermaid component view)
+gsl-query 'from *' < model.gsl | gsl-diagram -f mermaid -t component
+
+# 4. PlantUML needs no separate install of a renderer — just another view
+gsl-query 'from *' < model.gsl | gsl-diagram -f plantuml
 ```
 
-For full API reference, code patterns, and algorithm implementations, see **[GO_REFERENCE.md](GO_REFERENCE.md)**.
+Every command outputs **canonical GSL or a diagram derived from it** — stable, reviewable, diffable. `gsl-diagram` supports Mermaid (component, graph, sequence) and PlantUML (component, sequence); see [cmd/gsl-diagram/README.md](cmd/gsl-diagram/README.md) for the full converter reference.
 
-For query language usage, see the [`query/`](query/) package.
+### The two-minute test
 
-### Important Notes
+The flagship examples are self-checked: every committed result is byte-compared against the real CLI on every test run.
 
-- **Parsing is lenient**: Warnings are non-fatal. Parse will succeed even if implicit sets are created or name collisions occur.
-- **Canonical form**: Serialized output may have different ordering than input but represents the same graph.
-- **Graph structure**: No validation of graph properties (acyclicity, tree validity, etc.) is performed.
-- **Attributes are untyped**: All attributes are stored as `interface{}`. Type assertion is needed for safety.
-- **Duplicate edges preserved**: The graph preserves multiple edges between the same nodes (multiset).
+```bash
+go test ./examples -run Flagship -v
+```
 
 ---
 
-## Reference
+## GSL compared with alternatives
 
-The formal language specification is defined in:
+GSL is not "better" than these — it is *different*: model-first, render-later. Choose GSL when the graph is an asset you will version, query and reshape. Choose the alternative when it is the fastest path to the thing you need.
 
-* [the specification](SPEC.md)
-* [the grammar](GRAMMAR.md)
-* [examples](examples/)
+| Alternative | Choose *it* instead of GSL when… | Choose GSL instead when… |
+|---|---|---|
+| **Mermaid** | You want a picture in Markdown/GitHub with zero tooling, or a one-off throwaway diagram | The structure will be queried, reused or re-derived; you want the diagram *and* queryable data from one source |
+| **D2** | Diagram *appearance/layout* is the success criterion and you want premium auto-layout | You need the structure as queryable data and layout is a derived view, not the product |
+| **Graphviz / DOT** | You need serious auto-layout algorithms (dot/neato) or heavy rendering control | You want canonical ordering, sets, edge-dependency semantics, deterministic diffs, and a query layer DOT lacks |
+| **JSON / YAML** | You need maximum interop with generic tools; your structure is small or relational, not graph-shaped | Your data is graph-shaped and you want graph semantics, sets, edge dependencies and querying without writing a custom model |
+| **GraphML / GraphSON** | You must exchange graphs between specific tools/ecosystems | You need a human-authored, versionable, queryable graph you control end to end |
+| **Graph databases (Neo4j, …)** | You need persistence, indexing, live transactions or thousands-scale querying | The graph lives in a repository as code; queries are file-level deterministic transformations |
+| **Structurizr / C4 DSL** | You have committed to C4/Structurizr as your architecture standard | You model graphs beyond C4 (workflows, task dependencies, financial networks) or want a C4-agnostic format |
+
+The converters mean these compose rather than compete: a GSL graph can *become* a Mermaid or PlantUML view. The composition is the point.
+
+---
+
+## Learn GSL
+
+Ordered for learning, not for reference completeness:
+
+1. **[Flagship examples](examples/flagships/README.md)** — why GSL exists, problem-first.
+2. **[GSL Guide](GSL_GUIDE.md)** — the language in one self-contained document (syntax, semantics, design notes).
+3. **[Query tutorial](QUERY_TUTORIAL.md)** — a step-by-step learning path for GQL, the query language.
+4. **[GQL Guide](GQL_GUIDE.md)** — GQL as a self-contained reference.
+5. **[Go reference](GO_REFERENCE.md)** — the Go API and algorithm patterns, for programmatic use.
+6. **[Examples](examples/README.md)** — a catalog of graphs demonstrating individual language features.
+
+Targeted at AI and LLM tooling: start at **[llms.txt](llms.txt)** for the agent-oriented index.
+
+---
+
+## Specification
+
+GSL is defined by a normative, RFC 2119-style specification, not by the implementation:
+
+- **[SPEC.md](SPEC.md)** — the authoritative language specification (v1.0.0 Draft): grammar, semantics, canonicalisation guarantee.
+- **[GRAMMAR.md](GRAMMAR.md)** — the formal grammar, for implementing a parser.
+- **[QUERY_SPEC.md](QUERY_SPEC.md)** — the query language specification (v0.4.0 Revised Draft).
+- **[QUERY_GRAMMAR.md](QUERY_GRAMMAR.md)** — the formal GQL grammar.
+
+Every `gsl` and `gql` code block in this repository's markdown is automatically parsed on test — the documentation cannot drift from the language it describes.
+
+---
+
+## Implementations
+
+- **Go library** — the reference implementation; a hand-written parser with a canonical-form guarantee (`parse(serialize(parse(x))) == parse(x)`), standard-library core only. `go get github.com/dnnrly/gsl-lang`.
+- **`gsl-query`** — run GQL pipelines (subgraph, traverse, make, remove, collapse, graph algebra) against a GSL graph; emits canonical GSL.
+- **`gsl-diagram`** — render any GSL document (or derived view) to Mermaid or PlantUML.
+- **`gsl-lsp`** — a language server for GSL and GQL (completion, hover, diagnostics, formatting). Source lives in [`lsp/`](lsp/); a preliminary VS Code extension is in [`editors/vscode/`](editors/vscode/).
+
+The CLI tools are Unix-composable: GSL in, canonical GSL or a diagram out, via stdin/stdout.
+
+---
+
+## Project status
+
+**Young but extraordinarily specified.** The language is small and disciplined; this repository is its canonical home, and its claims are enforced by tests.
+
+| Element | Maturity | Basis |
+|---|---|---|
+| **Language & specification** | High | v1.0.0 Draft, RFC 2119 style, canonicalisation guarantee enforced by round-trip and fuzz tests |
+| **Go implementation** | High | Standard-library core, 68.6% coverage, 9 fuzz targets, acceptance tests |
+| **Query language (GQL)** | Medium | Large, well-tested surface — but a *Revised Draft* spec, unproven with real users |
+| **Tooling** | Medium | `gsl-query` and `gsl-diagram` work and are documented; the LSP and VS Code extension are early |
+| **Ecosystem** | Low | One reference implementation, no third-party integrations yet |
+
+What GSL deliberately is not — and why that is by design:
+
+- **Not a layout engine.** Diagram output exists; appearance is a view, not the product. Render through Mermaid, PlantUML and others.
+- **Not a schema or validation framework.** Graphs are accepted as written, with non-fatal warnings. Staying small is the point.
+- **Not a database.** No persistence, indexing or live multi-user querying. Queries are file-in, file-out transformations.
+- **Not a general data format.** GSL is for graph-shaped knowledge only.
+
+The closest thing to a gotcha: GQL is the differentiator, and it is honestly labelled a Revised Draft. The flagship examples only use behaviour covered by its tested fixtures.
+
+---
+
+## Contributing
+
+The parser is hand-written, the core is standard-library-only, and the tests run against the language itself. Contribution guidance and project conventions live in [AGENTS.md](AGENTS.md). The [code of conduct](CODE_OF_CONDUCT.md) applies. GPL-3.0 licensed.
