@@ -115,7 +115,7 @@ The review turned open questions into `gsl-query` commands:
 gsl-query '(subgraph node in @deprecated traverse in all) as DEP | from DEP' < model.gsl
 ```
 
-![Deprecation impact](views/deprecation-impact.graph.mmd)
+![Deprecation impact](views/deprecation-impact.graph.svg)
 
 Only `returns_system` still touches the deprecated parts. Concise.
 Actionable. The reviewer asked; the model answered.
@@ -126,7 +126,7 @@ Actionable. The reviewer asked; the model answered.
 gsl-query 'subgraph edge.instrument == "settlement"' < model.gsl
 ```
 
-![Settlement paths](views/settlement-paths.graph.mmd)
+![Settlement paths](views/settlement-paths.graph.svg)
 
 Yes — `promo_service` writes `reward_ledger` directly **and** publishes
 `event_bus` settlement events. Two parallel edges, one query. The model
@@ -138,7 +138,7 @@ made the risk structurally visible.
 gsl-query 'subgraph edge.confidence == "low"' < model.gsl
 ```
 
-![Low confidence facts](views/low-confidence.graph.mmd)
+![Low confidence facts](views/low-confidence.graph.svg)
 
 The `legacy_promo_calc -> catalog_cache` edge — "Derek would know". Put
 that on the verification list.

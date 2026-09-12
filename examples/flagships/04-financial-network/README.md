@@ -24,7 +24,7 @@ semantics for `member`, `clears`, `lending`, `direct`, `settles`:
 - interbank lending forms a **cycle** (alpha → beta → gamma → delta → alpha)
 - derivatives exposure carries a `notional` value
 
-![Full network](views/full.graph.mmd)
+![Full network](views/full.graph.svg)
 
 Everything you see in this example is derived from `model.gsl`.
 
@@ -39,7 +39,7 @@ gsl-query '(subgraph node.id == "ccp" traverse in all) as BLAST | from BLAST' < 
 | gsl-diagram -f mermaid -t graph
 ```
 
-![CCP blast radius](views/ccp-blast-radius.graph.mmd)
+![CCP blast radius](views/ccp-blast-radius.graph.svg)
 
 The transitive dependency cone — every institution that clears through the
 CCP *plus* everyone reachable through the interbank web. Note what the query
@@ -57,7 +57,7 @@ gsl-query '(subgraph node.id == "ccp" traverse in all) as BLAST | from * | (subg
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Critical exposure](views/critical-exposed.graph.mmd)
+![Critical exposure](views/critical-exposed.graph.svg)
 
 `alpha_bank` is exposed to the CCP and is itself `@critical`. A one-line
 pipeline derives the cross-product of two structural facts. No spreadsheet,
@@ -74,7 +74,7 @@ gsl-query 'subgraph edge.instrument == "derivatives"' < model.gsl \
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Derivatives cleared](views/derivatives-cleared.graph.mmd)
+![Derivatives cleared](views/derivatives-cleared.graph.svg)
 
 Edge attributes select by *instrument* — the predicate is on the
 relationship, not the institution.
@@ -90,7 +90,7 @@ gsl-query 'collapse into banks where node.type == "bank" | collapse into rail_sy
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Type-level view](views/type-collapse.graph.mmd)
+![Type-level view](views/type-collapse.graph.svg)
 
 Ten institutions collapse to a handful of typed participants. Parallel edges
 are preserved (banks use `rail_systems` as members *and* one has direct
@@ -107,7 +107,7 @@ gsl-query 'subgraph edge.instrument == "lending"' < model.gsl \
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Interbank lending web](views/interbank-lending.graph.mmd)
+![Interbank lending web](views/interbank-lending.graph.svg)
 
 A genuine *cycle* — the graph-shaped scenario spreadsheet software handles
 badly. GSL models, queries, and diffs it as naturally as anything else.

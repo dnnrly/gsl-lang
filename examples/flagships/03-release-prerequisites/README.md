@@ -64,7 +64,7 @@ PROMOTE: registry -> canary [stage="promote", parent=GATE] {
 **edges**. In mainstream diagram syntax this would be a hand-drawn arrow
 only a human can read; here it is a first-class relation you can query.
 
-![Full pipeline](views/full.graph.mmd)
+![Full pipeline](views/full.graph.svg)
 
 ---
 
@@ -74,7 +74,7 @@ only a human can read; here it is a first-class relation you can query.
 gsl-query 'subgraph edge parent exists' < model.gsl
 ```
 
-![Edges with prerequisites](views/edges-with-prerequisites.graph.mmd)
+![Edges with prerequisites](views/edges-with-prerequisites.graph.svg)
 
 Nine of the ten steps depend on a previous step (all but `checkout` and
 applying config). The nested canonical output shows the whole dependency
@@ -94,7 +94,7 @@ gsl-query 'subgraph edge depends on edge.stage == "gate" scope' < model.gsl
 the gate step; `scope` expands it to all descendants (everything the
 promotion unlocks):
 
-![Gated deploy spine](views/gated-deploy-spine.graph.mmd)
+![Gated deploy spine](views/gated-deploy-spine.graph.svg)
 
 The answer is exactly the deploy spine: `PROMOTE → CANARY → SMOKE`. If the
 gate is red, none of these run.
@@ -110,7 +110,7 @@ gsl-query 'subgraph edge.stage == "gate" scope' < model.gsl
 `scope` expands a matched edge to all its descendants — equivalent to
 `traverse down all`:
 
-![Approval impact](views/approval-impact.graph.mmd)
+![Approval impact](views/approval-impact.graph.svg)
 
 Note the canonical nesting: `CONFIG` appears because serialization keeps
 the structural context of its child `GATE`. The impact zone is computed,

@@ -49,7 +49,7 @@ The *whole* graph, rendered as a component diagram:
 gsl-query 'from *' < model.gsl | gsl-diagram -f mermaid -t component
 ```
 
-![Full component view](views/full.component.mmd)
+![Full component view](views/full.component.svg)
 
 And the same graph as a Mermaid directed graph:
 
@@ -57,7 +57,7 @@ And the same graph as a Mermaid directed graph:
 gsl-query 'from *' < model.gsl | gsl-diagram -f mermaid -t graph
 ```
 
-![Full graph view](views/full.graph.mmd)
+![Full graph view](views/full.graph.svg)
 
 ---
 
@@ -73,7 +73,7 @@ gsl-query '(subgraph node.id == "legacy-orders" traverse in all) as BLAST | from
 The full transitive dependency cone — every node that transitively
 depends on `legacy-orders`:
 
-![Blast radius](views/blast-radius.graph.mmd)
+![Blast radius](views/blast-radius.graph.svg)
 
 The **critical subset** — just the `@critical` nodes that break:
 
@@ -82,7 +82,7 @@ gsl-query '(subgraph node.id == "legacy-orders" traverse in all) as BLAST | from
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Critical blast radius](views/critical-blast.graph.mmd)
+![Critical blast radius](views/critical-blast.graph.svg)
 
 Retiring legacy-orders breaks `gateway → orders` — two critical
 services.  That is a runbook-worthy fact; you derived it, not guessed it.
@@ -98,7 +98,7 @@ gsl-query 'subgraph node.team == "payments" traverse out 1' < model.gsl \
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Payments team + dependents](views/payments-team.graph.mmd)
+![Payments team + dependents](views/payments-team.graph.svg)
 
 Payments and fraud (both `team="payments"`) plus the databases and card
 network they call.  A team-scoped diagram generated from the canonical
@@ -115,7 +115,7 @@ gsl-query 'collapse into team_gateway where node.team == "gateway" | collapse in
 | gsl-diagram -f mermaid -t component
 ```
 
-![Team-level graph](views/team-view.component.mmd)
+![Team-level graph](views/team-view.component.svg)
 
 Every 20-service node collapses into a single "team" node.  The resulting
 graph is what leadership wants; it was one query away from the detailed
@@ -138,7 +138,7 @@ gsl-query '(subgraph node in @deprecated traverse in all) as DEP | from DEP' < m
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Deprecated dependencies](views/deprecated.graph.mmd)
+![Deprecated dependencies](views/deprecated.graph.svg)
 
 Everything that transitively depends on the `@deprecated` cohort:
 web/mobile (via redis-cache), gateway (via orders → legacy),

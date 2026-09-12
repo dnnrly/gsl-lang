@@ -43,6 +43,9 @@ gsl-query -f 01-service-many-views/q4-payments-team.gql -i 01-service-many-views
   the commands in the README but the Mermaid/PlantUML converters iterate
   Go maps, so line order is not stable across runs. **The canonical GSL
   result files are the deterministic, tested contract.**
+- Committed `.svg` renders of the diagrams appear in the READMEs so the
+  pictures render on GitHub; they were produced once from the `.mmd`
+  sources and are illustrative like the source, not a tested contract.
 - Models avoid invented edges and record non-evidence: if a fact is weak,
   carry `confidence="low"` rather than deleting it.
 - Node counts stay in the 12–20 range so each example remains a two-minute

@@ -35,7 +35,7 @@ Now ask the graph a question: *"If we retire `orders`, which `@critical` parts a
 (subgraph node.id == "orders" traverse in all) as BLAST | from * | (subgraph node in @critical) as CRIT | BLAST & CRIT
 ```
 
-The answer comes back as canonical, diffable GSL:
+Read the pipeline left to right: `BLAST` grabs everything that transitively depends on `orders`; `CRIT` isolates the `@critical` nodes; the `&` keeps only what appears in both. The answer comes back as canonical, diffable GSL:
 
 ```gsl
 set critical
@@ -105,9 +105,9 @@ Five complete, runnable narratives — **problem → model → query → derived
 
 [**01 — one graph, many views**](examples/flagships/01-service-many-views/README.md) is the hero example: a single `model.gsl` for a retail platform.
 
-![The full architecture, derived from one graph](examples/flagships/01-service-many-views/views/full.component.mmd)
+![The full architecture, derived from one graph](examples/flagships/01-service-many-views/views/full.component.svg)
 
-![The critical blast radius of retiring the legacy order service](examples/flagships/01-service-many-views/views/critical-blast.graph.mmd)
+![The critical blast radius of retiring the legacy order service](examples/flagships/01-service-many-views/views/critical-blast.graph.svg)
 
 ---
 
@@ -139,11 +139,11 @@ gsl-query '(subgraph node.id == "legacy_orders" traverse in all) as BLAST | from
 # 3. A diagram of the full model (Mermaid component view)
 gsl-query 'from *' < model.gsl | gsl-diagram -f mermaid -t component
 
-# 4. PlantUML needs no separate install of a renderer — just another view
+# 4. The same graph as PlantUML source — a second diagram dialect
 gsl-query 'from *' < model.gsl | gsl-diagram -f plantuml
 ```
 
-Every command outputs **canonical GSL or a diagram derived from it** — stable, reviewable, diffable. `gsl-diagram` supports Mermaid (component, graph, sequence) and PlantUML (component, sequence); see [cmd/gsl-diagram/README.md](cmd/gsl-diagram/README.md) for the full converter reference.
+Every command outputs **canonical GSL or diagram source** (`.mmd`/`.puml`) — stable, reviewable, diffable. `gsl-diagram` supports Mermaid (component, graph, sequence) and PlantUML (component, sequence); see [cmd/gsl-diagram/README.md](cmd/gsl-diagram/README.md) for the full converter reference. The output is diagram *source*; pipe it to your usual renderer (`mermaid-cli`, `plantuml`) when you want a picture.
 
 ### The two-minute test
 
@@ -220,7 +220,7 @@ The CLI tools are Unix-composable: GSL in, canonical GSL or a diagram out, via s
 | Element | Maturity | Basis |
 |---|---|---|
 | **Language & specification** | High | v1.0.0 Draft, RFC 2119 style, canonicalisation guarantee enforced by round-trip and fuzz tests |
-| **Go implementation** | High | Standard-library core, 68.6% coverage, 9 fuzz targets, acceptance tests |
+| **Go implementation** | High | Standard-library core, 68.6% statement coverage (measured by `make test`), 9 fuzz targets, acceptance tests |
 | **Query language (GQL)** | Medium | Large, well-tested surface — but a *Revised Draft* spec, unproven with real users |
 | **Tooling** | Medium | `gsl-query` and `gsl-diagram` work and are documented; the LSP and VS Code extension are early |
 | **Ecosystem** | Low | One reference implementation, no third-party integrations yet |

@@ -31,7 +31,7 @@ views.
   - `@suspected` — provisional, awaiting evidence
   - `@critical` — believed load-bearing
 
-![Full recovered structure](views/full.graph.mmd)
+![Full recovered structure](views/full.graph.svg)
 
 ---
 
@@ -44,7 +44,7 @@ gsl-query 'subgraph node in @confirmed | remove edge where edge.confidence != "h
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Confirmed skeleton](views/confirmed-skeleton.graph.mmd)
+![Confirmed skeleton](views/confirmed-skeleton.graph.svg)
 
 Only components we're sure exist (`@confirmed`), connected only by
 directly-observed edges (`confidence == "high"`), with nodes orphaned by
@@ -66,7 +66,7 @@ gsl-query '(subgraph node in @critical traverse in all) as CRITCHAIN | from CRIT
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Suspected-but-load-bearing](views/suspected-feeding-critical.graph.mmd)
+![Suspected-but-load-bearing](views/suspected-feeding-critical.graph.svg)
 
 Start from the `@critical` components, walk **in** (who feeds them), then
 keep only the elements still marked `@suspected`. The answer:
@@ -90,7 +90,7 @@ gsl-query 'subgraph node.id == "legacy_monolith" traverse both 1' < model.gsl \
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Monolith neighbourhood](views/monolith-neighbourhood.graph.mmd)
+![Monolith neighbourhood](views/monolith-neighbourhood.graph.svg)
 
 Both directions — things the monolith calls *and* things that call it.
 For an archaeology target this is the "live wires" view: anything this
@@ -107,7 +107,7 @@ gsl-query 'subgraph node.id == "worker" traverse out all' < model.gsl \
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Worker dependency tree](views/worker-drives.graph.mmd)
+![Worker dependency tree](views/worker-drives.graph.svg)
 
 The worker writes to the live database, offloads files to `ftp_outbox`,
 archives to object storage, and (allegedly) emails. This is the
@@ -124,7 +124,7 @@ gsl-query 'subgraph node.source == "interview"' < model.gsl \
 | gsl-diagram -f mermaid -t graph
 ```
 
-![Interview-only claims](views/interview-only.graph.mmd)
+![Interview-only claims](views/interview-only.graph.svg)
 
 `emailer` and `reporting_job` exist only in someone's memory. If you're
 about to redesign around them, verify them first. One predicate, one
