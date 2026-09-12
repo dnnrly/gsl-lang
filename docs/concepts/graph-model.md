@@ -1,7 +1,7 @@
 # Concept: Graphs and Nodes
 
 **Audience:** everyone. **Prerequisite:** [Getting Started](../getting-started/README.md).
-**Next step:** [Edges as a multiset](edges.md).
+**Next step:** [Edges — relationships between nodes](edges.md).
 
 A GSL file describes a **graph**: a collection of **nodes** connected by **directed edges**. That's the entire data model, and it's deliberately small.
 
@@ -27,13 +27,15 @@ There are two basic statements to notice:
 
 That is the entire data model. The rest of GSL's power comes from what you can **do** with this tiny structure: query it, filter it, derive diagrams from it, and merge it cleanly because it is canonical text.
 
+> **Background:** this is what graph theory calls a *graph* — a collection of **vertices** (we call them *nodes*) connected by **edges**. If you have drawn a network topology or an architecture diagram, you already know the shape; there is no deeper theory you need to use GSL. ([Graph — discrete mathematics](https://en.wikipedia.org/wiki/Graph_(discrete_mathematics)))
+
 ## Nodes are the subjects
 
 Nodes are *things*: services, people, databases, components, decisions, permissions. Anything your graph's story is about. A node can carry:
 
 - **attributes** — untyped `key="value"` pairs describing it (see [Attributes](attributes.md)),
 - **set membership** — `@critical` marks it as part of a named set (see [Named sets](sets.md)),
-- **a parent scope** — nesting it inside another node (see [Parents and scopes](parents-and-scopes.md)).
+- **a parent scope** — nesting it inside another node (see [Structure and nesting](structure-and-nesting.md)).
 
 Here the actual syntax is enough — a node is:
 
@@ -62,7 +64,7 @@ Honest limits, all of which are *features*:
 - **No layout or rendering.** gsl-diagram asks the target format to place things. The graph knows *what* is connected, not *where* it goes.
 - **No home for your data model.** Graphs are graphs: if there is a *type system* in your organisation's sense, that is your application's job.
 
-These limits are what keep the format **fat-free**: canonical, diffable, mergeable — the properties that make text formats useful as source-of-truth assets.
+These limits are what keep the format small: canonical, diffable, mergeable — the properties that make text formats useful as source-of-truth assets.
 
 ## The shapes this supports
 
@@ -70,4 +72,4 @@ Because the model is just nodes and directed edges, one language covers many pro
 
 ---
 
-**Next:** [Edges as a multiset](edges.md) — the detail that makes a graph a *graph*, and how duplicate edges keep your facts intact.
+**Next:** [Edges — relationships between nodes](edges.md) — the relationship that makes a graph a *graph*, and how duplicate relationships can be distinct facts.

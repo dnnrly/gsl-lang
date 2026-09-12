@@ -22,8 +22,9 @@
 - [README.md](README.md): User-facing overview, quick start, and usage examples
 - [docs/README.md](docs/README.md): Human learning journey — Getting Started, Concepts, Tutorials, Cookbook (the route for beginner users)
 - [docs/getting-started/README.md](docs/getting-started/README.md): Install tools and run the two-minute test
-- [docs/concepts](docs/concepts/): The graph model in plain language — seven one-concept pages (graph-model, edges, sets, attributes, parents-and-scopes, parsing-and-merging, canonical-form)
-- [docs/tutorials/README.md](docs/tutorials/README.md): Flagship examples and the GQL learning path
+- [docs/concepts](docs/concepts/): The graph model in plain language — nine one-concept pages (graph-model, edges, attributes, sets, structure-and-nesting, edge-dependencies, queries-and-views, parsing-and-merging, canonical-form)
+- [docs/tutorials/README.md](docs/tutorials/README.md): Modelling with GSL, the flagship examples, and the GQL learning path
+- [docs/tutorials/modelling-with-gsl.md](docs/tutorials/modelling-with-gsl.md): How to decide what belongs in a model — node, edge, attribute, set, nesting, edge dependency
 - [docs/cookbook/README.md](docs/cookbook/README.md): Short recipes — retire a service, team views, CI rendering, release gates
 - [AGENTS.md](AGENTS.md): Development guide for AI agents contributing to this repo
 

@@ -1,9 +1,9 @@
 # Concept: Untyped Attributes
 
-**Audience:** everyone. **Prerequisite:** [Named sets](sets.md).
-**Next step:** [Parents, scopes and edge dependencies](parents-and-scopes.md).
+**Audience:** everyone. **Prerequisite:** [Edges — relationships between nodes](edges.md).
+**Next step:** [Named sets](sets.md).
 
-Nodes, sets and edges all carry **attributes** — `key="value"` pairs that describe them. Attributes are deliberately **untyped**: GSL stores a small vocabulary of values (strings, numbers, booleans, identifiers) and leaves interpretation to you.
+Attributes attach additional information to graph elements — nodes, edges and sets all carry **`key="value"` pairs** that describe them. Attributes are deliberately **untyped**: GSL stores a small vocabulary of values (strings, numbers, booleans, identifiers) and leaves interpretation to you.
 
 ## The surface syntax
 
@@ -30,12 +30,14 @@ checkout->orders [retries="3", timeout_ms=500] @async
 
 ## The honest caveat
 
-Because values are untyped, comparison is **string-ish by default**: a predicate must agree with how the value was written. In Go, reading `node.Attributes["replicas"]` returns an `interface{}` that you **type-assert** (`node.GetInt("replicas", 0)` exists for convenience) — see the [Go reference](../../GO_REFERENCE.md#go-api-reference). This is the price of no-type-migrations, and it is paid once, at the boundary: model in text, interpret where it matters.
+Because values are untyped, comparison is **string-ish by default**: a predicate must agree with how the value was written. `replicas="4"` is a different value from `replicas=4`, and queries treat them differently. This is the price of no-type-migrations, and it is paid once, at the boundary: model in text, interpret where it matters.
+
+> **For the Go implementation:** reading an attribute returns an untyped value that you type-assert, with convenient accessors for the common cases — see the [Go reference](../../GO_REFERENCE.md#go-api-reference). That is an implementation detail, not part of the mental model.
 
 ## One reserved key
 
-`parent` is special — it creates structure. See [Parents, scopes and edge dependencies](parents-and-scopes.md) next.
+`parent` is special — it creates structure. See [Structure and nesting](structure-and-nesting.md) next.
 
 ---
 
-**Next:** [Parents, scopes and edge dependencies](parents-and-scopes.md) — where attributes become structure, and edges depend on edges.
+**Next:** [Named sets](sets.md) — grouping nodes and edges into queryable categories.

@@ -8,7 +8,7 @@ A step-by-step guide to understanding GQL — the pipeline-oriented query and tr
 
 ## Prerequisites
 
-You should be familiar with GSL graph definitions: nodes, edges, attributes, and sets. If not, read `README.md` and `SPEC.md` first.
+You should be familiar with GSL graph definitions: nodes, edges, attributes, and sets. If not, follow the human [learning journey](docs/README.md) first — [Getting Started](docs/getting-started/README.md) and the [Concepts](docs/concepts/graph-model.md) pages are enough to start Step 1.
 
 Throughout this guide we'll use the following example graph:
 
@@ -252,6 +252,8 @@ subgraph edge.protocol == "http" traverse down all
 
 - *"What does the payments team depend on?"* → `subgraph node.team == "payments" traverse out 1`
 - *"What depends on the database?"* → `subgraph node.team == "platform" traverse in all`
+
+> **Background:** walking from element to element along the edges is what graph theory calls [graph traversal](https://en.wikipedia.org/wiki/Graph_traversal). GQL's version is deliberately simple — start at the matched elements and follow edges for a bounded number of hops in a given direction — so you don't need any of the classic traversal algorithms to use it. What matters for GSL is the three ideas above: follow edges, pick a direction, pick how far.
 
 ---
 

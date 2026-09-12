@@ -6,6 +6,8 @@
 
 Short, copy-pasteable jobs: the problem, a small model, the query, the answer, and a pointer to the flagship example doing it at real scale. Every recipe is **self-contained** — save the suggested file, run the commands, get the answer shown here.
 
+The first four recipes use only the core language and attributes, so they are reachable right after [Getting Started](../getting-started/README.md) — the Cookbook is not a goal you work up to, it is a set of starting points. Recipe 6 (edge dependencies) is the one that assumes the [concepts on scopes](../concepts/edge-dependencies.md).
+
 ## How to read a recipe
 
 1. **Save the model** exactly as shown (e.g. `model.gsl`).

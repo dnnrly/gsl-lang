@@ -11,6 +11,10 @@ By the end of this page you will have:
 - rendered a diagram derived from that graph,
 - and a pointer to the concepts that explain *what you just did*.
 
+> **Do I need to know graph theory?**
+>
+> No. If you've worked with diagrams, dependencies, networks or relationships between things, you already have most of the intuition you need. GSL borrows a little terminology from graph theory — *graph*, *node*, *edge* — and we explain each term when it becomes relevant, with optional background links when a wider theory exists. Nothing here requires prior mathematical study.
+
 ---
 
 ## 1. Install the tools
@@ -104,7 +108,65 @@ gateway->orders [protocol="http"]
 orders->orders_db [protocol="sql"]
 ```
 
-Or the blast-radius question — "if `orders` goes away, which `@critical` nodes depend on it?":
+That is a [subgraph](../concepts/queries-and-views.md): select nodes by a predicate, keep the edges *between* them, get back a new canonical graph.
+
+#### Select by a fact
+
+The same form works on any attribute — not just set membership. "What belongs to the payments team?"
+
+```bash
+gsl-query 'subgraph node.team == "payments"' < model.gsl
+```
+
+```gsl
+set critical
+
+node payments [team="payments"]
+```
+
+Attributes are data, so they select as easily as sets do.
+
+#### Follow the relationships
+
+Say `orders` itself is the question: "what does it call?" Traversal expands a subgraph along edges:
+
+```bash
+gsl-query 'subgraph node.id == "orders" traverse out 1' < model.gsl
+```
+
+```gsl
+set critical
+
+node orders [team="orders"] @critical
+node payments [team="payments"]
+node users [team="identity"]
+node orders_db [team="platform"] @critical
+
+orders->payments [protocol="grpc"]
+orders->users [protocol="grpc"]
+orders->orders_db [protocol="sql"]
+```
+
+`traverse out` follows edges *away from* the matched node. Flip the direction — what *depends on* `orders`?
+
+```bash
+gsl-query 'subgraph node.id == "orders" traverse in 1' < model.gsl
+```
+
+```gsl
+set critical
+
+node gateway [team="gateway"] @critical
+node orders [team="orders"] @critical
+
+gateway->orders [protocol="http"]
+```
+
+The same stored edges, walked either way — that is how "what depends on X?" becomes one query.
+
+#### Combine them into a real question
+
+Now the question the whole loop is for: *"if `orders` goes away, which `@critical` nodes depend on it?"* — a blast radius, assembled from exactly the pieces above, plus two new ones:
 
 ```bash
 gsl-query '(subgraph node.id == "orders" traverse in all) as BLAST | from * | (subgraph node in @critical) as CRIT | BLAST & CRIT' < model.gsl
@@ -119,7 +181,7 @@ node orders [team="orders"] @critical
 gateway->orders [protocol="http"]
 ```
 
-Reading the query left to right: *find everything that (transitively) depends on `orders`*, *take the `@critical` nodes*, *intersect them*. Three short concepts — subgraph, traversal, intersection — give you a structural answer you would otherwise eyeball.
+Reading left to right: *find everything that (transitively) depends on `orders`; name that graph `BLAST`; go back to the full model and pick out the `@critical` nodes as `CRIT`; keep only what is in both.* Subgraph and traversal you have just seen; *naming a graph* with `as` and *intersecting* graphs with `&` are Step 9 of the [query tutorial](../../QUERY_TUTORIAL.md). Even if you don't memorise the pipeline yet, the pieces it is made of are no longer mysterious.
 
 > **Tip:** run `gsl-query "" < model.gsl` — the empty query canonises the graph. It strips comments, sorts what the specification sorts, and emits stable deterministic GSL that produces small, reviewable git diffs.
 
@@ -146,14 +208,14 @@ You just touched the whole mental model without realising it:
 |---|---|---|
 | `node … [team="…"]` | an untyped attribute on a node | [Attributes](../concepts/attributes.md) |
 | `set critical` / `@critical` | a named set and membership syntax | [Named sets](../concepts/sets.md) |
-| `gateway -> orders` | a directed edge | [Edges as a multiset](../concepts/edges.md) |
-| `subgraph` / `traverse` | selecting and expanding a subgraph | [Graphs and nodes](../concepts/graph-model.md) |
+| `gateway -> orders` | a directed edge | [Edges — relationships between nodes](../concepts/edges.md) |
+| `subgraph` / `traverse` | selecting and expanding a subgraph | [Queries and derived views](../concepts/queries-and-views.md) |
 | `(…) as BLAST` / `&` | named graphs and graph algebra | [Query tutorial](../../QUERY_TUTORIAL.md) |
 | `gsl-query ""` | canonicalisation | [Canonical form](../concepts/canonical-form.md) |
-| the canonical result | "one graph, many views" in miniature | [Graphs and nodes](../concepts/graph-model.md) |
+| the canonical result | "one graph, many views" in miniature | [Queries and derived views](../concepts/queries-and-views.md) |
 
-Guessing at `@critical` membership or drawing a blast-radius arrow by hand is exactly the rot GSL exists to remove: the model holds the facts, and the views — diagrams, subsets, reports — are re-derived from it.
+Guessing at `@critical` membership or drawing a blast-radius arrow by hand is exactly the problem GSL addresses: the model holds the facts, and the views — diagrams, subsets, reports — are re-derived from it.
 
 ---
 
-**Next up:** [Concepts — the graph model](../concepts/graph-model.md) explains what a graph *is* in GSL, in plain language and without any grammar. When you want to go deeper into queries, the [query tutorial](../../QUERY_TUTORIAL.md) is the step-by-step GQL learning path.
+**Next up:** [Concepts — the graph model](../concepts/graph-model.md) explains what a graph *is* in GSL, in plain language and without any grammar. From there, [Modelling with GSL](../tutorials/modelling-with-gsl.md) helps you decide what actually goes into a model, the [query tutorial](../../QUERY_TUTORIAL.md) is the step-by-step GQL learning path, and the [cookbook](../cookbook/README.md) has small jobs with exact answers — its first four recipes use only what you have seen here.

@@ -1,9 +1,11 @@
 # Concept: Named Sets
 
-**Audience:** everyone. **Prerequisite:** [Graphs and nodes](graph-model.md).
-**Next step:** [Untyped attributes](attributes.md).
+**Audience:** everyone. **Prerequisite:** [Untyped attributes](attributes.md).
+**Next step:** [Structure and nesting](structure-and-nesting.md).
 
 A **set** is a named collection of nodes (and edges). It is GSL's grouping mechanism — and because membership is stored as first-class data, a set is something you can **query**, not just something you read.
+
+> **A set is not a type.** A set classifies and groups graph elements; it does not impose a type hierarchy. `@critical` does not say what a node *is*, and a node can be a member of any number of sets. Membership is data — it can change, and the change is a reviewable diff.
 
 ## Declaring a set and membership
 
@@ -48,4 +50,4 @@ A code review of a GSL change is literally a diff of set membership — "this de
 
 ---
 
-**Next:** [Untyped attributes](attributes.md) — the tiny data model behind `key="value"`.
+**Next:** [Structure and nesting](structure-and-nesting.md) — containment, and the parent relationship.

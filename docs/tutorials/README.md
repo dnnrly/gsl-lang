@@ -4,7 +4,11 @@
 **Prerequisite:** [Concepts](../concepts/graph-model.md) (or at least [Getting Started](../getting-started/README.md)).
 **Next step:** [Cookbook recipes](../cookbook/README.md) — or start the [query tutorial](../../QUERY_TUTORIAL.md) now.
 
-Two learning paths, both executable, both leading to the same depth:
+Three learning paths, all executable, all leading to the same depth:
+
+## Modelling with GSL — what belongs in a model
+
+Before you write queries, decide what to put in the model at all. [Modelling with GSL](modelling-with-gsl.md) is the guidance for that decision: when something is a node, when a relationship is an edge, when a fact is an attribute, when a grouping is a set, and when nesting or an edge dependency is the right shape. Start here when you have a domain and are not sure where to begin.
 
 ## The flagship examples — "the long way round"
 
@@ -33,6 +37,7 @@ Every step is runnable (the examples use the canonical ordering rules you saw in
 
 ## Which road to take
 
+- **Not sure what your model should contain?** Read [Modelling with GSL](modelling-with-gsl.md), then the query tutorial.
 - **Want the full sweep of GSL first?** Run [01 — one graph, many views](../../examples/flagships/01-service-many-views/README.md), then take the query tutorial.
 - **Iterate fast on a small model?** Start the [query tutorial](../../QUERY_TUTORIAL.md) directly — it needs nothing but the tools.
 - **Ready to look something up?** Jump to [GQL_GUIDE.md](../../GQL_GUIDE.md) or the [cookbook](../cookbook/README.md).

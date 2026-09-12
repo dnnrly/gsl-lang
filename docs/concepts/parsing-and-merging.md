@@ -1,6 +1,6 @@
 # Concept: Lenient Parsing and Last-Write-Wins
 
-**Audience:** everyone editing GSL or building with it. **Prerequisite:** [Parents, scopes and edge dependencies](parents-and-scopes.md).
+**Audience:** everyone editing GSL or building with it. **Prerequisite:** [Queries and derived views](queries-and-views.md). *(Advanced: you can defer these pages until you need them.)*
 **Next step:** [Canonical form and diffability](canonical-form.md).
 
 GSL's parser is deliberately **lenient** and its declarations follow **last-write-wins**. These two rules are why text-only graphs survive concurrent editing without ceremony — and why reading a warning is a normal part of using the language.
@@ -30,7 +30,7 @@ The second line simply wins. This turns concurrent edits into a tractable rule: 
 
 ## Two rules, one behaviour
 
-Punishment-free parse + deterministic overwrite = a format you can resolve by hand in a merge, not by regenerating a binary artifact. The trade-off, honestly stated: leniency means a typo can silently fall through as a warning, so *check your warnings* when it matters — a release gate that validates `gsl-query` round-trips are clean is a natural place to enforce it (see [Render a view for CI](../cookbook/render-a-view-for-ci.md)).
+Lenient parse + last-write-wins overwrite = a format you can resolve by hand in a merge, not by regenerating a binary artifact. The trade-off, honestly stated: leniency means a typo can silently fall through as a warning, so *check your warnings* when it matters — a release gate that validates `gsl-query` round-trips are clean is a natural place to enforce it (see [Render a view for CI](../cookbook/render-a-view-for-ci.md)).
 
 ---
 

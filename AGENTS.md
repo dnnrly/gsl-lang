@@ -62,7 +62,7 @@ go test -v -run TestName        # Run specific test
 - `GSL_GUIDE.md` - GSL language reference for LLMs and AI agents
 - `README.md` - User-facing examples and storefront
 - `GRAMMAR.md` - Formal grammar
-- `docs/` - Human learning journey (the IA index is `docs/README.md`): `getting-started/`, `concepts/` (seven one-concept pages), `tutorials/`, `cookbook/` (six recipes). Root-level specs and guides stay at root; docs/ tiers reference them rather than duplicate them.
+- `docs/` - Human learning journey (the IA index is `docs/README.md`): `getting-started/`, `concepts/` (nine one-concept pages: graph-model, edges, attributes, sets, structure-and-nesting, edge-dependencies, queries-and-views, parsing-and-merging, canonical-form), `tutorials/` (modelling-with-gsl + path index), `cookbook/` (six recipes). Root-level specs and guides stay at root; docs/ tiers reference them rather than duplicate them.
 - `markdown_test.go` - Validates all code blocks in root `*.md` and every `docs/**/*.md` recursively (via `findMarkdownFiles`; note that `filepath.Glob` does not support `**`)
 
 ## Before Submitting Changes
@@ -98,7 +98,7 @@ make lint
 | LSP server | lsp/*, cmd/gsl-lsp/main.go |
 | VS Code extension | editors/vscode/* |
 | Documentation examples | README.md, SPEC.md, GSL_GUIDE.md |
-| Documentation learning journey | docs/README.md (IA index), docs/getting-started/, docs/concepts/, docs/tutorials/, docs/cookbook/ |
+| Documentation learning journey | docs/README.md (IA index), docs/getting-started/, docs/concepts/, docs/tutorials/ (+ modelling-with-gsl.md), docs/cookbook/ |
 | Query language tests | query/testdata/*, query/.test-plan.md |
 | Acceptance tests | test/features/*.feature, test/*_test.go |
 
