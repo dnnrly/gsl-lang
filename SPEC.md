@@ -1,10 +1,10 @@
-# GSL-Lang Specification
+# GSL Specification
 
 Version 1.0.0 (Draft)
 
 ## Status
 
-This document defines the normative specification for GSL-Lang v1.0.
+This document defines the normative specification for GSL v1.0.
 
 The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in RFC 2119 and RFC 8174.
 

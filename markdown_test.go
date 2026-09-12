@@ -3,9 +3,11 @@ package gsl_test
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"testing"
 
@@ -18,8 +20,11 @@ import (
 // - "invalid-gsl" blocks must fail to parse
 // - "gql" blocks must parse successfully
 // - "invalid-gql" blocks must fail to parse
+//
+// It scans the repository root ("*.md") and the documentation tree
+// recursively ("docs/**/*.md").
 func TestMarkdownCodeBlocks(t *testing.T) {
-	markdownFiles, err := filepath.Glob("*.md")
+	markdownFiles, err := findMarkdownFiles()
 	if err != nil {
 		t.Fatalf("failed to find markdown files: %v", err)
 	}
@@ -81,6 +86,40 @@ func TestMarkdownCodeBlocks(t *testing.T) {
 	if totalGSL == 0 && totalGQL == 0 {
 		t.Fatalf("no gsl, invalid-gsl, gql, or invalid-gql code blocks found in markdown files")
 	}
+}
+
+// findMarkdownFiles returns the repository-root markdown files plus every
+// markdown file under docs/, sorted for deterministic logging. filepath.Glob
+// does not support "**", so the docs tree is walked explicitly.
+func findMarkdownFiles() ([]string, error) {
+	var files []string
+
+	root, err := filepath.Glob("*.md")
+	if err != nil {
+		return nil, err
+	}
+	files = append(files, root...)
+
+	if fi, err := os.Stat("docs"); err == nil && fi.IsDir() {
+		err := filepath.WalkDir("docs", func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() {
+				return nil
+			}
+			if strings.HasSuffix(path, ".md") {
+				files = append(files, path)
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	sort.Strings(files)
+	return files, nil
 }
 
 type codeBlock struct {

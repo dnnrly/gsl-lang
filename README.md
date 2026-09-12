@@ -177,12 +177,13 @@ The converters mean these compose rather than compete: a GSL graph can *become* 
 
 Ordered for learning, not for reference completeness:
 
-1. **[Flagship examples](examples/flagships/README.md)** — why GSL exists, problem-first.
-2. **[GSL Guide](GSL_GUIDE.md)** — the language in one self-contained document (syntax, semantics, design notes).
-3. **[Query tutorial](QUERY_TUTORIAL.md)** — a step-by-step learning path for GQL, the query language.
-4. **[GQL Guide](GQL_GUIDE.md)** — GQL as a self-contained reference.
-5. **[Go reference](GO_REFERENCE.md)** — the Go API and algorithm patterns, for programmatic use.
-6. **[Examples](examples/README.md)** — a catalog of graphs demonstrating individual language features.
+1. **[Documentation](docs/README.md)** — the learning journey: Getting Started → Concepts → Tutorials → Cookbook, with the guides and specifications as reference tiers.
+2. **[Flagship examples](examples/flagships/README.md)** — why GSL exists, problem-first; the narratives the documentation links back to.
+3. **[GSL Guide](GSL_GUIDE.md)** — the language in one self-contained document (syntax, semantics, design notes).
+4. **[Query tutorial](QUERY_TUTORIAL.md)** — a step-by-step learning path for GQL, the query language.
+5. **[GQL Guide](GQL_GUIDE.md)** — GQL as a self-contained reference.
+6. **[Go reference](GO_REFERENCE.md)** — the Go API and algorithm patterns, for programmatic use.
+7. **[Examples](examples/README.md)** — a catalog of graphs demonstrating individual language features.
 
 Targeted at AI and LLM tooling: start at **[llms.txt](llms.txt)** for the agent-oriented index.
 
@@ -197,7 +198,7 @@ GSL is defined by a normative, RFC 2119-style specification, not by the implemen
 - **[QUERY_SPEC.md](QUERY_SPEC.md)** — the query language specification (v0.4.0 Revised Draft).
 - **[QUERY_GRAMMAR.md](QUERY_GRAMMAR.md)** — the formal GQL grammar.
 
-Every `gsl` and `gql` code block in this repository's markdown is automatically parsed on test — the documentation cannot drift from the language it describes.
+Every `gsl` and `gql` code block in this repository's markdown — at the root and under [`docs/`](docs/README.md) — is automatically parsed on test. The documentation cannot drift from the language it describes.
 
 ---
 

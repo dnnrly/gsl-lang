@@ -1,10 +1,8 @@
 # Learning the GSL Query Language
 
-A step-by-step guide to understanding GSL-QL — the pipeline-oriented query and transformation language for GSL graphs.
+A step-by-step guide to understanding GQL — the pipeline-oriented query and transformation language for GSL graphs.
 
 **For a complete syntax reference**, see [GQL_GUIDE.md](GQL_GUIDE.md).
-
-> **Note:** The query language design is finalized. The "Questions to consider" sections throughout this tutorial are historical design discussions retained for context — they do not indicate unsettled syntax.
 
 ---
 
@@ -49,11 +47,6 @@ subgraph node.team == "payments" | remove orphans
 
 **Key insight:** Every expression receives a graph, does something to it, and outputs a graph. The output type never changes — it's always a valid GSL graph.
 
-### Questions to consider
-
-- *Does the pipeline metaphor feel natural for graph operations?*
-- *Is left-to-right evaluation intuitive enough, or would you expect something different?*
-
 ---
 
 ## Step 2: Starting a Query — Choosing Your Input
@@ -67,10 +60,6 @@ from *
 `from *` resets to the original input graph. `from NAME` switches to a named graph (more on this in Step 8).
 
 If you don't specify a source, the input graph is used implicitly.
-
-### Questions to consider
-
-- *Is the implicit source clear enough, or would you prefer an explicit `from` always?*
 
 ---
 
@@ -93,11 +82,6 @@ When you match nodes:
 2. Only edges where **both** source and target are selected are kept
 
 This prevents the subgraph from growing beyond what you asked for.
-
-### Questions to consider
-
-- *Is it clear that matching nodes also filters edges?*
-- *Does the "both endpoints must match" rule feel right, or would you sometimes want edges where only one end matches?*
 
 ---
 
@@ -182,12 +166,6 @@ subgraph edge depends on edge.protocol == "http" scope
 
 This selects edges whose parent uses HTTP, expands to all descendants via `scope`, then marks all matched edges as `reviewed`.
 
-### Questions to consider
-
-- *Is the distinction between node predicates and edge predicates clear?*
-- *Is forbidding mixed predicates too restrictive, or does it keep things simple?*
-- *Do the dependency predicates (`edge parent exists`, `edge.depth`, `edge depends on`) feel intuitive for navigating edge hierarchies?*
-
 ---
 
 ## Step 5: Richer Predicates
@@ -225,12 +203,6 @@ subgraph node.team == "payments" AND node.zone == "B"
 ```
 
 Both sides must target the same element type. Only `AND` is supported — no `OR`.
-
-### Questions to consider
-
-- *Is `AND`-only sufficient? How often would you need `OR`?*
-- *Is the "missing attribute → false" rule for inequality intuitive?*
-- *Is `@` prefix for sets clear enough?*
 
 ---
 
@@ -281,11 +253,6 @@ subgraph edge.protocol == "http" traverse down all
 - *"What does the payments team depend on?"* → `subgraph node.team == "payments" traverse out 1`
 - *"What depends on the database?"* → `subgraph node.team == "platform" traverse in all`
 
-### Questions to consider
-
-- *Is traversal as a suffix on `subgraph` natural, or would a standalone `| traverse out 1` expression feel better?*
-- *Is unbounded traversal (`all`) risky on large graphs?*
-
 ---
 
 ## Step 7: Transforming and Removing
@@ -324,11 +291,6 @@ subgraph node.team exists
 
 A node with a self-loop is **not** an orphan.
 
-### Questions to consider
-
-- *Is `make` a good verb for attribute assignment? Alternatives: `set`, `assign`, `tag`.*
-- *Is the interaction between removal stages and the pipeline clear?*
-
 ---
 
 ## Step 8: Collapsing Nodes
@@ -352,11 +314,6 @@ This merges `db` and `cache` into a single `platform_group` node.
 7. Duplicate edges created by the merge are **deduplicated**
 
 **Important:** Edge deduplication happens **only** during collapse. All other operations preserve duplicate edges.
-
-### Questions to consider
-
-- *Is the explicit target ID (`into <id>`) useful, or would grouping by attribute (`collapse by team`) be more convenient?*
-- *Is it surprising that deduplication only happens here?*
 
 ---
 
@@ -399,12 +356,6 @@ node api [team="platform", zone="A"]
 | (subgraph node.team == "identity") as ID
 | PAY + ID
 ```
-
-### Questions to consider
-
-- *Is the uppercase naming convention clear enough to distinguish named graphs from regular identifiers?*
-- *Is parenthesized binding intuitive?*
-- *Would you need more than two operands in graph algebra (e.g., `A + B + C`)?*
 
 ---
 
@@ -459,3 +410,16 @@ Reading left to right:
 | Parent not exists | `edge parent not exists` |
 | Edge depth | `edge.depth == 1` |
 | Parent depends on | `edge depends on edge.protocol == "http"` |
+
+---
+
+## Design History
+
+A short record of where the current behaviour comes from, for context. The query language design is **settled** — these are decisions, not open questions.
+
+- **Everything is a pipeline.** Every expression takes a graph and produces a graph; `|` chains them left to right (Step 1). No expression changes the input type, which is what makes steps composable and testable in isolation.
+- **`AND`-only compound predicates.** Predicates combine with `AND` and nothing else (Step 5). `OR` was deliberately not added: intersection is the shape that keeps review predictable, and graph algebra (`PAY + ID`) covers the cases `OR` would reach as separate queries.
+- **Uppercase named-graph identifiers.** Names are `[A-Z][A-Z0-9_]*` and immutable (Step 9). Uppercase makes named graphs visually distinct from node IDs and from set names (`@`-prefixed), and immutability keeps a pipeline's meaning legible.
+- **Collapse is the only place edges deduplicate.** Everywhere else edges are preserved as a multiset (Step 8). Parallel edges may carry meaning — two transports, two calls — and the language keeps them unless you explicitly collapse.
+- **Attribute conflicts resolve last-write-wins.** In graph algebra the right-hand graph's attributes win (Step 9), mirroring the merge semantics of the core language.
+- **Set membership and edge dependencies are first-class predicates.** Sets, edge parentage and edge depth are queryable directly (Steps 4–5), because they are stored data, not metadata to be inferred.

@@ -1,6 +1,6 @@
-# GSL-Lang Grammar
+# GSL Grammar
 
-This is the formal grammar for GSL-Lang v1.0, expressed in Extended Backus-Naur Form (EBNF). It defines the syntax of valid GSL documents.
+This is the formal grammar for GSL v1.0, expressed in Extended Backus-Naur Form (EBNF). It defines the syntax of valid GSL documents.
 
 ```ebnf
 program      ::= statement*

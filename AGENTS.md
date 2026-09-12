@@ -59,8 +59,10 @@ go test -v -run TestName        # Run specific test
 **Documentation:**
 - `SPEC.md` - Normative spec (source of truth for language rules)
 - `GSL_GUIDE.md` - GSL language reference for LLMs and AI agents
-- `README.md` - User-facing examples
+- `README.md` - User-facing examples and storefront
 - `GRAMMAR.md` - Formal grammar
+- `docs/` - Human learning journey (the IA index is `docs/README.md`): `getting-started/`, `concepts/` (seven one-concept pages), `tutorials/`, `cookbook/` (six recipes). Root-level specs and guides stay at root; docs/ tiers reference them rather than duplicate them.
+- `markdown_test.go` - Validates all code blocks in root `*.md` and every `docs/**/*.md` recursively (via `findMarkdownFiles`; note that `filepath.Glob` does not support `**`)
 
 ## Before Submitting Changes
 
@@ -72,12 +74,13 @@ go test -v -run TestMarkdownCodeBlocks
 make lint
 ```
 
-- All `gsl` code blocks in markdown must parse
+- All `gsl` code blocks in markdown (root and `docs/`) must parse
 - All `invalid-gsl` blocks must fail to parse
 - Round-trip tests required for parser/serializer changes
 - Integration tests validate all example GSL files with both Mermaid and PlantUML converters
 - Update SPEC.md if changing language semantics
 - Update GRAMMAR.md if changing syntax
+- Add or update `docs/` pages if changing the learning narrative; keep docs/ errors-free so `TestMarkdownCodeBlocks` stays green
 - Commit message should reference relevant files
 
 ## Task Reference
@@ -94,6 +97,7 @@ make lint
 | LSP server | lsp/*, cmd/gsl-lsp/main.go |
 | VS Code extension | editors/vscode/* |
 | Documentation examples | README.md, SPEC.md, GSL_GUIDE.md |
+| Documentation learning journey | docs/README.md (IA index), docs/getting-started/, docs/concepts/, docs/tutorials/, docs/cookbook/ |
 | Query language tests | query/testdata/*, query/.test-plan.md |
 | Acceptance tests | test/features/*.feature, test/*_test.go |
 

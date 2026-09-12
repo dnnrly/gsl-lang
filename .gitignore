@@ -22,6 +22,7 @@ planning/phase-1-positioning.md
 planning/phase-1-progress.md
 planning/phase-2-progress.md
 planning/phase-3-progress.md
+planning/phase-4-progress.md
 
 # Ignore fuzz seed corpus cache
 testdata/fuzz
