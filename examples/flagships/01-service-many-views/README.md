@@ -3,7 +3,7 @@
 > **The problem:** a platform team keeps architecture diagrams across
 > multiple tools, wiki pages and hand-edited SVGs.  Every service boundary
 > change requires editing *N* places.  Impact questions ("what breaks if we
-> retire legacy-orders?") are answered by gut feel.
+> retire legacy_orders?") are answered by gut feel.
 >
 > **The answer:** a single canonical GSL graph that describes the real
 > structure of the system.  Every diagram is *derived* from it with a
@@ -63,28 +63,28 @@ gsl-query 'from *' < model.gsl | gsl-diagram -f mermaid -t graph
 
 ## View 2 — Blast radius of retiring the legacy order monolith
 
-*"If we pull the plug on legacy-orders, who breaks?"*
+*"If we pull the plug on legacy_orders, who breaks?"*
 
 ```bash
-gsl-query '(subgraph node.id == "legacy-orders" traverse in all) as BLAST | from BLAST' < model.gsl \
+gsl-query '(subgraph node.id == "legacy_orders" traverse in all) as BLAST | from BLAST' < model.gsl \
 | gsl-diagram -f mermaid -t graph
 ```
 
 The full transitive dependency cone — every node that transitively
-depends on `legacy-orders`:
+depends on `legacy_orders`:
 
 ![Blast radius](views/blast-radius.graph.svg)
 
 The **critical subset** — just the `@critical` nodes that break:
 
 ```bash
-gsl-query '(subgraph node.id == "legacy-orders" traverse in all) as BLAST | from * | (subgraph node in @critical) as CRIT | BLAST & CRIT' < model.gsl \
+gsl-query '(subgraph node.id == "legacy_orders" traverse in all) as BLAST | from * | (subgraph node in @critical) as CRIT | BLAST & CRIT' < model.gsl \
 | gsl-diagram -f mermaid -t graph
 ```
 
 ![Critical blast radius](views/critical-blast.graph.svg)
 
-Retiring legacy-orders breaks `gateway → orders` — two critical
+Retiring legacy_orders breaks `gateway → orders` — two critical
 services.  That is a runbook-worthy fact; you derived it, not guessed it.
 
 ---
@@ -168,8 +168,8 @@ property of the system, visible in the model.
 # canonicalise the model
 gsl-query "" < model.gsl
 
-# answer "what breaks if we retire legacy-orders?"
-gsl-query '(subgraph node.id == "legacy-orders" traverse in all) as BLAST | from * | (subgraph node in @critical) as CRIT | BLAST & CRIT' < model.gsl
+# answer "what breaks if we retire legacy_orders?"
+gsl-query '(subgraph node.id == "legacy_orders" traverse in all) as BLAST | from * | (subgraph node in @critical) as CRIT | BLAST & CRIT' < model.gsl
 
 # show the payments team's one-hop neighbourhood
 gsl-query 'subgraph node.team == "payments" traverse out 1' < model.gsl
