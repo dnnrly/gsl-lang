@@ -44,8 +44,10 @@ gsl-query -f 01-service-many-views/q4-payments-team.gql -i 01-service-many-views
   Go maps, so line order is not stable across runs. **The canonical GSL
   result files are the deterministic, tested contract.**
 - Committed `.svg` renders of the diagrams appear in the READMEs so the
-  pictures render on GitHub; they were produced once from the `.mmd`
-  sources and are illustrative like the source, not a tested contract.
+  pictures render on GitHub; they were produced from the `.mmd`
+  sources with `make diagrams` and are illustrative like the source, not a
+  tested contract. Each is sized to its own drawing, so a small graph
+  renders small rather than stretching to the full page width.
 - Models avoid invented edges and record non-evidence: if a fact is weak,
   carry `confidence="low"` rather than deleting it.
 - Node counts stay in the 12–20 range so each example remains a two-minute

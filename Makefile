@@ -27,6 +27,10 @@ help: ## print help message
 clean:
 	rm -rf $(TMP_DIR)
 
+.PHONY: diagrams
+diagrams: ## render the .svg diagrams committed for README display (needs mmdc + python3)
+	./scripts/render-diagrams.sh
+
 .PHONY: lint
 lint: ## run linting
 	golangci-lint run

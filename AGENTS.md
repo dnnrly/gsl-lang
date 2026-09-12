@@ -19,6 +19,7 @@ make test-acceptance            # Run acceptance tests (BDD/godog feature tests)
 make lint                       # Run linting
 make fuzz                       # Run fuzz tests
 make build                      # Build CLI tools (gsl-diagram, gsl-query)
+make diagrams                   # Re-render README diagram SVGs from .mmd sources (needs mmdc + python3)
 make clean                      # Clean build artifacts
 go test -v -run TestName        # Run specific test
 ```
