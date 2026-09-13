@@ -12,7 +12,7 @@ A **set** is a named collection of nodes (and edges). It is GSL's grouping mecha
 
 > **A set is not a type.** A set classifies and groups graph elements; it does not impose a type hierarchy. `@critical` does not say what a node *is*, and a node can be a member of any number of sets. Membership is data — it can change, and the change is a reviewable diff.
 
-Sets are also **independent of each other**: nothing forces overlapping sets to be related, so a node can carry several simultaneous classifications — its environment, geography, trust boundary, data sensitivity and owner — without any one of them being imposed as "the" grouping. Since dimensions stay independent, any *combination* is queryable and no derived hierarchy needs maintaining. Flagship [07 — architecture across boundaries](../../examples/flagships/07-architecture-across-boundaries/README.md) is a full worked example of five orthogonal dimensions held on one flat graph; the query answers double as the proof that no dimension is derived from another.
+Sets are also **independent of each other**: nothing forces overlapping sets to be related, so a node can carry several simultaneous classifications — its environment, geography, trust boundary, data sensitivity and owner — without any one of them being imposed as "the" grouping. Since dimensions stay independent, any *combination* is queryable and no derived hierarchy needs maintaining. Flagship [03 — architecture across boundaries](../../examples/flagships/03-architecture-across-boundaries/README.md) is a full worked example of five orthogonal dimensions held on one flat graph; the query answers double as the proof that no dimension is derived from another.
 
 ## Declaring a set and membership
 

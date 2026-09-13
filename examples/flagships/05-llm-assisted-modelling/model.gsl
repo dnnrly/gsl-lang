@@ -17,7 +17,8 @@
 #     promo engine -- no invented edges were added
 #   * legacy_promo_calc -> catalog_cache is LOW confidence (email alone)
 #
-# Every fact carries provenance: source + confidence. See flagship 02.
+# Every fact carries provenance: source + confidence. See the architecture
+# archaeology study (examples/advanced/architecture-archaeology).
 
 set critical
 set deprecated

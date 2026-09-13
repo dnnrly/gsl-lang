@@ -49,4 +49,4 @@ Two cheap guards:
 
 A model edit that forgets to regenerate views is a **failed build**, not a forgotten chore. The reviewable object is the model diff itself — the diagrams and answers that advertise the change are re-derived and honest.
 
-**Next:** [What does the gate unlock?](what-does-the-gate-unlock.md) — workflows as graphs, the flagship's third idea.
+**Next:** [What does the gate unlock?](what-does-the-gate-unlock.md) — workflows as graphs, the flagship's second idea.

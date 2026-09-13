@@ -3,7 +3,7 @@ SPDX-License-Identifier: CC-BY-4.0
 Copyright (c) 2026 Pascal Dennerly.
 -->
 
-# 06 — Enterprise Architecture Archaeology: Many Repositories, One Queryable Model
+# Part 2 — Many systems: from repositories to one queryable graph
 
 > **The problem:** a large enterprise has hundreds of repositories and no
 > single document that says what the architecture actually is. Facts live in
@@ -17,12 +17,10 @@ Copyright (c) 2026 Pascal Dennerly.
 > into an enterprise graph, then answer cross-service questions by querying
 > the graph, not by re-reading twenty repositories.
 
-This is the next chapter after the [LLM-assisted modelling experiment
-(05)](../05-llm-assisted-modelling/README.md). Flagship 05 showed that one
-agent can turn *one* messy document into a *reviewable* model. This flagship
-shows what happens when that approach is used *many times, across many
-repositories*, and the results are **composed** into an architectural
-knowledge graph.
+This is the second part of the [architecture archaeology study](../README.md).
+[Part 1](../one-system/README.md) recovered one undocumented system; here the
+same archaeology discipline is applied *many times, across many repositories*,
+and the results are **composed** into an architectural knowledge graph.
 
 The central idea:
 
@@ -54,10 +52,7 @@ This example contains a small but believable version of that enterprise.
 The seven repositories themselves are *not* shipped with the example — real
 repositories are too large and messy to bundle. What ships instead is what
 an investigation actually produces: the facts, each one anchored to the
-evidence it was read from. That evidence is quoted inline in this narrative
-and in the fragments, because **the facts are distributed** across the
-repositories and would never be assembled by any single engineer's memory
-or diagram.
+evidence it was read from.
 
 The repositories an agent investigates:
 
@@ -78,27 +73,11 @@ facts live: service code shows calls, config shows connections, event
 handlers show subscriptions, READMEs show intent (and sometimes stale
 claims).
 
-Here is what an agent would see in **order-service**:
-
-```go
-// checkout.go
-prices := catalogue.Price(ctx, items)       // gRPC -> catalogue_service
-cust    := customers.Read(ctx, customerID)  // SQL -> customer_db
-pay     := payment.Create(ctx, cust, total) // gRPC -> payment_service
-o       := ordersdb.Insert(ctx, customerID, items) // SQL -> order_db
-publishOrderCompleted(ctx, o.ID)            // topic order_events
-```
-
-```yaml
-# config.yaml
-database:
-  order_db:    postgres://...@order-db.internal.example/orders
-  customer_db: postgres://...@customer-db.internal.example/customers
-```
-
-The calls are visible, the databases are named in configuration, and one
-event is published. But the repo also contains a claim that is **not**
-backed by code:
+Here is what an agent would see in **order-service**: `checkout.go` calls
+`catalogue.Price` (gRPC), reads `customer_db` (SQL), calls `payment.Create`
+(gRPC), inserts into `order_db`, and publishes to the `order_events` topic;
+`config.yaml` names both databases. But the repo also contains a claim that
+is **not** backed by code:
 
 ```markdown
 # README.md (order-service)
@@ -110,14 +89,12 @@ Nothing in `checkout.go` calls inventory — the stock path goes through
 archaeology pass should *record rather than resolve*.
 
 Now look at **notification-service**, a repo with only three files. The
-signal that matters is here:
+signal that matters is in the Kafka listener topics:
 
-```go
-// listener.go
+```markdown
+# listener.go (notification-service)
 // @KafkaListener(topics = "order.completed")
-type OrderCompleted struct{ OrderID string }
 // @KafkaListener(topics = "payment_settled")
-type PaymentSettled struct{ PaymentID string }
 ```
 
 Notice the two event names side by side:
@@ -203,9 +180,11 @@ Every observation in these fragments carries two attributes:
 
 > **This is a modelling convention, not a language feature.** GSL stores
 > untyped attributes; nothing enforces `source` or `confidence`. That is a
-> discipline of the archaeology workflow — flagship 02 established it and
-> flagship 05 relied on it. GSL makes the discipline *visible* and
-> *queryable*, which is what an enterprise needs.
+> discipline of the archaeology workflow — the [one-system part
+> (Part 1)](../one-system/README.md) established it and flagship
+> [05](../../../flagships/05-llm-assisted-modelling/README.md) relied on it.
+> GSL makes the discipline *visible* and *queryable*, which is what an
+> enterprise needs.
 
 Uncertainty is deliberately present in the composed model:
 
@@ -420,7 +399,7 @@ gsl-query -f q1-callers-of-payment.gql -i model.gsl \
 
 Nothing was drawn by hand. When an archaeology fact changes, you edit
 `discovered/` (or `model.gsl`), re-run `./compose.sh`, regenerate the
-committed results with `go test ./examples -run Flagship`, and **every
+committed results with `go test ./examples -run Advanced`, and **every
 diagram in this README updates**. You do not maintain seven architecture
 diagrams; you maintain one composed graph and derive seven views.
 
@@ -447,28 +426,24 @@ composition step.
 
 ---
 
-## What this demonstrates
+## What this part demonstrates
 
-- **GSL can represent architectural observations recovered from code**, with
-  provenance (`source`) and confidence carried on the same facts.
 - **Independent models compose.** Seven fragments produced by independent
   investigations merge into one graph with no merge tooling beyond GSL's own
   declarative semantics.
 - **Cross-service relationships become queryable.** Callers, blast radius,
   event flows and journeys now have one-line answers that no single
   repository contained.
-- **The same graph produces multiple focused views.** Seven views in this
-  example, all derived, none maintained.
-- **Canonical text makes the model reviewable.** `gsl-query "" < model.gsl`
-  is a diffable serialisation; the commit history of the fragments *is* the
-  archaeology audit trail.
+- **The composed graph is reviewable at the edges.** `source`, `confidence`,
+  `@suspected` and `@critical` make the archaeology's uncertainty a query,
+  not a footnote — the review queue is the deliverable.
 - **An LLM can participate in architecture archaeology without its output
   becoming an opaque blob of prose** — every fragment is inspectable,
   composable and queryable, and flags its own uncertainty.
 
 ## In the real world
 
-This example proves the **method**: independent fragments compose into a
+This part proves the **method**: independent fragments compose into a
 queryable graph, and cross-service questions become one-liners. A real
 deployment would layer the following on top:
 
@@ -477,18 +452,10 @@ deployment would layer the following on top:
   agents (or teams) revisiting each periodically and committing the updated
   fragment. The graph grows by committing new files, not by editing one
   canonical document.
-
 - **Tooling for provenance discipline.** `source` and `confidence` are
-  conventions in this example, not enforced by the language. Validation
-  tooling could require every edge to carry `source` and `confidence`, and
-  flag fragments that omit them — making the discipline machine-checked
-  without changing the language.
-
-- **Automated confidence escalation.** When a second source confirms a
-  `@suspected` edge, nothing here promotes it automatically. In production,
-  a review workflow could update `confidence="medium"` to `confidence="high"`
-  and remove the `@suspected` tag, with the git diff as the audit trail.
-
+  conventions here, not enforced by the language. Validation tooling could
+  require every edge to carry both, and flag fragments that omit them —
+  making the discipline machine-checked without changing the language.
 - **Event reconciliation at scale.** The `order_completed` vs
   `order.completed` mismatch is a small example of a real problem: many
   teams publish and consume events, and the names drift. A periodic
@@ -496,40 +463,33 @@ deployment would layer the following on top:
   of each event — would surface every such mismatch, without re-reading any
   repository.
 
-- **Richer source integration.** The archaeology here relied on code and
-  config files. A production setup would also read deployment manifests,
-  service catalogues, and observability traces — anything that names a
-  dependency or an event.
-
 The graph is the durable asset; the queries are the questions; the workflow
 is the archaeology discipline. **GSL makes all three inspectable and
 auditable** — the rest is an organisation's integration work.
 
 ---
 
-## Relationship to flagship 05
+## Where this fits in the flagship line
 
-[Flagship 05](../05-llm-assisted-modelling/README.md) asked: *"Can an LLM
-produce a reviewable GSL model from messy information?"* — an experiment with
-one agent, one document, one model.
+Flagship [05 — LLM-assisted modelling](../../../flagships/05-llm-assisted-modelling/README.md)
+asked: *"Can an LLM produce a reviewable GSL model from messy information?"* —
+an experiment with one agent, one document, one model. The one-system part
+of this study asks that same question for one undocumented system.
 
-This flagship asks the next question: *"What happens when LLMs use that
-approach repeatedly across many repositories and the results are composed
-into an architectural knowledge graph?"* — the unit of work is the same, but
-the value moves from *a reviewable draft* to *a queryable enterprise asset*.
-
-05's loop — *draft → parse gate → review diff → queries* — runs once per
-fragment here, before composition. The `@suspected` and `confidence`
-conventions are inherited from 02 and 05 unchanged. This example is the
-sequel, not a rewrite.
+This part asks the next question: *"What happens when the approach is used
+repeatedly across many repositories and the results are composed?"* — the
+unit of work is the same, but the value moves from *a reviewable draft* to
+*a queryable enterprise asset*. 05's loop — *draft → parse gate → review
+diff → queries* — runs once per fragment here, before composition. This part
+is the sequel, not a rewrite.
 
 ---
 
 ## Run the "two-minute test"
 
 ```bash
-go test ./examples -run Flagship -v        # composition, queries and results, all verified
-./compose.sh                               # re-compose the graph from the fragments
+go test ./examples -run Advanced -v    # composition, queries and results, all verified
+./compose.sh                           # re-compose the graph from the fragments
 gsl-query 'subgraph node.id == "payment_service" traverse in 1' < model.gsl          # who calls payment
 gsl-query 'subgraph edge.event == "order_completed"' < model.gsl                     # the event flow
 gsl-query '(subgraph edge.confidence == "low") as LOW | from * | (subgraph edge.confidence == "medium") as MED | LOW + MED' < model.gsl  # what to verify
@@ -541,7 +501,6 @@ gsl-query '(subgraph edge.confidence == "low") as LOW | from * | (subgraph edge.
 
 | File | What it is |
 |------|-----------|
-| **evidence (quoted inline)** | code/config/README excerpts from the seven repositories, embedded in this narrative so every fact is traceable |
 | `discovered/*.gsl` | seven independent investigation fragments, provenance attached |
 | `model.gsl` | the composed enterprise graph (the *composition*, not a separate file) |
 | `compose.sh` | reproduces `model.gsl` from the fragments with `cat` |

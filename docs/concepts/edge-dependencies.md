@@ -35,7 +35,7 @@ PROMOTE: registry -> canary [parent=GATE] {
 
 `PROMOTE` depends on `GATE`, and the steps inside its scope (`CANARY`, `SMOKE`) follow the promotion chain. Note the scoped blocks themselves must not carry a `parent` attribute — the label-level `[parent=...]` plus nesting covers the relationship.
 
-This is how flagship [03 — release prerequisites](../../examples/flagships/03-release-prerequisites/README.md) answers "when can we promote?" without a single workflow keyword — promotions, approvals, release gates and task pipelines are all just edges with edges depending on them. GQL exposes the structure through the edge-dependency predicates (`edge parent exists`, `edge.depth`, `edge depends on ... scope` — see the [query tutorial](../../QUERY_TUTORIAL.md)).
+This is how flagship [02 — release prerequisites](../../examples/flagships/02-release-prerequisites/README.md) answers "when can we promote?" without a single workflow keyword — promotions, approvals, release gates and task pipelines are all just edges with edges depending on them. GQL exposes the structure through the edge-dependency predicates (`edge parent exists`, `edge.depth`, `edge depends on ... scope` — see the [query tutorial](../../QUERY_TUTORIAL.md)).
 
 > **Version note:** scoped/edge-dependency syntax is part of the language and the current reference implementation, but the released binary may lag — build the tools from source if a `LABEL: a -> b { ... }` model fails to parse on your install ([Getting Started](../getting-started/README.md#1-install-the-tools)).
 

@@ -16,17 +16,24 @@ This directory contains example GSL graph definitions organized as a learning pa
 The [flagship examples](flagships/) are complete, runnable narratives: **problem → model → query → derived view** — each with a virtual "two-minute test". They are the best place to understand *why* GSL exists.
 
 - [`01-service-many-views`](flagships/01-service-many-views/) — one graph, many views: blast radius, team-level collapse, critical reach, migration backlog from a single 20-service model.
-- [`02-architecture-archaeology`](flagships/02-architecture-archaeology/) — reconstructing an undocumented monolith; facts carry provenance (`source`/`confidence`) and risk lists are queries.
-- [`03-release-prerequisites`](flagships/03-release-prerequisites/) — a relationship between relationships: a deploy edge gated on an approval edge.
+- [`02-release-prerequisites`](flagships/02-release-prerequisites/) — a relationship between relationships: a deploy edge gated on an approval edge.
+- [`03-architecture-across-boundaries`](flagships/03-architecture-across-boundaries/) — sets as five independent dimensions (environment, geography, trust, data, ownership) on one flat graph; every boundary a query, no hierarchy chosen.
 - [`04-financial-network`](flagships/04-financial-network/) — the same operations as #1 in a non-software domain: GSL is graph-shaped knowledge, not software-shaped.
 - [`05-llm-assisted-modelling`](flagships/05-llm-assisted-modelling/) — an honest experiment: agent drafts → parser gate → canonical diff → human review.
-- [`06-enterprise-architecture-archaeology`](flagships/06-enterprise-architecture-archaeology/) — independent investigation fragments from many repositories, composed into one queryable enterprise graph.
-- [`07-architecture-across-boundaries`](flagships/07-architecture-across-boundaries/) — sets as five independent dimensions (environment, geography, trust, data, ownership) on one flat graph; every boundary a query, no hierarchy chosen.
 
-All flagship models, queries, committed canonical results, diagram conversions and README code blocks are exercised by `flagship_test.go`:
+The [architecture archaeology study](advanced/architecture-archaeology/) is a
+two-part, self-directed continuation — provenance for a single undocumented
+system and for an enterprise recovered across many repositories. Formerly
+flagships 02 and 06, it now lives beyond the flagship line as an advanced
+topic.
+
+All flagship models, queries, committed canonical results, diagram
+conversions and README code blocks are exercised by `flagship_test.go`; the
+advanced study gets the same guarantees from `advanced_test.go`:
 
 ```bash
 go test ./examples -run Flagship -v
+go test ./examples -run Advanced -v
 ```
 
 ---

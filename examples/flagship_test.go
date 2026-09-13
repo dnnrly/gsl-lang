@@ -155,10 +155,10 @@ func TestFlagshipDiagramConverters(t *testing.T) {
 }
 
 // TestFlagshipDiagramConvertersSequence exercises the sequence dialect on
-// edge-dependency pipelines (flagship 03), where scoped blocks map to
+// edge-dependency pipelines (flagship 02), where scoped blocks map to
 // activations.
 func TestFlagshipDiagramConvertersSequence(t *testing.T) {
-	dir := "flagships/03-release-prerequisites"
+	dir := "flagships/02-release-prerequisites"
 	resultBytes := readFlagshipFile(t, dir, "q2-gated-deploy-spine.result.gsl")
 	graph, parseErr := gsl.Parse(bytes.NewReader([]byte(resultBytes)))
 	if parseErr != nil && parseErr.HasError() {

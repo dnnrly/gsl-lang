@@ -31,15 +31,25 @@ gsl-query -f 01-service-many-views/q4-payments-team.gql -i 01-service-many-views
 
 ## The examples
 
+Read them in order. Each builds on the vocabulary the previous one
+established.
+
 | # | Directory | Question it answers | Distinctive idea |
 |---|-----------|--------------------|------------------|
 | 1 | `01-service-many-views` | "Retire this service — who breaks?" | One 20-service model, seven derived views (blast radius, team-level, critical reach, migration). Graph over diagram. |
-| 2 | `02-architecture-archaeology` | "We inherited an undocumented monolith" | Model carries *provenance* (source + confidence); risk lists are queries, not guesses. |
-| 3 | `03-release-prerequisites` | "When can we promote?" | A relationship *between edges* — a promotion that depends on an approval edge. Workflow as a graph, not a runbook. |
+| 2 | `02-release-prerequisites` | "When can we promote?" | A relationship *between edges* — a promotion that depends on an approval edge. Workflow as a graph, not a runbook. |
+| 3 | `03-architecture-across-boundaries` | "What does each *boundary* look like, when none is the root?" | Sets as five independent dimensions (environment, geography, trust, data, ownership) on one flat graph; every perspective a query. |
 | 4 | `04-financial-network` | "If the CCP fails, who's exposed?" | The same operations as #1, in a non-software domain — GSL is graph-shaped knowledge, not software-shaped. |
 | 5 | `05-llm-assisted-modelling` | "Can an agent turn an email into a model?" | Honest experiment: parser + canonical diff + queries make agent output reviewable. Flags a validation gap (Phase 5). |
-| 6 | `06-enterprise-architecture-archaeology` | "What does our enterprise architecture actually look like?" | Independent investigation fragments, composed into one queryable graph; cross-service questions answered by GQL. |
-| 7 | `07-architecture-across-boundaries` | "What does each *boundary* look like, when none is the root?" | Sets as five independent dimensions (environment, geography, trust, data, ownership) on one flat graph; every perspective a query |
+
+## The advanced study
+
+The archaeology material — provenance, `source`/`confidence`, the git
+confidence-escalation loop, and composing independent investigation
+fragments — used to be flagships 02 and 06. It now lives as a two-part,
+self-directed study in [`../advanced/architecture-archaeology`](../advanced/architecture-archaeology/README.md):
+one system (a single undocumented monolith) and many systems (an enterprise
+across seven repositories). It is tested by the same harness.
 
 ## Conventions
 
@@ -57,19 +67,20 @@ gsl-query -f 01-service-many-views/q4-payments-team.gql -i 01-service-many-views
   renders small rather than stretching to the full page width.
 - Models avoid invented edges and record non-evidence: if a fact is weak,
   carry `confidence="low"` rather than deleting it.
-- Node counts stay in the 12–20 range so each example remains a two-minute
-  read.
+- Node counts stay small so each example remains a two-minute read.
 
 ## Test entry points
 
 - `go test ./examples -run TestFlagship` — validates every flagship model,
   runs every query, byte-compares canonical results, exercises the diagram
   converters, and parses every `gsl`/`gql` code block in these READMEs.
-- `make test` — runs the flagship suite as part of the full build.
+- `go test ./examples -run TestAdvanced` — the same guarantees for the
+  advanced study (`advanced/architecture-archaeology`).
+- `make test` — runs the whole suite as part of the full build.
 
 ## Signature queries (pure GQL)
 
-Each entity's defining question shown as the naked query language, for
+Each flagship's defining question shown as the naked query language, for
 reference and as validated `gql` blocks:
 
 **01 — service many-views:** the critical blast radius of retiring a service.
@@ -84,28 +95,28 @@ reference and as validated `gql` blocks:
 collapse into team_gateway where node.team == "gateway" | collapse into team_orders where node.team == "orders" | collapse into team_payments where node.team == "payments"
 ```
 
-**02 — archaeology:** the conservative diagram (confirmed, high-confidence).
-
-```gql
-subgraph node in @confirmed | remove edge where edge.confidence != "high" | remove orphans
-```
-
-**02 — risk prioritisation: suspected structure feeding critical parts.**
-
-```gql
-(subgraph node in @critical traverse in all) as CRITCHAIN | from CRITCHAIN | subgraph node in @suspected
-```
-
-**03 — release prerequisites:** what the approval gate unlocks.
+**02 — release prerequisites:** what the approval gate unlocks.
 
 ```gql
 subgraph edge depends on edge.stage == "gate" scope
 ```
 
-**03 — release prerequisites:** entry points of the whole release.
+**02 — release prerequisites:** entry points of the whole release.
 
 ```gql
 subgraph edge.depth == 0
+```
+
+**03 — architecture across boundaries:** the commerce blast radius through the restricted boundary.
+
+```gql
+(subgraph node in @restricted traverse in all) as REST | from * | (subgraph node in @commerce) as COM | REST & COM
+```
+
+**03 — architecture across boundaries:** the production, Europe and highly-confidential overlap (the whole flagship in one line).
+
+```gql
+subgraph node in @production AND node in @europe AND node in @highly_confidential_data
 ```
 
 **04 — financial network:** the same blast-radius pattern as 01, new domain.
@@ -126,20 +137,7 @@ subgraph edge.instrument == "lending"
 subgraph edge.confidence == "low"
 ```
 
-**06 — enterprise archaeology:** what needs verification after composing all fragments.
-
-```gql
-(subgraph edge.confidence == "low") as LOW | from * | (subgraph edge.confidence == "medium") as MED | LOW + MED
-```
-
-**07 — architecture across boundaries:** the commerce blast radius through the restricted boundary.
-
-```gql
-(subgraph node in @restricted traverse in all) as REST | from * | (subgraph node in @commerce) as COM | REST & COM
-```
-
-**07 — architecture across boundaries:** the production, Europe and highly-confidential overlap (the whole flagship in one line).
-
-```gql
-subgraph node in @production AND node in @europe AND node in @highly_confidential_data
-```
+The archaeology signatures (confirmed skeleton, risk prioritisation from
+`@suspected`, the review queue over low/medium confidence) live with the
+[advanced study](../advanced/architecture-archaeology/README.md), on the
+models there.

@@ -3,8 +3,12 @@ SPDX-License-Identifier: CC-BY-4.0
 Copyright (c) 2026 Pascal Dennerly.
 -->
 
-# 02 — Architecture Archaeology: Reconstructing an Undocumented Monolith
+# Part 1 — One system: reconstructing an undocumented monolith
 
+> This is the first part of the [architecture archaeology study](../README.md).
+> Part 2, [many systems](../many-systems/README.md), scales the same
+> discipline across repositories.
+>
 > **The problem:** you inherit a decade-old, undocumented order-fulfilment
 > system. Nobody knows what talks to what. There is a hand-drawn diagram from
 > 2018 that nobody trusts. You need a credible structural model to plan work
