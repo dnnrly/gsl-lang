@@ -14,39 +14,31 @@ Copyright (c) 2026 Pascal Dennerly.
 > classifications — flat, independent, orthogonal. Any perspective is a query
 > away, and the surprising overlaps are facts to discuss, not bugs to hide.
 
-Northstar runs an internet storefront in two regions, on two environments,
-across four trust boundaries, with three data classifications and four owning
-teams. None of those five dimensions is a child of another — yet the platform
-is a **single graph**.
+Northstar runs an internet storefront in two regions and two environments,
+across four trust classifications, three data classes and four owning teams.
+None of those five dimensions is a child of another — the platform is a
+**single graph**.
 
 ---
 
 ## The problem
 
-Every architecture description eventually faces the same question: *what is
-the root of the tree?* Deploy a component diagram and you have grouped by
-region. Add "which team owns it" and you need a second diagram. Throw in data
-classification and a third. Each diagram is right, and none of them matches
-the others.
+Every architecture description faces the same question: *what is the root of
+the tree?* Deploy a component diagram and you have grouped by region. Add
+"which team owns it" and you need a second diagram. Throw in data
+classification and a third — each diagram right, none matching the others.
 
 Northstar is the platform to enjoy that problem at full strength:
 
 - components run in `@europe` **and** `@north_america`;
 - they live in `@production`, with some rehearsed in `@staging`;
-- they sit in one of four trust positions — `@public`, `@application`,
+- they sit in one of four trust classifications — `@public`, `@application`,
   `@restricted`, or outside the platform entirely (`@external`);
 - they touch `@internal_data`, `@confidential_data`, or
   `@highly_confidential_data`; and
 - they are owned by `@commerce`, `@platform`, `@security`, or `@operations`.
 
-A payment service that is *restricted, highly-confidential, North-America,
-commerce-owned* cannot sit underneath "Europe" in a tree, or underneath
-"production", or underneath "commerce". It sits underneath all of them, and
-underneath none.
-
-## Why a hierarchy is not enough
-
-Pick any root. The collapse is instant:
+Pick any root and the collapse is instant:
 
 ```text
 Production
@@ -55,9 +47,10 @@ Production
         └── Payment service
 ```
 
-That tree is *true* — and useless. It says nothing about the restricted
-boundary, the data classification, or that the service actually runs in
-North America. Try four more trees and you have the diagram set that already
+That tree is *true* — and useless. A payment service that is *restricted,
+highly-confidential, North-America, commerce-owned* cannot sit underneath
+"Europe", "production" or "commerce". It sits underneath all of them, and
+underneath none. Try four more trees and you have the diagram set that already
 drove the org to GSL.
 
 A tree forces a **single** parent. Northstar's components have five
@@ -78,32 +71,16 @@ model stores.
 `model.gsl` is the Northstar dependency graph: 18 components, 25 edges, 15
 sets declared up front. Edges carry what they are (`protocol`,
 `event`/`pub|sub` labels); nodes carry *where they are* in every dimension at
-once.
+once:
 
 ```gsl
-set production
-set staging
-set europe
-set north_america
-set public
-set application
-set restricted
-set external
-set internal_data
-set confidential_data
-set highly_confidential_data
-set commerce
-set platform
-set security
-set operations
-
 node web_portal [text="Web Portal"] @production @europe @public @internal_data @commerce
 node payment_service @production @north_america @restricted @highly_confidential_data @commerce
 ```
 
-The set declarations are not decoration: GSL warns on any membership that has
-not been declared, so an accidental `@europe` typo is a *recorded* problem in
-the model, not a silent line in `model.gsl`.
+The set declarations are not decoration: an undeclared membership is a GSL
+warning, so an accidental `@europe` typo is a *recorded* problem, not a silent
+line in `model.gsl`.
 
 The full membership table (readable as English, and queried as facts):
 
@@ -149,40 +126,31 @@ Two classifications deserve an explicit note before we trust them.
 **A component can carry more than one value inside a dimension.** `event_bus`
 carries `@confidential_data` **and** `@highly_confidential_data`. That is not
 a mistake — it is the semantics the dimension needs. The bus carries two
-streams with different sensitivities: `order_placed` events hold customer
-PII (confidential), while `payment_settled` events hold tokenised card data
-(highly-confidential). A component that joins differently-classified flows is
-a member of *all* of those classifications and inherits their combined
-controls — the network-segment rule: a shared conduit is classified at its
-most restrictive payload. This is the punchline of [the second question](#q2--which-production-components-in-europe-touch-highly-confidential-data):
+streams with different sensitivities: `order_placed` events hold customer PII
+(confidential); `payment_settled` events hold tokenised card data
+(highly-confidential). Northstar therefore records the bus in both
+classifications; any controls applied to them are organisational policy
+outside GSL. This is the punchline of [the second question](#q2--which-production-components-in-europe-touch-highly-confidential-data):
 the only production-and-Europe component touching highly-confidential data is
-a *bus*, not a store. It is also actionable: to downgrade the bus you would
-have to stop payment events transiting it.
+a *bus*, not a store.
 
 **`@external` is not a derived convenience and not a sixth dimension.** It is
-the fourth value of the trust dimension, placed past `@restricted`: the
-payment gateway, email provider and identity provider are *outside Northstar's
-boundary*. Internal nodes are members of all five dimensions; external nodes
-are members of exactly one set, because Northstar records whether a component
-is under its control but does not apply its internal policy dimensions to
-vendors. `@external` cannot be cleanly re-derived either — "not in
-`@production` and not in `@staging`" already smuggles in the boundary
-decision it pretends to compute. So it is recorded, not computed. Within the
-trust dimension the four values form an obvious order
-(`@public` → `@application` → `@restricted` → `@external`) — but, as the next
-sections show, that one dimension's internal order explains nothing about the
-other four.
+the fourth member of the trust dimension: the payment gateway, email provider
+and identity provider are *outside Northstar's boundary*. Internal nodes are
+members of all five dimensions; external nodes are members of exactly one set
+— Northstar records control, and does not apply internal policy dimensions
+to vendors. `@external` cannot be cleanly re-derived either: "not in
+`@production` and not in `@staging`" already smuggles the boundary decision
+in. So it is recorded, not computed. Reading the four as `@public` →
+`@application` → `@restricted` → `@external` is for convenience only — GSL
+defines no ordering between them — and, as the next section shows, it explains
+nothing about the other four dimensions.
 
 ## Why the memberships are not a hierarchy
 
 The moment you hold all five dimensions at once, the crossings become the
 architecture:
 
-- **`@restricted` does not imply `@highly_confidential_data`.** `order_store`
-  and `customer_store` are restricted but only confidential. Meanwhile
-  `event_bus` is highly-confidential but sits in `@application`, not
-  `@restricted` — the boundary describes *network access*, the classification
-  describes *data*.
 - **A highly-confidential service outside Europe is policy, not error.**
   `payment_service` and `payment_store` run in `@north_america` while
   `@confidential_data` PII lives in Europe. Data classification has no
@@ -191,9 +159,6 @@ architecture:
   `@application`, the same boundary as the public catalogue.** Northstar's
   policy restricts where *customer records rest* (the stores), not where
   *notifications read them*.
-- **The restricted stores are not owned by the teams that depend on them.**
-  `order_store`, `payment_store` and `customer_store` are `@platform`-owned;
-  `payment_service` is the only `@restricted` component owned by `@commerce`.
 - **`fraud_service` is `@security`-owned yet inside `@commerce`'s checkout**
   (payment_service calls it), and it reads the commerce `customer_store`.
   The security team owns a component the commerce team cannot operate without.
@@ -205,8 +170,6 @@ architecture:
 None of these is a modelling error. Each is a real, sometimes uncomfortable,
 organisational fact that a single-rooted tree would have forced you to
 suppress at write time.
-
-## Sanity check — are the dimensions actually independent?
 
 "Independent" has a precise meaning here: **no dimension is a function of any
 other.** If knowing one classification let you predict another, the sets would
@@ -231,26 +194,16 @@ below are only interesting because of that.
 
 ## Ask questions
 
-The six committed queries are one line each. Run any of them with the `gsl-query`
-CLI:
+The six committed queries are one line each. Run any with the `gsl-query`
+CLI — answers print as **canonical GSL text** (starting with the sorted `set`
+declarations; the contract the `qN-*.result.gsl` files record). To *draw* one,
+chain `gsl-diagram` as the final hop, since raw `gsl-query` output is rejected
+by a mermaid renderer:
 
 ```bash
 gsl-query -f q1-europe.gql -i model.gsl
-```
-
-Every `qN-*.gql` answer is printed as **canonical GSL text** — starting with
-the (sorted) `set` declarations. That is the contract the `qN-*.result.gsl`
-files record. To *draw* one, it must pass through `gsl-diagram` as its final
-hop — raw `gsl-query` output handed to a mermaid renderer is simply rejected
-mermaid, so keep the two tools chained:
-
-```bash
 gsl-query -f q1-europe.gql -i model.gsl | gsl-diagram -f mermaid -t graph
 ```
-
-Queries into set membership are where the edge over a hierarchy first shows:
-each classification question is the same *parser construct*, and combining
-classifications is just `AND`-ing set predicates — no tree navigation invented.
 
 ### Q1 — What runs in Europe?
 
@@ -268,8 +221,8 @@ node event_bus [text="Event Bus"] @application @confidential_data @europe @highl
 ```
 
 (Truncated: the committed `q1-europe.result.gsl` holds all 11 nodes and 14
-edges. `catalogue_service` and `event_bus` show their `@staging` rehearsal
-membership beside `@production`.)
+edges, with `catalogue_service` and `event_bus` showing their `@staging`
+rehearsal membership beside `@production`.)
 
 ![Everything that runs in Europe](views/europe.graph.svg)
 
@@ -285,11 +238,9 @@ Three constraints, one predicate each, **one answer**:
 node event_bus [text="Event Bus"] @application @confidential_data @europe @highly_confidential_data @platform @production @staging
 ```
 
-The bus, and nothing else. Not `payment_service` (it is in North America),
-not a store (their data is stored where the *records* rest). The union of
-"Europe", "production" and "highly-confidential" is a single conduit. A
-hierarchy would never have had this answer standing; it is exactly the kind
-of fact that gets argued over in meetings until a query settles it.
+The bus, and nothing else — not `payment_service` (it is in North America),
+not a store. The union of "Europe", "production" and "highly-confidential" is
+a single conduit that a hierarchy would never have had an answer standing for.
 
 ### Q3 — Which commerce-owned components are restricted?
 
@@ -386,71 +337,42 @@ would have drawn in a completely different corner of the diagram.)
 
 ## Generate views
 
-Every diagram above came from a query — nothing was re-typed. The same
-discipline extends to the views, and the derived nature shows its worth on
-the *summary* diagrams. Where a static diagram records a judgment call ("the
-boundary looks like this"), the query *derives* the boundary from the facts.
+Every diagram above came from a query — nothing was re-typed, so the views
+cannot drift from the model. The discipline pays off on the *summary*
+diagrams: where a static diagram records a judgment call ("the boundary
+looks like this"), the query *derives* the boundary from the facts.
 
 ### The trust boundary, summarised
 
-Collapse each trust level into a single node and the cross-boundary edges
-remain — the border, drawn fresh:
-
-```gql
-remove node.text where node.text exists | collapse into trust_public where node in @public | collapse into trust_application where node in @application | collapse into trust_restricted where node in @restricted | collapse into trust_external where node in @external
-```
+Collapse each trust classification into a single node and the cross-boundary
+edges remain — the border, drawn fresh:
 
 ```bash
 gsl-query 'remove node.text where node.text exists | collapse into trust_public where node in @public | collapse into trust_application where node in @application | collapse into trust_restricted where node in @restricted | collapse into trust_external where node in @external' < model.gsl | gsl-diagram -f mermaid -t component
 ```
 
-Four boxes, eight boundary crossings — public→application over HTTPS, the
-application boundary reaching out to `@external` (identity provider,
-email), application→restricted over SQL and gRPC into the stores, the
-restricted payment service calling the external payment processor, and the
-event wiring back out of `@restricted`: `payment_service` publishes
-`payment_settled` onto the application `event_bus`, whose subscribers read
-the restricted `customer_store`. This is the one-slide
-trust diagram for a security review, and it is regenerated by a command, not
-maintained by hand.
+Four boxes, eight boundary crossings — public→application over HTTPS,
+application→`@external` (identity provider, email), application→restricted
+over SQL and gRPC into the stores, the restricted payment service calling
+the external processor — and the event wiring back out of `@restricted`:
+`payment_service` publishes `payment_settled` to the application `event_bus`,
+whose subscribers read the restricted `customer_store`. One slide for a
+security review, regenerated by a command, not maintained by hand.
 
 ![The trust boundary, summarised from the model](views/trust-summary.component.svg)
 
 ### Run it yourself
 
-The plain boundary query that the summary was built from — again, the output
-is canonical GSL *text*, so append `gsl-diagram` to turn it into a diagram:
+Two more inline queries round out the pattern: the plain restricted-boundary
+subgraph, and a geography collapse — three regions plus the edges that cross
+between them. Answers are canonical GSL text; append `gsl-diagram` to turn
+one into a diagram:
 
 ```bash
 gsl-query 'subgraph node in @restricted' < model.gsl
 gsl-query 'subgraph node in @restricted' < model.gsl | gsl-diagram -f mermaid -t graph
-```
-
-And the geography summary — three regions, and the edges that cross between
-them (the inter-region commerce calls and the event subscriptions flowing
-back from North America to Europe):
-
-```bash
 gsl-query 'remove node.text where node.text exists | collapse into region_europe where node in @europe | collapse into region_north_america where node in @north_america | collapse into region_external where node in @external' < model.gsl
 ```
-
-## What this demonstrates
-
-- **A graph can carry several independent classification dimensions with no
-  hierarchy at all.** Northstar holds all five in the same model, and deriving
-  any single dimension costs one query.
-- **Membership is a fact, not an inference.** `event_bus` really is both
-  confidential and highly-confidential. A tree could not *store* that;
-  `model.gsl` does, and the classifiers stay honest.
-- **The representations are not the validation.** Northstar's classifications
-  are record-keeping for an org policy, not rules GSL enforces. GSL stores
-  Northstar's truth; Northstar's owners are still accountable for it.
-- **Orthogonal sets unlock questions a hierarchy makes awkward.** Three
-  predicates (`@production` + `@europe` + `@highly_confidential_data`) pin
-  down a single fact that four hand-drawn trees could not agree on.
-- **Nothing is re-maintained.** Every view — including the trust-summary
-  border diagram — is one query, so the "diagrams drift from reality" failure
-  mode is designed out.
 
 ## What this does not demonstrate
 
@@ -458,12 +380,11 @@ gsl-query 'remove node.text where node.text exists | collapse into region_europe
   classifications; it does not enforce that `payment_service` secrets stay in
   `@north_america`, or that `@restricted` nodes require specific access
   controls. The sets are data, not policy engines.
-- **It is not a methodology.** This is a *demonstration* that one
-  18-component model can carry five dimensions. Real enterprises would arrive
-  at their own set vocabulary; the mechanism shown here survives regardless.
+- **It is not a methodology.** Real enterprises would arrive at their own set
+  vocabulary; the mechanism shown here survives regardless.
 - **The `@external` shortcut is a modelling choice, not a general rule.**
-  Real integration landscapes often classify vendor systems by geography and
-  environment too. Northstar only records what it is prepared to stand behind.
+  Real integration landscapes often classify vendor systems too. Northstar
+  only records what it is prepared to stand behind.
 - **Boundary "correctness" is not checked.** Nothing prevents a future
   contributor from adding a `@restricted` node in the `@public` zone. The
   model will happily hold it — and the *next* reviewer will query it.

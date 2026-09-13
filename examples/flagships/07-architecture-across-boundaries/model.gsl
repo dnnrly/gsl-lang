@@ -10,8 +10,10 @@
 #   ownership:     @commerce @platform @security @operations
 #
 # Sets are declared here so membership is a record, never an accident. A node
-# carries exactly one value per dimension; membership is orthogonal across
-# dimensions (see README "Why the memberships are not a hierarchy").
+# carries one or more memberships within a dimension (catalogue_service and
+# event_bus are both production and staging; event_bus is also confidential
+# and highly-confidential); membership is orthogonal across dimensions (see
+# README "Why the memberships are not a hierarchy").
 set production
 set staging
 set europe
