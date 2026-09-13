@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Regenerate the .svg diagram renders committed for README display.
 #
-# Renders every .mmd source referenced by an image in a README (root or
-# flagships) with mermaid-cli, then rewrites the svg width="100%" to the
+# Renders every .mmd source referenced by an image in a README (root,
+# flagships, or advanced studies) with mermaid-cli, then rewrites the svg width="100%" to the
 # diagram's natural viewBox size so GitHub renders it content-sized rather
 # than stretched to the page width.
 #
@@ -20,7 +20,7 @@ command -v python3 >/dev/null || { echo "python3 not found" >&2; exit 1; }
 
 rendered=0
 skipped=0
-for readme in "$here/README.md" "$here"/examples/flagships/*/README.md; do
+for readme in "$here/README.md" "$here"/examples/flagships/*/README.md "$here"/examples/advanced/*/*/README.md; do
   dir="$(dirname "$readme")"
   # every image reference of the form (path/to/x.svg)
   while IFS= read -r svg; do

@@ -73,7 +73,7 @@ These limits are what keep the format small: canonical, diffable, mergeable — 
 
 ## The shapes this supports
 
-Because the model is just nodes and directed edges, one language covers many problem shapes — service architecture, dependency graphs, workflows, organisational reporting, security boundaries, relationship networks. The flagship examples explore real ones: [service retirement](../../examples/flagships/01-service-many-views/README.md), [financial-network criticality](../../examples/flagships/04-financial-network/README.md), [LLM-assisted modelling](../../examples/flagships/05-llm-assisted-modelling/README.md), and [independent classification dimensions](../../examples/flagships/07-architecture-across-boundaries/README.md).
+Because the model is just nodes and directed edges, one language covers many problem shapes — service architecture, dependency graphs, workflows, organisational reporting, security boundaries, relationship networks. The flagship examples explore real ones: [service retirement](../../examples/flagships/01-service-many-views/README.md), [financial-network criticality](../../examples/flagships/04-financial-network/README.md), [LLM-assisted modelling](../../examples/flagships/05-llm-assisted-modelling/README.md), and [independent classification dimensions](../../examples/flagships/03-architecture-across-boundaries/README.md).
 
 ---
 

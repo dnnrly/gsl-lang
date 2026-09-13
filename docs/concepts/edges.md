@@ -63,7 +63,7 @@ GATE: controlplane -> approve
 PROMOTE: registry -> canary [parent=GATE]
 ```
 
-Read that as *"`PROMOTE` cannot run until `GATE` has happened"* — while both remain first-class edges in the graph. This is how flagship [03 — release prerequisites](../../examples/flagships/03-release-prerequisites/README.md) models "when can we promote?" as pure graph. Promotions, approvals, gates — a whole class of workflow is just edges with edges depending on them. See [Edge dependencies](edge-dependencies.md).
+Read that as *"`PROMOTE` cannot run until `GATE` has happened"* — while both remain first-class edges in the graph. This is how flagship [02 — release prerequisites](../../examples/flagships/02-release-prerequisites/README.md) models "when can we promote?" as pure graph. Promotions, approvals, gates — a whole class of workflow is just edges with edges depending on them. See [Edge dependencies](edge-dependencies.md).
 
 ## Why you can traverse both ways
 

@@ -3,7 +3,7 @@ SPDX-License-Identifier: CC-BY-4.0
 Copyright (c) 2026 Pascal Dennerly.
 -->
 
-# 07 — Architecture Across Boundaries
+# 03 — Architecture Across Boundaries
 
 > **The problem:** a retail platform must be understood from several
 > independent perspectives at once — geography, environment, trust boundary,
@@ -395,7 +395,7 @@ gsl-query 'remove node.text where node.text exists | collapse into region_europe
 ## The two-minute test
 
 ```bash
-cd examples/flagships/07-architecture-across-boundaries
+cd examples/flagships/03-architecture-across-boundaries
 
 # 1. The whole Northstar architecture, canonicalised (no warnings)
 #    -> prints canonical GSL text, not a diagram
@@ -436,9 +436,9 @@ Flagship [01 — one graph, many views](../01-service-many-views/README.md) is
 about *deriving views from the graph*: one single-valued attribute
 (`team`, `zone`) or one set (`@critical`) drives each view. This flagship is
 the step beyond — five *simultaneous* classifications that must be held at
-once, and queried across. Flagships [02](../02-architecture-archaeology/README.md)
-and [06](../06-enterprise-architecture-archaeology/README.md) carry
-provenance, not classification dimensions; [05](../05-llm-assisted-modelling/README.md)
-is about the modelling process, not the model's structure. Northstar 07
+once, and queried across. The [architecture archaeology study](../../advanced/architecture-archaeology/README.md)
+carries provenance (`source`/`confidence`) rather than classification
+dimensions, and [05](../05-llm-assisted-modelling/README.md) is about the
+modelling process, not the model's structure. Architecture across boundaries
 exists to answer the question each of them touches but none of them asks:
 *what if a system belongs to five things at once?*

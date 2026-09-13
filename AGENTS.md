@@ -62,6 +62,12 @@ go test -v -run TestName        # Run specific test
 - `editors/vscode/package.json` — Extension manifest
 - `editors/vscode/syntaxes/` — TextMate grammars for GSL and GQL
 
+**Examples:**
+- `examples/flagships/` - the five flagship narratives (01 many-views, 02 release-prerequisites, 03 architecture-across-boundaries, 04 financial-network, 05 llm-assisted-modelling), each `model.gsl` + `README.md` + `qN-*.gql`/`.result.gsl` + `views/`
+- `examples/advanced/architecture-archaeology/` - the advanced study (one-system + many-systems), same layout as a flagship
+- `examples/flagship_test.go` - flagship model/query/result/diagram/README validation
+- `examples/advanced_test.go` - the same guarantees for `advanced/`
+
 **Documentation:**
 - `SPEC.md` - Normative spec (source of truth for language rules)
 - `GSL_GUIDE.md` - GSL language reference for LLMs and AI agents
@@ -103,6 +109,7 @@ make lint
 | LSP server | lsp/*, cmd/gsl-lsp/main.go |
 | VS Code extension | editors/vscode/* |
 | Documentation examples | README.md, SPEC.md, GSL_GUIDE.md |
+| Flagship/advanced examples | examples/flagship_test.go, examples/advanced_test.go, examples/flagships/*, examples/advanced/* |
 | Documentation learning journey | docs/README.md (IA index), docs/getting-started/, docs/concepts/, docs/tutorials/ (+ modelling-with-gsl.md), docs/cookbook/ |
 | Query language tests | query/testdata/*, query/.test-plan.md |
 | Acceptance tests | test/features/*.feature, test/*_test.go |

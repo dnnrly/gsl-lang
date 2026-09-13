@@ -100,8 +100,8 @@ Honest boundaries: GSL is a file format and a derivation tool. It does not do gr
 | Job | What it looks like | Full example |
 |---|---|---|
 | **Keep architecture docs truthful** | One canonical model; diagrams, team views and impact answers derived from it | [01 — one graph, many views](examples/flagships/01-service-many-views/README.md) |
-| **Reconstruct an undocumented system** | Record recovered facts with provenance (`source`, `confidence`) while you dig; risk lists become queries | [02 — architecture archaeology](examples/flagships/02-architecture-archaeology/README.md) |
-| **Model workflow prerequisites** | A deploy edge that depends on an approval edge; query "what does the gate unlock?" | [03 — release prerequisites](examples/flagships/03-release-prerequisites/README.md) |
+| **Reconstruct an undocumented system** | Record recovered facts with provenance (`source`, `confidence`) while you dig; risk lists become queries | [Architecture archaeology](examples/advanced/architecture-archaeology/README.md) |
+| **Model workflow prerequisites** | A deploy edge that depends on an approval edge; query "what does the gate unlock?" | [02 — release prerequisites](examples/flagships/02-release-prerequisites/README.md) |
 | **Model relationship networks of any kind** | Financial exposure, org structures, relationship graphs — the same operations, a different domain | [04 — financial relationships](examples/flagships/04-financial-network/README.md) |
 
 GSL is a *graph* language. It is not software-only: the same text format, query language and derived views describe financial networks, organisational structures and any other relationship-shaped knowledge. Whatever the domain, the point is the same: the graph is the asset; the views are derived.
@@ -110,17 +110,17 @@ GSL is a *graph* language. It is not software-only: the same text format, query 
 
 ## Flagship examples
 
-Seven complete, runnable narratives — **problem → model → query → derived view** — each with a two-minute test you can run. They are the best place to understand why GSL exists, end to end. See the [flagships index](examples/flagships/README.md).
+Five complete, runnable narratives — **problem → model → query → derived view** — each with a two-minute test you can run. They are the best place to understand why GSL exists, end to end. See the [flagships index](examples/flagships/README.md).
 
 | Example | The question it answers | The distinctive idea |
 |---|---|---|
 | [01 — one graph, many views](examples/flagships/01-service-many-views/README.md) | "Retire this service — who breaks?" | One 20-service model, seven derived views (blast radius, team-level, critical reach, migration). |
-| [02 — architecture archaeology](examples/flagships/02-architecture-archaeology/README.md) | "We inherited an undocumented monolith" | The model carries provenance; risk lists are queries, not guesses. |
-| [03 — release prerequisites](examples/flagships/03-release-prerequisites/README.md) | "When can we promote?" | A relationship *between edges* — a promotion gated on an approval. Workflow as a graph. |
+| [02 — release prerequisites](examples/flagships/02-release-prerequisites/README.md) | "When can we promote?" | A relationship *between edges* — a promotion gated on an approval. Workflow as a graph. |
+| [03 — architecture across boundaries](examples/flagships/03-architecture-across-boundaries/README.md) | "Which boundary do I even mean?" | Sets as five independent dimensions on one flat graph; every boundary is a query, no hierarchy chosen. |
 | [04 — financial relationships](examples/flagships/04-financial-network/README.md) | "If the CCP fails, who is exposed?" | The same operations as 01, in a non-software domain. |
 | [05 — LLM-assisted modelling](examples/flagships/05-llm-assisted-modelling/README.md) | "Can an agent turn prose into a model?" | An honest experiment: parser + canonical diff + queries make agent output reviewable. |
-| [06 — enterprise architecture archaeology](examples/flagships/06-enterprise-architecture-archaeology/README.md) | "What does our enterprise architecture actually look like?" | Independent investigation fragments from many repos compose into one queryable graph. |
-| [07 — architecture across boundaries](examples/flagships/07-architecture-across-boundaries/README.md) | "Which boundary do I even mean?" | Sets as five independent dimensions on one flat graph; every boundary is a query, no hierarchy chosen. |
+
+The [architecture archaeology study](examples/advanced/architecture-archaeology/README.md) is the advanced continuation: provenance for one undocumented system, then for an enterprise recovered across many repositories.
 
 [**01 — one graph, many views**](examples/flagships/01-service-many-views/README.md) is the hero example: a single `model.gsl` for a retail platform.
 

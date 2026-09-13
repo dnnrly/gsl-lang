@@ -7,7 +7,7 @@ Copyright (c) 2026 Pascal Dennerly.
 
 **Problem:** a release pipeline has an approval gate. Once the gate passes, what is allowed to run — and what is still held?
 
-**At scale:** this is the whole of [flagship 03 — release prerequisites](../../examples/flagships/03-release-prerequisites/README.md), where two tracks rejoin before production.
+**At scale:** this is the whole of [flagship 02 — release prerequisites](../../examples/flagships/02-release-prerequisites/README.md), where two tracks rejoin before production.
 
 > **Version note:** this recipe uses **scoped edge dependencies** — edges that depend on other edges. This is part of the language spec and the reference implementation; it first shipped with the v0.5.0 release, so commands here require at least v0.5.0 (`gsl-query version` shows your binary's version).
 
@@ -74,6 +74,6 @@ Passing `GATE` unlocks promotion and the canary/smoke rollout; it does **not** u
 ## Turning it into a policy check
 
 - **"Hold until approved"** — the gate-holding query is the complement: `subgraph edge parent exists` minus the unlocked set. GQL lets you combine these as named graphs ([query tutorial Step 9](../../QUERY_TUTORIAL.md#step-9-named-graphs-and-graph-algebra)).
-- **Reuse the flagships' vocabulary** — flagship 03 queries by `edge.stage`, exactly as here, at six times the size.
+- **Reuse the flagships' vocabulary** — flagship 02 queries by `edge.stage`, exactly as here, at six times the size.
 
 **Next:** back to the [cookbook index](README.md), or up a level to the concept on [edge dependencies](../concepts/edge-dependencies.md).
