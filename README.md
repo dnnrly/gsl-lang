@@ -110,7 +110,7 @@ GSL is a *graph* language. It is not software-only: the same text format, query 
 
 ## Flagship examples
 
-Six complete, runnable narratives — **problem → model → query → derived view** — each with a two-minute test you can run. They are the best place to understand why GSL exists, end to end. See the [flagships index](examples/flagships/README.md).
+Seven complete, runnable narratives — **problem → model → query → derived view** — each with a two-minute test you can run. They are the best place to understand why GSL exists, end to end. See the [flagships index](examples/flagships/README.md).
 
 | Example | The question it answers | The distinctive idea |
 |---|---|---|
@@ -120,6 +120,7 @@ Six complete, runnable narratives — **problem → model → query → derived 
 | [04 — financial relationships](examples/flagships/04-financial-network/README.md) | "If the CCP fails, who is exposed?" | The same operations as 01, in a non-software domain. |
 | [05 — LLM-assisted modelling](examples/flagships/05-llm-assisted-modelling/README.md) | "Can an agent turn prose into a model?" | An honest experiment: parser + canonical diff + queries make agent output reviewable. |
 | [06 — enterprise architecture archaeology](examples/flagships/06-enterprise-architecture-archaeology/README.md) | "What does our enterprise architecture actually look like?" | Independent investigation fragments from many repos compose into one queryable graph. |
+| [07 — architecture across boundaries](examples/flagships/07-architecture-across-boundaries/README.md) | "Which boundary do I even mean?" | Sets as five independent dimensions on one flat graph; every boundary is a query, no hierarchy chosen. |
 
 [**01 — one graph, many views**](examples/flagships/01-service-many-views/README.md) is the hero example: a single `model.gsl` for a retail platform.
 

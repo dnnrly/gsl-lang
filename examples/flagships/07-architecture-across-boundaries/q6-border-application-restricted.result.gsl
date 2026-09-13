@@ -1,0 +1,40 @@
+set application
+set commerce
+set confidential_data
+set europe
+set external
+set highly_confidential_data
+set internal_data
+set north_america
+set operations
+set platform
+set production
+set public
+set restricted
+set security
+set staging
+
+node order_service @application @commerce @confidential_data @europe @production
+node order_store @confidential_data @europe @platform @production @restricted
+node customer_service @application @commerce @confidential_data @europe @production
+node payment_service @commerce @highly_confidential_data @north_america @production @restricted
+node event_bus [text="Event Bus"] @application @confidential_data @europe @highly_confidential_data @platform @production @staging
+node fraud_service @application @confidential_data @north_america @production @security
+node customer_store @confidential_data @europe @platform @production @restricted
+node fulfilment_service @application @internal_data @north_america @operations @production
+node notification_service @application @confidential_data @europe @operations @production
+
+order_service->order_store [protocol="sql"]
+order_service->customer_service [protocol="grpc"]
+order_service->payment_service [protocol="grpc"]
+order_service->event_bus [event="order_placed", protocol="pub"]
+payment_service->fraud_service [protocol="grpc"]
+payment_service->event_bus [event="payment_settled", protocol="pub"]
+customer_service->customer_store [protocol="sql"]
+fraud_service->event_bus [event="order_placed", protocol="sub"]
+fraud_service->customer_store [protocol="sql"]
+fulfilment_service->event_bus [event="order_placed", protocol="sub"]
+fulfilment_service->order_store [protocol="sql"]
+notification_service->event_bus [event="order_placed", protocol="sub"]
+notification_service->event_bus [event="payment_settled", protocol="sub"]
+notification_service->customer_store [protocol="sql"]

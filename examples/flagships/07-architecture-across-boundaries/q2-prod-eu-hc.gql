@@ -1,0 +1,3 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
+subgraph node in @production AND node in @europe AND node in @highly_confidential_data

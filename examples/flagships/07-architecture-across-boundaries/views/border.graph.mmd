@@ -1,0 +1,27 @@
+graph TD
+%% Generated: gsl-query -f q6-border-application-restricted.gql -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  customer_store["customer_store"]
+  fulfilment_service["fulfilment_service"]
+  order_store["order_store"]
+  order_service["order_service"]
+  event_bus["Event Bus"]
+  notification_service["notification_service"]
+  customer_service["customer_service"]
+  payment_service["payment_service"]
+  fraud_service["fraud_service"]
+
+  order_service --> order_store
+  order_service --> customer_service
+  order_service --> payment_service
+  order_service --> event_bus
+  payment_service --> fraud_service
+  payment_service --> event_bus
+  customer_service --> customer_store
+  fraud_service --> event_bus
+  fraud_service --> customer_store
+  fulfilment_service --> event_bus
+  fulfilment_service --> order_store
+  notification_service --> event_bus
+  notification_service --> event_bus
+  notification_service --> customer_store

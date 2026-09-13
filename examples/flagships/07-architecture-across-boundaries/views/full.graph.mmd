@@ -1,0 +1,47 @@
+graph TD
+%% Generated: gsl-query 'from *' -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  order_service["order_service"]
+  identity_provider["Identity provider"]
+  customer_service["customer_service"]
+  fulfilment_service["fulfilment_service"]
+  payment_store["payment_store"]
+  notification_service["notification_service"]
+  payment_gateway["Payment processor"]
+  fraud_service["fraud_service"]
+  payment_service["payment_service"]
+  customer_api["Customer API"]
+  catalogue_store["catalogue_store"]
+  catalogue_service["catalogue_service"]
+  order_store["order_store"]
+  email_provider["Email provider"]
+  web_portal["Web Portal"]
+  event_bus["Event Bus"]
+  observability["Observability"]
+  customer_store["customer_store"]
+
+  web_portal --> customer_api
+  web_portal --> catalogue_service
+  customer_api --> identity_provider
+  customer_api --> order_service
+  customer_api --> customer_service
+  order_service --> order_store
+  order_service --> customer_service
+  order_service --> payment_service
+  order_service --> catalogue_service
+  order_service --> event_bus
+  payment_service --> payment_store
+  payment_service --> payment_gateway
+  payment_service --> fraud_service
+  payment_service --> event_bus
+  customer_service --> customer_store
+  fraud_service --> event_bus
+  fraud_service --> customer_store
+  fulfilment_service --> event_bus
+  fulfilment_service --> order_store
+  notification_service --> event_bus
+  notification_service --> event_bus
+  notification_service --> email_provider
+  notification_service --> customer_store
+  catalogue_service --> catalogue_store
+  event_bus --> observability
