@@ -69,5 +69,6 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the app exits without error$`, tc.theAppExitsWithoutError)
 	ctx.Step(`^the app exits with an error$`, tc.theAppExitsWithAnError)
 	ctx.Step(`^the app output contains "(.*)"$`, tc.theAppOutputContains)
+	ctx.Step(`^the app output does not contain "(.*)"$`, tc.theAppOutputDoesNotContain)
 	ctx.Step(`^a GSL input file with content:$`, tc.aGslInputFileWithContent)
 }
