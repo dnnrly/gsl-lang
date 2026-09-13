@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # GSL
 
 > **The source of truth for the graphs behind your diagrams.**
@@ -251,4 +256,21 @@ The closest thing to a gotcha: GQL is the differentiator, and it is honestly lab
 
 ## Contributing
 
-The parser is hand-written, the core is standard-library-only, and the tests run against the language itself. Contribution guidance and project conventions live in [AGENTS.md](AGENTS.md). The [code of conduct](CODE_OF_CONDUCT.md) applies. GPL-3.0 licensed.
+The parser is hand-written, the core is standard-library-only, and the tests run against the language itself. Contribution guidance and project conventions live in [AGENTS.md](AGENTS.md). The [code of conduct](CODE_OF_CONDUCT.md) applies.
+
+---
+
+## Licensing
+
+The original GSL work is authored and maintained by **Pascal Dennerly**, who holds its copyright. The repository is intentionally dual-licensed so that code and documentation can be reused under the terms that best fit each:
+
+| Content | Licence |
+|---|---|
+| **Implementation/source code** — Go sources, CLI tools, LSP server, VS Code extension, build and configuration files | [Apache-2.0](LICENSE) |
+| **GSL specification** — `SPEC.md`, `GRAMMAR.md`, `QUERY_SPEC.md`, `QUERY_GRAMMAR.md` | [CC-BY-4.0](LICENSE-CC-BY-4.0) |
+| **Technical documentation/tutorials** — `docs/`, the guides, READMEs, contribution docs | [CC-BY-4.0](LICENSE-CC-BY-4.0) |
+| **Code examples** — `.gsl`/`.gql` files under `examples/` and the test fixtures, and fenced code blocks shown in the documentation | [Apache-2.0](LICENSE) |
+
+Individual files carry an SPDX header identifying their licence; where a document is CC-BY-4.0, **fenced code blocks embedded in it remain Apache-2.0**. Reuse the prose under CC-BY-4.0 and the code under Apache-2.0. The CLI tools report their licence in `version` output, and the embedded guides ship under CC-BY-4.0 with the binaries.
+
+These licences cover the material published in this repository. They grant permission to use that material; they do not claim ownership of, or restrict independent implementations of, the GSL language itself.

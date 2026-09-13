@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Concept: Canonical Form and Diffability
 
 **Audience:** everyone treating a graph as an asset. **Prerequisite:** [Lenient parsing and last-write-wins](parsing-and-merging.md).

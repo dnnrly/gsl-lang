@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # 05 — LLM-Assisted Modelling: An Honest Experiment
 
 > **The hypothesis (from GSL-ADOPTION-PLAN):** an LLM/agent can turn messy

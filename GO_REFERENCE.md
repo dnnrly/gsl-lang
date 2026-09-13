@@ -3,6 +3,12 @@ name: gsl-go-library
 description: Complete reference for using GSL (Graph Specification Language) in Go applications. Covers API usage, data structures, algorithms, and best practices. Use when working with GSL in Go code.
 ---
 
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
+
 # GSL Go Library - Complete Guide for LLMs
 
 This document contains everything needed to use GSL in Go applications.

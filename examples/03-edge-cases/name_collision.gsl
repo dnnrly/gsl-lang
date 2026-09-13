@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
 # Demonstrates node and set name collision
 # "auth" is used both as a node name and as a set name.
 # This is allowed but generates a warning.

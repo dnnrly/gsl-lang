@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Recipe: Render Views in CI
 
 **Problem:** diagrams and derived views go stale. You want a pipeline that regenerates them from the model file, and a check that fails when they drift.

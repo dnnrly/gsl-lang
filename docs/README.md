@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # GSL Documentation — The Learning Journey
 
 > **The source of truth for the graphs behind your diagrams.**

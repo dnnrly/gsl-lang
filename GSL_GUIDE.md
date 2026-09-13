@@ -10,6 +10,12 @@ grammar: GRAMMAR.md
 implementation: Go
 ---
 
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
+
 # GSL (Graph Specification Language) - Complete Guide for LLMs
 
 This document contains everything needed to understand and write GSL files and use the language correctly.

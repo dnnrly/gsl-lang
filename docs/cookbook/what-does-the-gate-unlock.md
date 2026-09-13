@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Recipe: What Does the Approval Gate Unlock?
 
 **Problem:** a release pipeline has an approval gate. Once the gate passes, what is allowed to run — and what is still held?

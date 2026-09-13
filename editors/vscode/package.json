@@ -4,7 +4,7 @@
   "description": "GSL (Graph Specification Language) language support",
   "version": "0.1.0",
   "publisher": "gsl-lang",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "engines": {
     "vscode": "^1.85.0"
   },

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
 # Task scheduling/build system example
 # Shows dependencies between tasks.
 # Can be used for topological sorting to determine execution order.

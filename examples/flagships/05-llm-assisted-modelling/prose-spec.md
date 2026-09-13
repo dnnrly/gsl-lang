@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Source material: the "promotion engine" redesign
 
 This is the messy source of truth an agent is handed. It is deliberately

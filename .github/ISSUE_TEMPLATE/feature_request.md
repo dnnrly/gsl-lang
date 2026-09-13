@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 ---
 name: Feature request
 about: Suggest an idea for GSL, the query language, the CLI tools, or the LSP

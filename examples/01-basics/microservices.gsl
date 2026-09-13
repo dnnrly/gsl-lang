@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
 # Microservices architecture
 # Demonstrates sets for service grouping and attributes for metadata
 

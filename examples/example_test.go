@@ -358,7 +358,7 @@ func Example_parentOverride() {
 	// Output:
 	// Graph: 4 nodes
 	// Warnings: 1
-	//   - 7:3: parent override inside block
+	//   - 9:3: parent override inside block
 	// Parent relationships:
 	//   Child1 -> Parent1
 	//   Child2 -> Parent2

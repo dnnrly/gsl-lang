@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Recipe: What Is `@critical`?
 
 **Problem:** your architecture review needs the load-bearing services — who is in the `@critical` set, and how are they wired to each other?

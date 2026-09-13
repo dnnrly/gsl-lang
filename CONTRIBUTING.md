@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Contributing to GSL
 
 Thanks for considering contributing to GSL. This guide covers how to work

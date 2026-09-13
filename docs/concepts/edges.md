@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Concept: Edges — Relationships Between Nodes
 
 **Audience:** everyone. **Prerequisite:** [Graphs and nodes](graph-model.md).

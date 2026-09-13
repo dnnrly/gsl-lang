@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # AGENTS.md - GSL-Lang Development Guide
 
 This document provides instructions for AI agents working on the GSL-Lang project.

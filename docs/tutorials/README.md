@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Tutorials
 
 **Audience:** people who have grasped the [concepts](../concepts/graph-model.md) and want to *do* something.

@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # GQL EBNF Grammar (Spec v0.4)
 
 ## 1. Query Structure

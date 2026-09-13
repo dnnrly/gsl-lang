@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
 # Demonstrates parent override inside a block
 # The "Child2" node explicitly declares a different parent (sibling)
 # than the implicit parent from the block, which generates a warning.

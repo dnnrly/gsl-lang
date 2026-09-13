@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2026 Pascal Dennerly.
 package cli
 
 import (
@@ -28,6 +30,8 @@ func PrintVersion(tool, version, commit, buildDate string) {
 	if info, ok := debug.ReadBuildInfo(); ok {
 		fmt.Printf("Go: %s\n", info.GoVersion)
 	}
+	fmt.Println("License: Apache-2.0 (see LICENSE)")
+	fmt.Println("Copyright: (c) 2026 Pascal Dennerly")
 }
 
 // extractFrontmatter extracts YAML frontmatter from markdown.

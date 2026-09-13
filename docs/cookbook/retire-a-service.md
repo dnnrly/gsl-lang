@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Recipe: Retire a Service — "Who Breaks?"
 
 **Problem:** `legacy_orders` is being switched off. Which `@critical` services end up affected — directly or through the cascade?

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
 # Legacy order-fulfilment system — reconstructed by archaeology.
 #
 # An undocumented monolith that has been running for a decade. The model is

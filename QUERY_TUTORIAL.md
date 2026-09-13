@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Learning the GSL Query Language
 
 A step-by-step guide to understanding GQL — the pipeline-oriented query and transformation language for GSL graphs.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2026 Pascal Dennerly.
 package gsl
 
 // NodeRef is a distinct type for node references in attribute values.

@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Concept: Untyped Attributes
 
 **Audience:** everyone. **Prerequisite:** [Edges — relationships between nodes](edges.md).

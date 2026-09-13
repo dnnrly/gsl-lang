@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Concept: Lenient Parsing and Last-Write-Wins
 
 **Audience:** everyone editing GSL or building with it. **Prerequisite:** [Queries and derived views](queries-and-views.md). *(Advanced: you can defer these pages until you need them.)*

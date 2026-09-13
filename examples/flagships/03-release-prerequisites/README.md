@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # 03 — Release Prerequisites: A Relationship Between Relationships
 
 > **The problem:** releasing to production involves parallel tracks that must
