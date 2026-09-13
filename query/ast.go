@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2026 Pascal Dennerly.
 //nolint:structtag,composites // Participle uses custom struct tag syntax that standard Go validators don't understand
 package query
 

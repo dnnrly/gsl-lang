@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Security Policy
 
 ## Reporting a vulnerability

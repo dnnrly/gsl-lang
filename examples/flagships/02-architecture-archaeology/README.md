@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # 02 — Architecture Archaeology: Reconstructing an Undocumented Monolith
 
 > **The problem:** you inherit a decade-old, undocumented order-fulfilment

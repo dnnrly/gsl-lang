@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # GSL Specification
 
 Version 1.0.0 (Draft)

@@ -1,6 +1,13 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # GSL Examples
 
 This directory contains example GSL graph definitions organized as a learning path, along with a demonstration of using the GSL library in a Go program.
+
+**Licensing.** This prose is CC-BY-4.0 (see [LICENSE-CC-BY-4.0](../LICENSE-CC-BY-4.0)); the `.gsl`/`.gql` example files are Apache-2.0 code examples (each carries that SPDX header, and the terms are in [LICENSE](../LICENSE)).
 
 ---
 

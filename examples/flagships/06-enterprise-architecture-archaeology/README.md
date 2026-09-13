@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # 06 — Enterprise Architecture Archaeology: Many Repositories, One Queryable Model
 
 > **The problem:** a large enterprise has hundreds of repositories and no

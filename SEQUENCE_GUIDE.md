@@ -7,6 +7,12 @@ description: Reference guide for the sequence diagram dialect in gsl-diagram. Co
 keywords: [gsl, sequence-diagram, plantuml, mermaid, uml, activations, arrow-styles, lifelines, gsl-diagram]
 ---
 
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
+
 # GSL Sequence Diagrams - LLM Guide
 
 This document explains how `gsl-diagram` converts GSL graphs into UML sequence diagrams. Both **PlantUML** and **Mermaid** output formats are supported.

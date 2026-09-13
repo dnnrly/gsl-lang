@@ -9,6 +9,12 @@ spec: QUERY_SPEC.md
 grammar: QUERY_GRAMMAR.md
 ---
 
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
+
 # GSL Query Language — AI Agent Guide
 
 **Target audience:** AI agents, LLMs, and autonomous tools that need to understand, implement, or reason about GSL queries.

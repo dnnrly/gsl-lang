@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
 # Production release with parallel tracks and edge prerequisites.
 #
 # Two tracks advance in parallel and must rejoin before production:

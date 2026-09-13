@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
 # Retail platform service dependency model.
 #
 # One source of truth for the shape of the system: every owned service,

@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Recipe: Migration Backlog — "What Does Deprecated Still Reach?"
 
 **Problem:** `legacy_orders` is `@deprecated`. The migration story needs the concrete list of what it still touches, so ticket size is not a guess.

@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Concept: Structure and Nesting
 
 **Audience:** everyone modelling systems with containment. **Prerequisite:** [Attributes](attributes.md).

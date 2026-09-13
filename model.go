@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2026 Pascal Dennerly.
 package gsl
 
 // Graph is the top-level semantic model produced by parsing a GSL document.

@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Concept: Edge Dependencies
 
 **Audience:** everyone modelling workflows, gates or sequenced steps. **Prerequisite:** [Structure and nesting](structure-and-nesting.md).

@@ -3,6 +3,12 @@ name: gsl-query-language-spec
 description: RFC specification for the GSL Query Language. Covers subgraph extraction, predicates (equality, existence, set membership), traversal (follow), transformations (make), removal operations, node collapse, named graphs, graph algebra (union, intersection, difference, symmetric difference), and pipeline composition. Use when implementing, extending, or understanding GSL query semantics.
 ---
 
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
+
 # GSL Query Language Specification
 
 Version 0.4.0 (Revised Draft RFC)

@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 ---
 description: Query language fixture test catalog. Organized as a learning journey — each group builds on the previous. Quick reference for LLMs and developers.
 ---

@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # GSL-Lang
 
 > A declarative graph specification language for describing directed graphs with attributes and set-based grouping. This repository contains the normative specification, reference implementation (Go), query language (GQL) extension, CLI tools, LSP server, and VS Code integration.

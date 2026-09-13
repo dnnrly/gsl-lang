@@ -1,1 +1,3 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
 collapse into banks where node.type == "bank" | collapse into rail_systems where node.type == "payment_rail" | collapse into counterparties where node.type == "central_counterparty"

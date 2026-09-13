@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
 # Flat style: child nodes have explicit parent attribute
 # Demonstrates conversion to nested block syntax
 node C

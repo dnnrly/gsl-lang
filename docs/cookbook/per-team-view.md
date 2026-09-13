@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Recipe: Zoom to One Team
 
 **Problem:** the model is a system-wide graph. The payments team needs *just their slice* — services, databases, and the edges between them.

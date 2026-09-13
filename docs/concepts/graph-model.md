@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # Concept: Graphs and Nodes
 
 **Audience:** everyone. **Prerequisite:** [Getting Started](../getting-started/README.md).

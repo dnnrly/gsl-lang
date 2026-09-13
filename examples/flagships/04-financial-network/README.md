@@ -1,3 +1,8 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
 # 04 — A Financial Relationships Network (Non-Software Domain)
 
 > **The problem:** in financial networks the *relationships* are the thing
