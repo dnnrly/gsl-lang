@@ -37,7 +37,7 @@ cat graph.gsl | gsl-diagram --format mermaid > diagram.mmd
 - `-i, --input` - Input GSL file (reads from stdin if not provided)
 - `-o, --output` - Output diagram file (writes to stdout if not provided)
 - `-f, --format` - Output format: `mermaid` (default), `plantuml`
-- `-t, --type` - Diagram type: `component` (default), `graph` (mermaid), `sequence`
+- `-t, --type` - Diagram type: `component` (default) or `sequence` (both formats); `graph` (mermaid only)
 
 ## Supported Formats
 

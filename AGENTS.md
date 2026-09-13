@@ -7,7 +7,7 @@ This document provides instructions for AI agents working on the GSL-Lang projec
 **For a description of the query language, see [QUERY_SPEC.md](QUERY_SPEC.md) and [QUERY_GRAMMAR.md](QUERY_GRAMMAR.md).**
 **LLM specific advice, see [GSL_GUIDE.md](GSL_GUIDE.md) and [GQL_GUIDE.md](GQL_GUIDE.md).**
 **See [GO_REFERENCE.md](GO_REFERENCE.md) for Go reference implementation patterns and algorithms.**
-**For a quick LLM-oriented overview, start with [llms.txt](llms.txt) or the ["For LLMs and AI Agents"](README.md#for-llms-and-ai-agents) section in README.md.**
+**For a quick LLM-oriented overview, start with [llms.txt](llms.txt).**
 
 ## Quick Commands
 

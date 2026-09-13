@@ -233,7 +233,7 @@ The CLI tools are Unix-composable: GSL in, canonical GSL or a diagram out, via s
 | Element | Maturity | Basis |
 |---|---|---|
 | **Language & specification** | High | v1.0.0 Draft, RFC 2119 style, canonicalisation guarantee enforced by round-trip and fuzz tests |
-| **Go implementation** | High | Standard-library core, 68.6% statement coverage (measured by `make test`), 9 fuzz targets, acceptance tests |
+| **Go implementation** | High | Standard-library core, 68.8% statement coverage (measured by `make test`), 9 fuzz targets, acceptance tests |
 | **Query language (GQL)** | Medium | Large, well-tested surface — but a *Revised Draft* spec, unproven with real users |
 | **Tooling** | Medium | `gsl-query` and `gsl-diagram` work and are documented; the LSP and VS Code extension are early |
 | **Ecosystem** | Low | One reference implementation, no third-party integrations yet |
