@@ -206,7 +206,7 @@ func gqlSemanticTokens(content string) []uint32 {
 					end++
 				}
 				word := line[i:end]
-				ti := uint32(0)
+				ti := uint32(4)
 				for _, kw := range gqlKeywords {
 					if kw.label == word {
 						ti = 0

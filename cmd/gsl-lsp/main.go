@@ -12,6 +12,13 @@ import (
 	"github.com/dnnrly/gsl-lang/lsp"
 )
 
+// Build information injected by goreleaser
+var (
+	Version   = "dev"
+	Commit    = "unknown"
+	BuildDate = "unknown"
+)
+
 type readWriteCloser struct {
 	io.Reader
 	io.Writer

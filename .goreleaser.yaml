@@ -22,6 +22,15 @@ builds:
       - -X main.Version={{.Version}}
       - -X main.Commit={{.Commit}}
       - -X main.BuildDate={{.CommitDate}}
+  - id: gsl-lsp
+    main: ./cmd/gsl-lsp
+    binary: gsl-lsp
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64, 386]
+    ldflags:
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.BuildDate={{.CommitDate}}
 
 checksum:
   name_template: 'checksums.txt'

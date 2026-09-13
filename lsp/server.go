@@ -2,6 +2,8 @@ package lsp
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/dnnrly/gsl-lang"
@@ -122,12 +124,53 @@ func (s *Server) DidChange(ctx context.Context, params *protocol.DidChangeTextDo
 		case *protocol.TextDocumentContentChangeWholeDocument:
 			doc.content = c.Text
 		case *protocol.TextDocumentContentChangePartial:
-			doc.content = c.Text
+			var err error
+			doc.content, err = applyPartialChange(doc.content, c)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	doc.version = params.TextDocument.Version
 	s.parseAndDiagnose(ctx, doc)
 	return nil
+}
+
+// applyPartialChange applies an incremental text change to the current
+// document content. The server advertises full-document sync, but it must
+// not silently replace the whole document with a single changed snippet if a
+// partial change is received.
+func applyPartialChange(content string, c *protocol.TextDocumentContentChangePartial) (string, error) {
+	start, err := positionToOffset(content, c.Range.Start)
+	if err != nil {
+		return "", err
+	}
+	end, err := positionToOffset(content, c.Range.End)
+	if err != nil {
+		return "", err
+	}
+	return content[:start] + c.Text + content[end:], nil
+}
+
+// positionToOffset converts a zero-based line/character position into a byte
+// offset within content. Offsets are computed on the document as UTF-16-like
+// LSP positions, but since GSL sources are ASCII in practice, characters are
+// treated as bytes here.
+func positionToOffset(content string, pos protocol.Position) (int, error) {
+	line := int(pos.Line)
+	col := int(pos.Character)
+	offset := 0
+	for currentLine := 0; currentLine < line; currentLine++ {
+		idx := strings.IndexByte(content[offset:], '\n')
+		if idx < 0 {
+			return 0, fmt.Errorf("line %d out of range", line)
+		}
+		offset += idx + 1
+	}
+	if offset+col > len(content) {
+		return 0, fmt.Errorf("column %d out of range on line %d", col, line)
+	}
+	return offset + col, nil
 }
 
 func (s *Server) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) error {

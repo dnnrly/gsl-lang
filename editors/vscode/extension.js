@@ -6,21 +6,20 @@ const lc = require("vscode-languageclient");
 let client = null;
 
 function findServerBinary() {
-  const extDir = path.dirname(__dirname);
-  const resolved = fs.realpathSync(extDir);
-  const projectRoot = path.resolve(resolved, "..", "..");
+  const repoRoot = path.resolve(__dirname, "..", "..");
   const candidates = [
-    path.join(projectRoot, "bin", "gsl-lsp"),
-    "/tmp/gsl-lsp",
-    path.join(projectRoot, "gsl-lsp"),
+    path.join(repoRoot, "bin", "gsl-lsp"),
+    path.join(repoRoot, "tmp", "gsl-lsp"),
+    "gsl-lsp",
   ];
   for (const p of candidates) {
-    if (fs.existsSync(p)) {
+    if (path.isAbsolute(p) && fs.existsSync(p)) {
       console.log("GSL LSP: using binary at", p);
       return p;
     }
   }
-  return candidates[0];
+  console.log("GSL LSP: resolving gsl-lsp on PATH");
+  return "gsl-lsp";
 }
 
 function createClient() {
