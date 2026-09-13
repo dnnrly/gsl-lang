@@ -1,0 +1,14 @@
+set critical
+set external
+set suspected
+
+node order_service [confidence="high", source="repo", team="orders"] @critical
+node payment_service [confidence="high", source="repo", team="payments"] @critical
+node payments_db [confidence="high", source="config", team="platform", text="PostgreSQL"] @critical
+node psp_gateway [confidence="high", source="config", team="external", text="Card processor (PSP)"] @external
+node payment_events [confidence="high", source="config", team="platform", text="Kafka topic: payment_events"]
+
+order_service->payment_service [confidence="high", protocol="grpc", source="code"]
+payment_service->payments_db [confidence="high", protocol="sql", source="config"]
+payment_service->psp_gateway [confidence="high", protocol="https", source="code"]
+payment_service->payment_events [confidence="high", event="payment_settled", protocol="pub", source="code"]

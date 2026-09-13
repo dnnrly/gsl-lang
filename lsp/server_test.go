@@ -542,3 +542,67 @@ func TestParseErrorToDiagnostic(t *testing.T) {
 		t.Fatalf("expected character 15 (0-based), got %d", d.Range.Start.Character)
 	}
 }
+
+func TestApplyPartialChange(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+		start   protocol.Position
+		end     protocol.Position
+		repl    string
+		want    string
+	}{
+		{"replace single line token", "node A\nnode B\n", protocol.Position{Line: 0, Character: 0}, protocol.Position{Line: 0, Character: 4}, "edge", "edge A\nnode B\n"},
+		{"insert text", "node A\n", protocol.Position{Line: 1, Character: 0}, protocol.Position{Line: 1, Character: 0}, "node B\n", "node A\nnode B\n"},
+		{"replace across lines", "node A\nnode B\n", protocol.Position{Line: 0, Character: 6}, protocol.Position{Line: 1, Character: 0}, " ", "node A node B\n"},
+		{"delete whole line", "node A\nnode B\n", protocol.Position{Line: 1, Character: 0}, protocol.Position{Line: 2, Character: 0}, "", "node A\n"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &protocol.TextDocumentContentChangePartial{
+				Range: protocol.Range{Start: tt.start, End: tt.end},
+				Text:  tt.repl,
+			}
+			got, err := applyPartialChange(tt.content, c)
+			if err != nil {
+				t.Fatalf("applyPartialChange: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("applyPartialChange(%q) = %q, want %q", tt.content, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestApplyPartialChange_OutOfRange(t *testing.T) {
+	c := &protocol.TextDocumentContentChangePartial{
+		Range: protocol.Range{Start: protocol.Position{Line: 5, Character: 0}, End: protocol.Position{Line: 5, Character: 1}},
+		Text:  "x",
+	}
+	if got, err := applyPartialChange("node A\n", c); err == nil {
+		t.Errorf("expected out-of-range error, got content %q", got)
+	}
+}
+
+func TestPositionToOffset(t *testing.T) {
+	content := "node A\nnode B\n"
+	tests := []struct {
+		line, char, want int
+	}{
+		{0, 0, 0},
+		{0, 5, 5},
+		{1, 0, 7},
+		{1, 3, 10},
+	}
+	for _, tt := range tests {
+		got, err := positionToOffset(content, protocol.Position{Line: uint32(tt.line), Character: uint32(tt.char)})
+		if err != nil {
+			t.Errorf("positionToOffset(%d,%d): %v", tt.line, tt.char, err)
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("positionToOffset(%d,%d) = %d, want %d", tt.line, tt.char, got, tt.want)
+		}
+	}
+}

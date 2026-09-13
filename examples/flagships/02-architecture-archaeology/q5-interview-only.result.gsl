@@ -1,0 +1,8 @@
+set confirmed
+set critical
+set suspected
+
+node emailer [confidence="low", source="interview"] @suspected
+node reporting_job [confidence="medium", source="interview"] @suspected
+
+reporting_job->emailer [confidence="low", protocol="smtp"]

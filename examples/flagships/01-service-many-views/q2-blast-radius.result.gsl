@@ -1,0 +1,14 @@
+set critical
+set deprecated
+set external
+
+node gateway [replicas="4", team="gateway", zone="A"] @critical
+node web [team="gateway", zone="A"]
+node mobile [team="gateway", zone="A"]
+node orders [replicas="6", team="orders", zone="B"] @critical
+node legacy_orders [team="legacy", zone="B"] @deprecated
+
+web->gateway [protocol="http"]
+mobile->gateway [protocol="http"]
+gateway->orders [protocol="http"]
+orders->legacy_orders [protocol="soap"]

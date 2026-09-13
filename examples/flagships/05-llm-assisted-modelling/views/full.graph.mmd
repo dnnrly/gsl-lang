@@ -1,0 +1,20 @@
+graph TD
+%% Generated: gsl-query 'from *' < model.gsl | gsl-diagram -f mermaid -t graph
+
+  catalog_cache["Redis"]
+  catalog_service["catalog_service"]
+  event_bus["Kafka"]
+  legacy_promo_calc --> catalog_cache
+  legacy_promo_calc --> main_product_db
+  legacy_promo_calc["legacy_promo_calc"]
+  main_product_db["PostgreSQL"]
+  offer_db["offer_db"]
+  promo_service --> event_bus
+  promo_service --> offer_db
+  promo_service --> reward_ledger
+  promo_service --> rules_service
+  promo_service["promo_service"]
+  returns_system --> legacy_promo_calc
+  returns_system["returns_system"]
+  reward_ledger["reward_ledger"]
+  rules_service["rules_service"]

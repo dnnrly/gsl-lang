@@ -1,0 +1,11 @@
+set critical
+
+node alpha_bank [territory="home", type="bank"] @critical
+node beta_bank [territory="home", type="bank"]
+node gamma_bank [territory="offshore", type="bank"]
+node delta_bank [territory="home", type="bank"]
+
+alpha_bank->beta_bank [instrument="lending", lending, notional="150"]
+beta_bank->gamma_bank [instrument="lending", lending, notional="80"]
+gamma_bank->delta_bank [instrument="lending", lending, notional="45"]
+delta_bank->alpha_bank [instrument="lending", lending, notional="30"]

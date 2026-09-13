@@ -1,0 +1,63 @@
+# Retail platform service dependency model.
+#
+# One source of truth for the shape of the system: every owned service,
+# datastore and external dependency, who owns it, where it runs, what it calls
+# and which parts of the business it is load-bearing for.
+#
+# Every diagram in this example is DERIVED from this file with gsl-query +
+# gsl-diagram. Edit the model, re-run the queries, and every view updates.
+
+set critical
+set deprecated
+set external
+
+node gateway [team="gateway", zone="A", replicas="4"] @critical
+node web [team="gateway", zone="A"]
+node mobile [team="gateway", zone="A"]
+node orders [team="orders", zone="B", replicas="6"] @critical
+node payments [team="payments", zone="B", replicas="4"] @critical
+node fraud [team="payments", zone="B", replicas="2"]
+node users [team="identity", zone="A", replicas="3"]
+node inventory [team="orders", zone="B", replicas="2"]
+node shipping [team="fulfilment", zone="C", replicas="2"]
+node notifications [team="fulfilment", zone="C"]
+node reporting [team="platform", zone="A"] @deprecated
+node catalog [team="storefront", zone="A", replicas="3"]
+node search [team="storefront", zone="A", replicas="2"]
+node orders_db [text="PostgreSQL", team="platform", zone="B"] @critical
+node payments_db [text="PostgreSQL", team="platform", zone="B"] @critical
+node redis_cache [text="Redis", team="platform", zone="A"] @deprecated
+node kafka [text="Kafka", team="platform", zone="C"]
+node legacy_orders [team="legacy", zone="B"] @deprecated
+node legacy_db [team="legacy", zone="B"] @deprecated
+node card_network [team="external", zone="external"] @external
+
+web -> gateway [protocol="http"]
+mobile -> gateway [protocol="http"]
+gateway -> orders [protocol="http"]
+gateway -> payments [protocol="http"]
+gateway -> users [protocol="http"]
+gateway -> catalog [protocol="http"]
+orders -> payments [protocol="grpc"]
+orders -> inventory [protocol="grpc"]
+orders -> users [protocol="grpc"]
+orders -> shipping [protocol="grpc"]
+orders -> orders_db [protocol="sql"]
+orders -> kafka [protocol="pub", kind="async"]
+orders -> legacy_orders [protocol="soap"]
+payments -> fraud [protocol="grpc"]
+payments -> payments_db [protocol="sql"]
+payments -> card_network [protocol="https"]
+fraud -> payments_db [protocol="sql"]
+inventory -> orders_db [protocol="sql"]
+shipping -> notifications [protocol="grpc", kind="async"]
+shipping -> kafka [protocol="pub", kind="async"]
+kafka -> notifications [protocol="sub", kind="async"]
+kafka -> reporting [protocol="sub", kind="async"]
+reporting -> orders_db [protocol="sql"]
+catalog -> search [protocol="grpc"]
+users -> orders_db [protocol="sql"]
+users -> redis_cache [protocol="tcp"]
+search -> redis_cache [protocol="tcp"]
+catalog -> redis_cache [protocol="tcp"]
+legacy_orders -> legacy_db [protocol="sql"]

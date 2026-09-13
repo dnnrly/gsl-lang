@@ -1,0 +1,12 @@
+set critical
+set external
+set suspected
+
+node customer_api [confidence="high", source="repo", team="customer"]
+node order_service [confidence="high", source="repo", team="orders"] @critical
+node payment_service [confidence="high", source="repo", team="payments"] @critical
+node payments_db [confidence="high", source="config", team="platform", text="PostgreSQL"] @critical
+
+customer_api->order_service [confidence="high", protocol="http", source="code"]
+order_service->payment_service [confidence="high", protocol="grpc", source="code"]
+payment_service->payments_db [confidence="high", protocol="sql", source="config"]

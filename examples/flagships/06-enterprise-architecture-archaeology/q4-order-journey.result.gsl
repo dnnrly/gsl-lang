@@ -1,0 +1,29 @@
+set critical
+set external
+set suspected
+
+node catalogue_db [confidence="high", source="config", team="platform", text="PostgreSQL"]
+node catalogue_service [confidence="high", source="repo", team="merchandising"]
+node inventory_service [confidence="high", source="repo", team="fulfilment"]
+node inventory_db [confidence="high", source="config", team="platform", text="PostgreSQL"]
+node order_service [confidence="high", source="repo", team="orders"] @critical
+node customer_db [confidence="high", source="config", team="platform", text="PostgreSQL"]
+node payment_service [confidence="high", source="repo", team="payments"] @critical
+node order_db [confidence="high", source="config", team="platform", text="PostgreSQL"] @critical
+node order_events [confidence="high", source="config", team="platform", text="Kafka topic: order_events"]
+node payments_db [confidence="high", source="config", team="platform", text="PostgreSQL"] @critical
+node psp_gateway [confidence="high", source="config", team="external", text="Card processor (PSP)"] @external
+node payment_events [confidence="high", source="config", team="platform", text="Kafka topic: payment_events"]
+
+catalogue_service->catalogue_db [confidence="high", protocol="sql", source="config"]
+catalogue_service->inventory_service [confidence="high", protocol="grpc", source="code"]
+inventory_service->inventory_db [confidence="high", protocol="sql", source="config"]
+order_service->catalogue_service [confidence="high", protocol="grpc", source="code"]
+order_service->customer_db [confidence="medium", protocol="sql", source="code"]
+order_service->payment_service [confidence="high", protocol="grpc", source="code"]
+order_service->order_db [confidence="high", protocol="sql", source="config"]
+order_service->order_events [confidence="high", event="order_completed", protocol="pub", source="code"]
+order_service->inventory_service [confidence="low", protocol="grpc", source="docs"]
+payment_service->payments_db [confidence="high", protocol="sql", source="config"]
+payment_service->psp_gateway [confidence="high", protocol="https", source="code"]
+payment_service->payment_events [confidence="high", event="payment_settled", protocol="pub", source="code"]

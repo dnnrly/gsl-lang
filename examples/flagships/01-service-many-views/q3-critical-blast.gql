@@ -1,0 +1,1 @@
+(subgraph node.id == "legacy_orders" traverse in all) as BLAST | from * | (subgraph node in @critical) as CRIT | BLAST & CRIT

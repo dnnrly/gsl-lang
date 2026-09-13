@@ -1,0 +1,12 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q2-blast-radius.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  gateway --> orders
+  gateway["gateway"]
+  legacy_orders["legacy_orders"]
+  mobile --> gateway
+  mobile["mobile"]
+  orders --> legacy_orders
+  orders["orders"]
+  web --> gateway
+  web["web"]

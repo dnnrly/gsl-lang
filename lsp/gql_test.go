@@ -469,6 +469,62 @@ func TestGQLSemanticTokens_StringAndNumber(t *testing.T) {
 	}
 }
 
+func TestGQLSemanticTokens_IdentifiersNotKeywords(t *testing.T) {
+	s, _ := newTestServer()
+	docURI := uri.File("/tmp/test.gql")
+	src := `subgraph node.owner == "bob"`
+
+	err := s.DidOpen(context.Background(), &protocol.DidOpenTextDocumentParams{
+		TextDocument: protocol.TextDocumentItem{
+			URI:  docURI,
+			Text: src,
+		},
+	})
+	if err != nil {
+		t.Fatalf("DidOpen failed: %v", err)
+	}
+
+	tokens, err := s.SemanticTokensFull(context.Background(), &protocol.SemanticTokensParams{
+		TextDocument: protocol.TextDocumentIdentifier{URI: docURI},
+	})
+	if err != nil {
+		t.Fatalf("SemanticTokensFull failed: %v", err)
+	}
+
+	// Reconstruct word -> type mapping from delta quintuples.
+	byWord := map[string]uint32{}
+	line := uint32(0)
+	col := uint32(0)
+	for i := 0; i < len(tokens.Data); i += 5 {
+		line += tokens.Data[i]
+		if tokens.Data[i] == 0 {
+			col += tokens.Data[i+1]
+		} else {
+			col = tokens.Data[i+1]
+		}
+		start := int(col)
+		end := start + int(tokens.Data[i+2])
+		if end > len(src) {
+			continue
+		}
+		word := strings.Trim(src[start:end], `"`)
+		byWord[word] = tokens.Data[i+3]
+	}
+
+	if byWord["subgraph"] != 0 {
+		t.Errorf("expected subgraph keyword token type 0, got %d", byWord["subgraph"])
+	}
+	if byWord["node"] != 0 {
+		t.Errorf("expected node keyword token type 0, got %d", byWord["node"])
+	}
+	if byWord["owner"] != 4 {
+		t.Errorf("expected owner identifier token type 4, got %d", byWord["owner"])
+	}
+	if byWord["bob"] != 1 {
+		t.Errorf("expected bob string token type 1, got %d", byWord["bob"])
+	}
+}
+
 func TestGQLDefinition_Unsupported(t *testing.T) {
 	s, _ := newTestServer()
 	docURI := uri.File("/tmp/test.gql")

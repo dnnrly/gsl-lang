@@ -1,0 +1,10 @@
+set critical
+set external
+set suspected
+
+node fulfilment_service [confidence="high", source="repo", team="fulfilment"]
+node order_events [confidence="high", source="config", team="platform", text="Kafka topic: order_events"]
+node order_service [confidence="high", source="repo", team="orders"] @critical
+
+fulfilment_service->order_events [confidence="high", event="order_completed", protocol="sub", source="code"]
+order_service->order_events [confidence="high", event="order_completed", protocol="pub", source="code"]

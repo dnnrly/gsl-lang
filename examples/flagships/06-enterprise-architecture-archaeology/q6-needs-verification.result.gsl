@@ -1,0 +1,13 @@
+set critical
+set external
+set suspected
+
+node inventory_service [confidence="high", source="repo", team="fulfilment"]
+node order_service [confidence="high", source="repo", team="orders"] @critical
+node notification_service [confidence="high", source="repo", team="engagement"]
+node order_events [confidence="high", source="config", team="platform", text="Kafka topic: order_events"]
+node customer_db [confidence="high", source="config", team="platform", text="PostgreSQL"]
+
+order_service->inventory_service [confidence="low", protocol="grpc", source="docs"]
+notification_service->order_events [confidence="medium", event="order.completed", protocol="sub", source="code"] @suspected
+order_service->customer_db [confidence="medium", protocol="sql", source="code"]

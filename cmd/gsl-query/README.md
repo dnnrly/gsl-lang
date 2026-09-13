@@ -8,7 +8,7 @@ Execute queries against GSL (Graph Specification Language) graphs and output fil
 make build
 ```
 
-The binary will be available at `./cmd/gsl-query/gsl-query`.
+The binary will be available at `./tmp/gsl-query`.
 
 ## Usage
 

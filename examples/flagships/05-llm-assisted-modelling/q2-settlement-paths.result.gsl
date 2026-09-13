@@ -1,0 +1,9 @@
+set critical
+set deprecated
+
+node promo_service [team="promo"] @critical
+node reward_ledger [team="accounting"]
+node event_bus [team="platform", text="Kafka"]
+
+promo_service->reward_ledger [confidence="high", instrument="settlement", source="email"]
+promo_service->event_bus [confidence="high", instrument="settlement", protocol="pub", source="email"]

@@ -1,0 +1,1 @@
+(subgraph node in @critical traverse in all) as CRITCHAIN | from CRITCHAIN | subgraph node in @suspected

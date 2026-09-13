@@ -1,0 +1,4 @@
+node image
+node registry
+
+PUSH: image->registry [stage="push"]

@@ -1,0 +1,13 @@
+graph TB
+%% Generated: gsl-query -f q7-payments-team.gql -i model.gsl | gsl-diagram -f mermaid -t component
+
+  payment_service["payment_service"]
+  payments_db["PostgreSQL"]
+  psp_gateway["Card processor (PSP)"]
+  payment_events["Kafka topic: payment_events"]
+  order_service["order_service"]
+
+  order_service --> payment_service
+  payment_service --> payments_db
+  payment_service --> psp_gateway
+  payment_service --> payment_events

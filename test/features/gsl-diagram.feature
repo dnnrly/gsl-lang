@@ -11,6 +11,22 @@ Feature: gsl-diagram CLI validation
     Then the app exits without error
     And the app output contains "Usage:"
 
+  Scenario: Help command is listed exactly once
+    When I run gsl-diagram with parameters "help"
+    Then the app exits without error
+    And the app output contains "Help about any command"
+    And the app output does not contain "Show help for gsl-diagram"
+
+  Scenario: PlantUML graph type is rejected instead of silently falling back
+    Given a GSL input file with content:
+      """
+      node API
+      node DB
+      API -> DB
+      """
+    When I run gsl-diagram with parameters "--input <input_file> -f plantuml -t graph"
+    Then the app exits with an error
+
   Scenario: Prints AI topics
     When I run gsl-diagram with parameters "ai"
     Then the app exits without error

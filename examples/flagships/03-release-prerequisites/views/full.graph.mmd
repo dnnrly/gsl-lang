@@ -1,0 +1,25 @@
+graph TD
+%% Generated: gsl-query 'from *' < model.gsl | gsl-diagram -f mermaid -t graph
+
+  approve["approve"]
+  build --> image
+  build --> scan
+  build --> test
+  build["build"]
+  canary --> prod
+  canary["canary"]
+  checkout --> build
+  checkout["checkout"]
+  config --> controlplane
+  config["config"]
+  controlplane --> approve
+  controlplane["controlplane"]
+  image --> registry
+  image["image"]
+  prod --> smoke
+  prod["prod"]
+  registry --> canary
+  registry["registry"]
+  scan["scan"]
+  smoke["smoke"]
+  test["test"]

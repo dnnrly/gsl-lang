@@ -1,0 +1,40 @@
+# Promotion engine — final, reviewed model.
+#
+# Derived from prose-spec.md via the experiment recorded in README.md:
+# draft-01 (raw) -> draft-02 (mechanical fixes) -> canonical.gsl -> this
+# reviewed model.
+#
+# Review decisions reflected in this file:
+#   * shared DB migrated: main_product_db, NOT the stale "checkout DB"
+#     (email wins over stale README -- conflict noted)
+#   * catalog price cache is deprecated (PROMO-121)
+#   * promo_service and rules_service are load-bearing (PROMO-114)
+#   * the direct write to reward_ledger bypasses the event bus -- kept
+#     because the email confirms it, still flagged (INFRA-77 risk)
+#   * catalog_service exists (ownership table) but is not wired into the
+#     promo engine -- no invented edges were added
+#   * legacy_promo_calc -> catalog_cache is LOW confidence (email alone)
+#
+# Every fact carries provenance: source + confidence. See flagship 02.
+
+set critical
+set deprecated
+
+node promo_service [team="promo"] @critical
+node rules_service [team="merchandising"] @critical
+node offer_db [team="merchandising"]
+node catalog_service [team="storefront"]
+node catalog_cache [text="Redis", team="storefront"] @deprecated
+node legacy_promo_calc [team="promo"] @deprecated
+node returns_system [team="fulfilment"]
+node reward_ledger [team="accounting"]
+node event_bus [text="Kafka", team="platform"]
+node main_product_db [text="PostgreSQL", team="platform"]
+
+promo_service -> offer_db [protocol="sql", source="email", confidence="high"]
+promo_service -> rules_service [protocol="grpc", source="email", confidence="high"]
+promo_service -> reward_ledger [instrument="settlement", source="email", confidence="high"]
+promo_service -> event_bus [instrument="settlement", protocol="pub", source="email", confidence="high"]
+legacy_promo_calc -> main_product_db [protocol="sql", source="email", confidence="high"]
+legacy_promo_calc -> catalog_cache [protocol="tcp", source="email_readme", confidence="low"]
+returns_system -> legacy_promo_calc [protocol="internal", source="email", confidence="medium"]

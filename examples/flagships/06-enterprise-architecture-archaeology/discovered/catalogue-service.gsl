@@ -1,0 +1,15 @@
+# catalogue-service -- investigation notes
+#
+# Investigated: catalogue-service/
+#   * service.go calls inventory_service.HasStock (gRPC) for availability
+#   * config.yaml holds the catalogue-db DSN        -> SQL dependency (config)
+#   * README: "Availability is delegated to inventory_service"
+#
+# Conclusion: catalogue_service owns catalogue_db and asks inventory_service
+# for stock. No other outbound calls visible.
+
+node catalogue_service [team="merchandising", source="repo", confidence="high"]
+node catalogue_db [text="PostgreSQL", team="platform", source="config", confidence="high"]
+
+catalogue_service -> catalogue_db [protocol="sql", source="config", confidence="high"]
+catalogue_service -> inventory_service [protocol="grpc", source="code", confidence="high"]

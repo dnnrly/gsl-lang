@@ -1,0 +1,1 @@
+subgraph node.id == "legacy_monolith" traverse both 1

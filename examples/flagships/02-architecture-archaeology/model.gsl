@@ -1,0 +1,47 @@
+# Legacy order-fulfilment system — reconstructed by archaeology.
+#
+# An undocumented monolith that has been running for a decade. The model is
+# recovered from log analysis (source="logs"), deployment manifests
+# (source="deploy") and engineer interviews (source="interview").
+#
+# `confidence` records how sure the archaeologist is about each claim:
+#   "high"   - directly observed (logs, config)
+#   "medium" - inferred from behaviour
+#   "low"    - reported from memory, unverified
+#
+# Nodes and edges are kept in @confirmed / @suspected as the working
+# hypothesis evolves in git. A diagram is not updated by hand — the model
+# is, and the views follow.
+
+set confirmed
+set suspected
+set critical
+
+node orders_ui [source="deploy", confidence="high"] @confirmed
+node legacy_monolith [source="logs", confidence="high"] @confirmed @critical
+node orders_db [source="logs", confidence="high"] @confirmed @critical
+node queue [source="logs", confidence="high"] @confirmed @critical
+node worker [source="logs", confidence="medium"] @confirmed
+node scheduler [source="deploy", confidence="low"] @suspected
+node ftp_outbox [source="deploy", confidence="medium"] @suspected
+node emailer [source="interview", confidence="low"] @suspected
+node payment_gateway [source="logs", confidence="high"] @confirmed
+node staging_db [source="deploy", confidence="low"] @suspected
+node reporting_job [source="interview", confidence="medium"] @suspected
+node archive_storage [source="deploy", confidence="medium"] @suspected
+
+orders_ui -> legacy_monolith [protocol="http", confidence="high"]
+legacy_monolith -> orders_db [protocol="sql", confidence="high"]
+legacy_monolith -> queue [protocol="amqp", confidence="high"]
+legacy_monolith -> payment_gateway [protocol="https", confidence="high"]
+queue -> worker [protocol="amqp", confidence="medium"]
+worker -> orders_db [protocol="sql", confidence="medium"]
+worker -> ftp_outbox [protocol="sftp", confidence="medium"]
+worker -> emailer [protocol="smtp", confidence="low"]
+worker -> archive_storage [protocol="s3", confidence="medium"]
+scheduler -> legacy_monolith [protocol="internal", confidence="low"]
+scheduler -> reporting_job [protocol="cron", confidence="medium"]
+scheduler -> staging_db [protocol="sql", confidence="low"]
+staging_db -> orders_db [protocol="sql", confidence="low"]
+reporting_job -> staging_db [protocol="sql", confidence="medium"]
+reporting_job -> emailer [protocol="smtp", confidence="low"]

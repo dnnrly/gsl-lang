@@ -1,0 +1,16 @@
+sequenceDiagram
+    participant image
+    participant registry
+    participant canary
+    participant prod
+    participant smoke
+    image ->>+ registry:
+    deactivate registry
+    registry ->>+ canary:
+        canary ->> prod:
+        prod ->> smoke:
+    deactivate canary
+    canary ->>+ prod:
+    deactivate prod
+    prod ->>+ smoke:
+    deactivate smoke

@@ -1,0 +1,12 @@
+graph TD
+%% Generated: gsl-query -f q6-needs-verification.gql -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  order_events["Kafka topic: order_events"]
+  customer_db["PostgreSQL"]
+  inventory_service["inventory_service"]
+  order_service["order_service"]
+  notification_service["notification_service"]
+
+  order_service --> inventory_service
+  notification_service --> order_events
+  order_service --> customer_db

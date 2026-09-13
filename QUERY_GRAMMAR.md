@@ -1,4 +1,4 @@
-# GSL-QL EBNF Grammar (Spec v0.4)
+# GQL EBNF Grammar (Spec v0.4)
 
 ## 1. Query Structure
 

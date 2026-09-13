@@ -1,0 +1,14 @@
+set confirmed
+set critical
+set suspected
+
+node orders_db [confidence="high", source="logs"] @confirmed @critical
+node worker [confidence="medium", source="logs"] @confirmed
+node ftp_outbox [confidence="medium", source="deploy"] @suspected
+node emailer [confidence="low", source="interview"] @suspected
+node archive_storage [confidence="medium", source="deploy"] @suspected
+
+worker->orders_db [confidence="medium", protocol="sql"]
+worker->ftp_outbox [confidence="medium", protocol="sftp"]
+worker->emailer [confidence="low", protocol="smtp"]
+worker->archive_storage [confidence="medium", protocol="s3"]

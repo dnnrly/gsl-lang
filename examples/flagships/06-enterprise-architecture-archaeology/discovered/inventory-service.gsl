@@ -1,0 +1,14 @@
+# inventory-service -- investigation notes
+#
+# Investigated: inventory-service/
+#   * service.go: single gRPC availability call, reads inventory_db
+#   * config.yaml: inventory-db DSN
+#   * README: "has no outbound calls of its own"
+#
+# Conclusion: inventory_service is a leaf service over inventory_db. It is
+# called by catalogue_service (and possibly others -- see order_service notes).
+
+node inventory_service [team="fulfilment", source="repo", confidence="high"]
+node inventory_db [text="PostgreSQL", team="platform", source="config", confidence="high"]
+
+inventory_service -> inventory_db [protocol="sql", source="config", confidence="high"]

@@ -1,0 +1,50 @@
+set critical
+set deprecated
+set external
+
+node gateway [replicas="4", team="gateway", zone="A"] @critical
+node orders [replicas="6", team="orders", zone="B"] @critical
+node payments [replicas="4", team="payments", zone="B"] @critical
+node users [replicas="3", team="identity", zone="A"]
+node catalog [replicas="3", team="storefront", zone="A"]
+node inventory [replicas="2", team="orders", zone="B"]
+node shipping [replicas="2", team="fulfilment", zone="C"]
+node orders_db [team="platform", text="PostgreSQL", zone="B"] @critical
+node kafka [team="platform", text="Kafka", zone="C"]
+node legacy_orders [team="legacy", zone="B"] @deprecated
+node fraud [replicas="2", team="payments", zone="B"]
+node payments_db [team="platform", text="PostgreSQL", zone="B"] @critical
+node card_network [team="external", zone="external"] @external
+node notifications [team="fulfilment", zone="C"]
+node reporting [team="platform", zone="A"] @deprecated
+node search [replicas="2", team="storefront", zone="A"]
+node redis_cache [team="platform", text="Redis", zone="A"] @deprecated
+node legacy_db [team="legacy", zone="B"] @deprecated
+
+gateway->orders [protocol="http"]
+gateway->payments [protocol="http"]
+gateway->users [protocol="http"]
+gateway->catalog [protocol="http"]
+orders->payments [protocol="grpc"]
+orders->inventory [protocol="grpc"]
+orders->users [protocol="grpc"]
+orders->shipping [protocol="grpc"]
+orders->orders_db [protocol="sql"]
+orders->kafka [kind="async", protocol="pub"]
+orders->legacy_orders [protocol="soap"]
+payments->fraud [protocol="grpc"]
+payments->payments_db [protocol="sql"]
+payments->card_network [protocol="https"]
+fraud->payments_db [protocol="sql"]
+inventory->orders_db [protocol="sql"]
+shipping->notifications [kind="async", protocol="grpc"]
+shipping->kafka [kind="async", protocol="pub"]
+kafka->notifications [kind="async", protocol="sub"]
+kafka->reporting [kind="async", protocol="sub"]
+reporting->orders_db [protocol="sql"]
+catalog->search [protocol="grpc"]
+users->orders_db [protocol="sql"]
+users->redis_cache [protocol="tcp"]
+search->redis_cache [protocol="tcp"]
+catalog->redis_cache [protocol="tcp"]
+legacy_orders->legacy_db [protocol="sql"]

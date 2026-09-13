@@ -1,0 +1,43 @@
+# A financial relationships network.
+#
+# Nodes are institutions and critical payment/clearing infrastructure.
+# An edge "A -> B" means A is exposed to, or participates in, B.
+#
+#   member       — institution is a member of a payment/clearing system
+#   clears       — clears instruments through a central counterparty
+#   lending      — bilateral interbank exposure
+#   direct       — direct access to a settlement rail
+#   settles      — settlement relationship
+#
+# @critical marks systemically important participants and rails. The same
+# GQL operations used on the retail-platform flagship work here unchanged
+# — GSL is for graph-shaped knowledge, not just software.
+
+set critical
+
+node alpha_bank [type="bank", territory="home"] @critical
+node beta_bank [type="bank", territory="home"]
+node gamma_bank [type="bank", territory="offshore"]
+node delta_bank [type="bank", territory="home"]
+node brokerage [type="broker", territory="home"]
+node exchange [type="exchange", territory="home"] @critical
+node swift [type="payment_rail", territory="international"] @critical
+node chaps [type="payment_rail", territory="home"] @critical
+node ccp [type="central_counterparty", territory="international"] @critical
+node treasury [type="settlement", territory="home"] @critical
+
+alpha_bank -> swift [member, instrument="payments"]
+beta_bank -> swift [member, instrument="payments"]
+gamma_bank -> chaps [member, instrument="payments"]
+alpha_bank -> chaps [direct, instrument="payments"]
+delta_bank -> treasury [member, instrument="settlement"]
+alpha_bank -> ccp [clears, instrument="derivatives", notional="400"]
+beta_bank -> ccp [clears, instrument="derivatives", notional="180"]
+brokerage -> exchange [clears, instrument="equities"]
+brokerage -> ccp [clears, instrument="derivatives", notional="60"]
+alpha_bank -> beta_bank [lending, instrument="lending", notional="150"]
+beta_bank -> gamma_bank [lending, instrument="lending", notional="80"]
+gamma_bank -> delta_bank [lending, instrument="lending", notional="45"]
+delta_bank -> alpha_bank [lending, instrument="lending", notional="30"]
+exchange -> treasury [settles, instrument="settlement"]
+chaps -> treasury [settles, instrument="settlement"]

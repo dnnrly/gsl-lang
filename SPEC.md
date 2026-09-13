@@ -1,10 +1,18 @@
-# GSL-Lang Specification
+# GSL Specification
 
 Version 1.0.0 (Draft)
 
 ## Status
 
-This document defines the normative specification for GSL-Lang v1.0.
+This document defines the normative specification for GSL v1.0.
+
+**Status: Draft.** The GSL language is under active development. Until this
+document is promoted to final status (Version 1.0.0), language rules may
+change between GSL releases without a separate deprecation cycle. The
+*implementation* continues to be released and tagged independently of the
+language level: release artifacts are reproducible for their tagged commit,
+and canonical form output is stable within a release. See CONTRIBUTING.md for
+the versioning and compatibility policy.
 
 The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHALL**, **SHALL NOT**, **SHOULD**, **SHOULD NOT**, **RECOMMENDED**, **MAY**, and **OPTIONAL** in this document are to be interpreted as described in RFC 2119 and RFC 8174.
 

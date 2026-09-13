@@ -1,0 +1,12 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q1-confirmed-view.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  legacy_monolith --> orders_db
+  legacy_monolith --> payment_gateway
+  legacy_monolith --> queue
+  legacy_monolith["legacy_monolith"]
+  orders_db["orders_db"]
+  orders_ui --> legacy_monolith
+  orders_ui["orders_ui"]
+  payment_gateway["payment_gateway"]
+  queue["queue"]

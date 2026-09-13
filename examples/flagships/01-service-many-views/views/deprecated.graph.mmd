@@ -1,0 +1,32 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q7-deprecated.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  catalog --> redis_cache
+  catalog --> search
+  catalog["catalog"]
+  gateway --> catalog
+  gateway --> orders
+  gateway --> users
+  gateway["gateway"]
+  kafka --> reporting
+  kafka["Kafka"]
+  legacy_db["legacy_db"]
+  legacy_orders --> legacy_db
+  legacy_orders["legacy_orders"]
+  mobile --> gateway
+  mobile["mobile"]
+  orders --> kafka
+  orders --> legacy_orders
+  orders --> shipping
+  orders --> users
+  orders["orders"]
+  redis_cache["Redis"]
+  reporting["reporting"]
+  search --> redis_cache
+  search["search"]
+  shipping --> kafka
+  shipping["shipping"]
+  users --> redis_cache
+  users["users"]
+  web --> gateway
+  web["web"]

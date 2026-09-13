@@ -1,0 +1,7 @@
+node build
+node checkout
+node config
+node controlplane
+
+CHECKOUT: checkout->build [stage="build"]
+CONFIG: config->controlplane [stage="apply"]

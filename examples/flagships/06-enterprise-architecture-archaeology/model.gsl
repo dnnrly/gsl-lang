@@ -1,0 +1,134 @@
+# catalogue-service -- investigation notes
+#
+# Investigated: catalogue-service/
+#   * service.go calls inventory_service.HasStock (gRPC) for availability
+#   * config.yaml holds the catalogue-db DSN        -> SQL dependency (config)
+#   * README: "Availability is delegated to inventory_service"
+#
+# Conclusion: catalogue_service owns catalogue_db and asks inventory_service
+# for stock. No other outbound calls visible.
+
+node catalogue_service [team="merchandising", source="repo", confidence="high"]
+node catalogue_db [text="PostgreSQL", team="platform", source="config", confidence="high"]
+
+catalogue_service -> catalogue_db [protocol="sql", source="config", confidence="high"]
+catalogue_service -> inventory_service [protocol="grpc", source="code", confidence="high"]# customer-api -- investigation notes
+#
+# Investigated: customer-api/
+#   * main.go: checkout handler reads customer_db, calls catalogue.Flashes
+#     (gRPC) and orders.Place (HTTP)
+#   * config.yaml: customer-db DSN + identity-provider base URL (login)
+#   * README: "placing an order calls order_service"
+#
+# Conclusion: customer_api is the customer-facing entry point. It depends on
+# customer_db, identity_provider, catalogue_service and order_service.
+
+set external
+
+node customer_api [team="customer", source="repo", confidence="high"]
+node customer_db [text="PostgreSQL", team="platform", source="config", confidence="high"]
+node identity_provider [text="Identity provider (SaaS)", team="external", source="config", confidence="high"] @external
+
+customer_api -> customer_db [protocol="sql", source="config", confidence="high"]
+customer_api -> identity_provider [protocol="https", source="config", confidence="high"]
+customer_api -> catalogue_service [protocol="grpc", source="code", confidence="high"]
+customer_api -> order_service [protocol="http", source="code", confidence="high"]# fulfilment-service -- investigation notes
+#
+# Investigated: fulfilment-service/
+#   * worker.go: SQL reads order_db (read-only), HTTPS -> wms_system,
+#     consumes the "order_events" topic
+#   * config.yaml: order-db DSN (read-only), wms base_url
+#   * README: "listens for order_completed on order_events to pick early"
+#
+# Conclusion: fulfilment_service reads orders and dispatches work to the
+# external warehouse system. Owning team: fulfilment (warehouse).
+
+set external
+
+node fulfilment_service [team="fulfilment", source="repo", confidence="high"]
+node wms_system [text="Warehouse management (SaaS)", team="external", source="config", confidence="high"] @external
+
+fulfilment_service -> order_db [protocol="sql", source="config", confidence="high"]
+fulfilment_service -> wms_system [protocol="https", source="code", confidence="high"]
+fulfilment_service -> order_events [event="order_completed", protocol="sub", source="code", confidence="high"]# inventory-service -- investigation notes
+#
+# Investigated: inventory-service/
+#   * service.go: single gRPC availability call, reads inventory_db
+#   * config.yaml: inventory-db DSN
+#   * README: "has no outbound calls of its own"
+#
+# Conclusion: inventory_service is a leaf service over inventory_db. It is
+# called by catalogue_service (and possibly others -- see order_service notes).
+
+node inventory_service [team="fulfilment", source="repo", confidence="high"]
+node inventory_db [text="PostgreSQL", team="platform", source="config", confidence="high"]
+
+inventory_service -> inventory_db [protocol="sql", source="config", confidence="high"]# notification-service -- investigation notes
+#
+# Investigated: notification-service/
+#   * listener.go: @KafkaListener(topics = "order.completed") and
+#     @KafkaListener(topics = "payment_settled")
+#   * email.go: HTTPS -> email_platform
+#   * config.yaml: email_platform base_url
+#
+# NOTE -- suspected naming inconsistency: order_service publishes
+# "order_completed" but this listener subscribes to "order.completed".
+# Either a different spelling of the same topic, or a listener wired to
+# nothing that publishes. Kept exactly as observed, flagged @suspected.
+# A human must reconcile the two.
+
+set external
+set suspected
+
+node notification_service [team="engagement", source="repo", confidence="high"]
+node email_platform [text="Email platform (SaaS)", team="external", source="config", confidence="high"] @external
+
+notification_service -> email_platform [protocol="https", source="code", confidence="high"]
+notification_service -> payment_events [event="payment_settled", protocol="sub", source="code", confidence="high"]
+notification_service -> order_events [event="order.completed", protocol="sub", source="code", confidence="medium"] @suspected# order-service -- investigation notes
+#
+# Investigated: order-service/
+#   * checkout.go: gRPC -> catalogue_service (Price), gRPC -> payment_service
+#     (Create), SQL read of the customer (customer_db), insert into order_db
+#   * events.go: PublishOrderCompleted -> topic "order_events"
+#   * config.yaml: order_db and customer_db DSNs, kafka endpoint
+#   * README: claims orders "reserve stock directly via the inventory API".
+#     NOT confirmed in code -- checkout goes via catalogue_service, and
+#     inventory's own README says nothing accepts direct orders. Recorded as
+#     a low-confidence, docs-only edge for human review.
+#
+# Conclusion: order_service is the order state machine. Load-bearing.
+
+set critical
+
+node order_service [team="orders", source="repo", confidence="high"] @critical
+node order_db [text="PostgreSQL", team="platform", source="config", confidence="high"] @critical
+node order_events [text="Kafka topic: order_events", team="platform", source="config", confidence="high"]
+
+order_service -> catalogue_service [protocol="grpc", source="code", confidence="high"]
+order_service -> customer_db [protocol="sql", source="code", confidence="medium"]
+order_service -> payment_service [protocol="grpc", source="code", confidence="high"]
+order_service -> order_db [protocol="sql", source="config", confidence="high"]
+order_service -> order_events [event="order_completed", protocol="pub", source="code", confidence="high"]
+order_service -> inventory_service [protocol="grpc", source="docs", confidence="low"]# payment-service -- investigation notes
+#
+# Investigated: payment-service/
+#   * payment.go: HTTPS -> psp_gateway (external card processor),
+#     payments_db writes, publishes payment_settled on payment_events
+#   * config.yaml: payments-db DSN, psp_gateway base_url
+#   * README: "the payment_settled event is published for receipting"
+#
+# Conclusion: payment_service owns payments_db, reaches the outside world
+# via psp_gateway, and publishes asynchronous payment events. Load-bearing.
+
+set critical
+set external
+
+node payment_service [team="payments", source="repo", confidence="high"] @critical
+node payments_db [text="PostgreSQL", team="platform", source="config", confidence="high"] @critical
+node payment_events [text="Kafka topic: payment_events", team="platform", source="config", confidence="high"]
+node psp_gateway [text="Card processor (PSP)", team="external", source="config", confidence="high"] @external
+
+payment_service -> payments_db [protocol="sql", source="config", confidence="high"]
+payment_service -> psp_gateway [protocol="https", source="code", confidence="high"]
+payment_service -> payment_events [event="payment_settled", protocol="pub", source="code", confidence="high"]

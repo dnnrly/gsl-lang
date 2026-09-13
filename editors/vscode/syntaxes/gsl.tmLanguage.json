@@ -4,7 +4,7 @@
   "fileTypes": ["gsl"],
   "patterns": [
     {
-      "match": "\\b(node|set|digraph|graph|subgraph|edge|->|@)\\b",
+      "match": "\\b(node|set)\\b",
       "name": "keyword.control.gsl"
     },
     {
@@ -20,13 +20,24 @@
       "name": "string.quoted.double.gsl"
     },
     {
-      "match": "//[^\n]*",
-      "name": "comment.line.double-slash.gsl"
+      "match": "#[^\\n]*",
+      "name": "comment.line.hash.gsl"
     },
     {
-      "begin": "/\\*",
-      "end": "\\*/",
-      "name": "comment.block.gsl"
+      "match": "->",
+      "name": "keyword.operator.arrow.gsl"
+    },
+    {
+      "match": "@",
+      "name": "storage.type.namespace.gsl"
+    },
+    {
+      "match": ":",
+      "name": "punctuation.separator.gsl"
+    },
+    {
+      "match": "[\\[\\],=]",
+      "name": "keyword.operator.gsl"
     },
     {
       "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b",

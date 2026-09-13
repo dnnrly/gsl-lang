@@ -1,0 +1,44 @@
+graph TD
+%% Generated: gsl-query 'from *' -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  payment_service["payment_service"]
+  psp_gateway["Card processor (PSP)"]
+  identity_provider["Identity provider (SaaS)"]
+  fulfilment_service["fulfilment_service"]
+  order_service["order_service"]
+  inventory_service["inventory_service"]
+  inventory_db["PostgreSQL"]
+  customer_db["PostgreSQL"]
+  notification_service["notification_service"]
+  catalogue_db["PostgreSQL"]
+  catalogue_service["catalogue_service"]
+  email_platform["Email platform (SaaS)"]
+  wms_system["Warehouse management (SaaS)"]
+  order_db["PostgreSQL"]
+  payments_db["PostgreSQL"]
+  payment_events["Kafka topic: payment_events"]
+  order_events["Kafka topic: order_events"]
+  customer_api["customer_api"]
+
+  catalogue_service --> catalogue_db
+  catalogue_service --> inventory_service
+  customer_api --> customer_db
+  customer_api --> identity_provider
+  customer_api --> catalogue_service
+  customer_api --> order_service
+  fulfilment_service --> order_db
+  fulfilment_service --> wms_system
+  fulfilment_service --> order_events
+  inventory_service --> inventory_db
+  notification_service --> email_platform
+  notification_service --> payment_events
+  notification_service --> order_events
+  order_service --> catalogue_service
+  order_service --> customer_db
+  order_service --> payment_service
+  order_service --> order_db
+  order_service --> order_events
+  order_service --> inventory_service
+  payment_service --> payments_db
+  payment_service --> psp_gateway
+  payment_service --> payment_events

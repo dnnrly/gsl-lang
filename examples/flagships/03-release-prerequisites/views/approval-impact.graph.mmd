@@ -1,0 +1,15 @@
+graph TD
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q3-approval-impact.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t graph
+
+  approve["approve"]
+  canary --> prod
+  canary["canary"]
+  config --> controlplane
+  config["config"]
+  controlplane --> approve
+  controlplane["controlplane"]
+  prod --> smoke
+  prod["prod"]
+  registry --> canary
+  registry["registry"]
+  smoke["smoke"]

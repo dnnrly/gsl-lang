@@ -1,0 +1,29 @@
+graph TB
+%% Generated: /home/dnnrly/projects/gsl-lang/tmp/gsl-query -f q6-team-view.gql -i model.gsl | /home/dnnrly/projects/gsl-lang/tmp/gsl-diagram -f mermaid -t component
+
+  card_network["card_network"]
+  team_fulfilment --> team_platform
+  team_fulfilment["team_fulfilment"]
+  team_gateway --> team_identity
+  team_gateway --> team_orders
+  team_gateway --> team_payments
+  team_gateway --> team_storefront
+  team_gateway["team_gateway"]
+  team_identity --> team_platform
+  team_identity --> team_platform
+  team_identity["team_identity"]
+  team_legacy["team_legacy"]
+  team_orders --> team_fulfilment
+  team_orders --> team_identity
+  team_orders --> team_legacy
+  team_orders --> team_payments
+  team_orders --> team_platform
+  team_orders --> team_platform
+  team_orders["team_orders"]
+  team_payments --> card_network
+  team_payments --> team_platform
+  team_payments["team_payments"]
+  team_platform --> team_fulfilment
+  team_platform["Redis"]
+  team_storefront --> team_platform
+  team_storefront["team_storefront"]

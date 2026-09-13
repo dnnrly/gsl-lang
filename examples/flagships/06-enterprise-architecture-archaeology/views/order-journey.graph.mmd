@@ -1,0 +1,28 @@
+graph TD
+%% Generated: gsl-query -f q4-order-journey.gql -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  inventory_service["inventory_service"]
+  catalogue_service["catalogue_service"]
+  inventory_db["PostgreSQL"]
+  order_service["order_service"]
+  order_events["Kafka topic: order_events"]
+  customer_db["PostgreSQL"]
+  payment_service["payment_service"]
+  payments_db["PostgreSQL"]
+  psp_gateway["Card processor (PSP)"]
+  payment_events["Kafka topic: payment_events"]
+  catalogue_db["PostgreSQL"]
+  order_db["PostgreSQL"]
+
+  catalogue_service --> catalogue_db
+  catalogue_service --> inventory_service
+  inventory_service --> inventory_db
+  order_service --> catalogue_service
+  order_service --> customer_db
+  order_service --> payment_service
+  order_service --> order_db
+  order_service --> order_events
+  order_service --> inventory_service
+  payment_service --> payments_db
+  payment_service --> psp_gateway
+  payment_service --> payment_events

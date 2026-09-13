@@ -1,0 +1,34 @@
+set critical
+set deprecated
+set external
+
+node gateway [replicas="4", team="gateway", zone="A"] @critical
+node web [team="gateway", zone="A"]
+node mobile [team="gateway", zone="A"]
+node orders [replicas="6", team="orders", zone="B"] @critical
+node users [replicas="3", team="identity", zone="A"]
+node catalog [replicas="3", team="storefront", zone="A"]
+node shipping [replicas="2", team="fulfilment", zone="C"]
+node kafka [team="platform", text="Kafka", zone="C"]
+node legacy_orders [team="legacy", zone="B"] @deprecated
+node reporting [team="platform", zone="A"] @deprecated
+node search [replicas="2", team="storefront", zone="A"]
+node redis_cache [team="platform", text="Redis", zone="A"] @deprecated
+node legacy_db [team="legacy", zone="B"] @deprecated
+
+web->gateway [protocol="http"]
+mobile->gateway [protocol="http"]
+gateway->orders [protocol="http"]
+gateway->users [protocol="http"]
+gateway->catalog [protocol="http"]
+orders->users [protocol="grpc"]
+orders->shipping [protocol="grpc"]
+orders->kafka [kind="async", protocol="pub"]
+orders->legacy_orders [protocol="soap"]
+shipping->kafka [kind="async", protocol="pub"]
+kafka->reporting [kind="async", protocol="sub"]
+catalog->search [protocol="grpc"]
+users->redis_cache [protocol="tcp"]
+search->redis_cache [protocol="tcp"]
+catalog->redis_cache [protocol="tcp"]
+legacy_orders->legacy_db [protocol="sql"]

@@ -27,6 +27,10 @@ help: ## print help message
 clean:
 	rm -rf $(TMP_DIR)
 
+.PHONY: diagrams
+diagrams: ## render the .svg diagrams committed for README display (needs mmdc + python3)
+	./scripts/render-diagrams.sh
+
 .PHONY: lint
 lint: ## run linting
 	golangci-lint run
@@ -64,9 +68,10 @@ test-acceptance: build ## run acceptance tests (BDD/godog feature tests)
 	go test -v -tags acceptance ./test/...
 
 .PHONY: build
-build: ## build CLI tools (gsl-diagram, gsl-query)
+build: ## build CLI tools (gsl-diagram, gsl-query, gsl-lsp)
 	mkdir -p $(TMP_DIR)
 	go build -o $(TMP_DIR)/gsl-diagram ./cmd/gsl-diagram
 	go build -o $(TMP_DIR)/gsl-query ./cmd/gsl-query
+	go build -o $(TMP_DIR)/gsl-lsp ./cmd/gsl-lsp
 
 

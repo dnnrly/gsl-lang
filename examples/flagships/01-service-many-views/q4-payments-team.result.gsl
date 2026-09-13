@@ -1,0 +1,13 @@
+set critical
+set deprecated
+set external
+
+node fraud [replicas="2", team="payments", zone="B"]
+node payments [replicas="4", team="payments", zone="B"] @critical
+node payments_db [team="platform", text="PostgreSQL", zone="B"] @critical
+node card_network [team="external", zone="external"] @external
+
+payments->fraud [protocol="grpc"]
+payments->payments_db [protocol="sql"]
+payments->card_network [protocol="https"]
+fraud->payments_db [protocol="sql"]

@@ -1,0 +1,8 @@
+set critical
+set external
+set suspected
+
+node order_service [confidence="high", source="repo", team="orders"] @critical
+node payment_service [confidence="high", source="repo", team="payments"] @critical
+
+order_service->payment_service [confidence="high", protocol="grpc", source="code"]

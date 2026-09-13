@@ -1,0 +1,7 @@
+set critical
+set deprecated
+
+node catalog_cache [team="storefront", text="Redis"] @deprecated
+node legacy_promo_calc [team="promo"] @deprecated
+
+legacy_promo_calc->catalog_cache [confidence="low", protocol="tcp", source="email_readme"]

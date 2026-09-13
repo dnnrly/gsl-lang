@@ -7,6 +7,13 @@ description: RFC specification for the GSL Query Language. Covers subgraph extra
 
 Version 0.4.0 (Revised Draft RFC)
 
+**Status: Revised Draft.** The query language is extensive and heavily
+tested, but remains a draft: rules may change between GSL releases while
+pre-1.0. The *implementation* is released and tagged independently of the
+language level; release artifacts are reproducible for their tagged commit,
+and query output for a given graph is stable within a release. See
+CONTRIBUTING.md for the versioning and compatibility policy.
+
 ---
 
 # 1. Motivation
