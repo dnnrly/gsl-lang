@@ -391,8 +391,10 @@ func TestCLIIntegrationMermaid(t *testing.T) {
 		t.Fatalf("output file is empty")
 	}
 
-	// Validate with mermaid-cli
-	cmd := exec.Command("mmdc", "-i", mmdFile.Name(), "-o", pngFile, "-q")
+	// Validate with mermaid-cli (use the shared puppeteer config so the
+	// bundled Chromium runs with --no-sandbox in restricted environments
+	// such as CI runners)
+	cmd := exec.Command("mmdc", "-p", "../../scripts/puppeteer-config.json", "-i", mmdFile.Name(), "-o", pngFile, "-q")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("mermaid-cli validation failed: %v\nOutput: %s", err, string(output))
 	}
