@@ -1,0 +1,14 @@
+graph TD
+%% Generated: gsl-query -f q4-commerce-restricted-blast.gql -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  customer_api["Customer API"]
+  web_portal["Web Portal"]
+  order_service["order_service"]
+  customer_service["customer_service"]
+  payment_service["payment_service"]
+
+  web_portal --> customer_api
+  customer_api --> order_service
+  customer_api --> customer_service
+  order_service --> customer_service
+  order_service --> payment_service

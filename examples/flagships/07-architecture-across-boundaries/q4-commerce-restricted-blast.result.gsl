@@ -1,0 +1,27 @@
+set application
+set commerce
+set confidential_data
+set europe
+set external
+set highly_confidential_data
+set internal_data
+set north_america
+set operations
+set platform
+set production
+set public
+set restricted
+set security
+set staging
+
+node customer_api [text="Customer API"] @application @commerce @confidential_data @europe @production
+node web_portal [text="Web Portal"] @commerce @europe @internal_data @production @public
+node order_service @application @commerce @confidential_data @europe @production
+node customer_service @application @commerce @confidential_data @europe @production
+node payment_service @commerce @highly_confidential_data @north_america @production @restricted
+
+web_portal->customer_api [protocol="https"]
+customer_api->order_service [protocol="grpc"]
+customer_api->customer_service [protocol="grpc"]
+order_service->customer_service [protocol="grpc"]
+order_service->payment_service [protocol="grpc"]

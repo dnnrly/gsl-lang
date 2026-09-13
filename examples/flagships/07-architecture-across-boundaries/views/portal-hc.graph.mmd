@@ -1,0 +1,9 @@
+graph TD
+%% Generated: gsl-query -f q5-portal-to-hc.gql -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  payment_service["payment_service"]
+  payment_store["payment_store"]
+  event_bus["Event Bus"]
+
+  payment_service --> payment_store
+  payment_service --> event_bus

@@ -1,0 +1,16 @@
+graph TB
+%% Generated: gsl-query 'remove node.text where node.text exists | collapse into trust_public ... ' -i model.gsl | gsl-diagram -f mermaid -t component
+
+  trust_application["trust_application"]
+  trust_public["trust_public"]
+  trust_external["trust_external"]
+  trust_restricted["trust_restricted"]
+
+  trust_public --> trust_application
+  trust_application --> trust_external
+  trust_application --> trust_restricted
+  trust_application --> trust_restricted
+  trust_restricted --> trust_external
+  trust_restricted --> trust_application
+  trust_restricted --> trust_application
+  trust_application --> trust_external

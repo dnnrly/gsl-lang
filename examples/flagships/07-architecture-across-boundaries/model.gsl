@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
+# Northstar commerce platform -- the production dependency graph.
+#
+# Five independent classification dimensions, flat, no hierarchy:
+#   environment:   @production @staging
+#   geography:     @europe @north_america
+#   trust:         @public @application @restricted @external
+#   data:          @internal_data @confidential_data @highly_confidential_data
+#   ownership:     @commerce @platform @security @operations
+#
+# Sets are declared here so membership is a record, never an accident. A node
+# carries one or more memberships within a dimension (catalogue_service and
+# event_bus are both production and staging; event_bus is also confidential
+# and highly-confidential); membership is orthogonal across dimensions (see
+# README "Why the memberships are not a hierarchy").
+set production
+set staging
+set europe
+set north_america
+set public
+set application
+set restricted
+set external
+set internal_data
+set confidential_data
+set highly_confidential_data
+set commerce
+set platform
+set security
+set operations
+
+node web_portal [text="Web Portal"] @production @europe @public @internal_data @commerce
+node customer_api [text="Customer API"] @production @europe @application @confidential_data @commerce
+node catalogue_service @production @staging @europe @application @internal_data @commerce
+node order_service @production @europe @application @confidential_data @commerce
+node payment_service @production @north_america @restricted @highly_confidential_data @commerce
+node customer_service @production @europe @application @confidential_data @commerce
+node fraud_service @production @north_america @application @confidential_data @security
+node fulfilment_service @production @north_america @application @internal_data @operations
+node notification_service @production @europe @application @confidential_data @operations
+node catalogue_store @production @europe @application @internal_data @platform
+node order_store @production @europe @restricted @confidential_data @platform
+node payment_store @production @north_america @restricted @highly_confidential_data @platform
+node customer_store @production @europe @restricted @confidential_data @platform
+node event_bus [text="Event Bus"] @production @staging @europe @application @confidential_data @highly_confidential_data @platform
+node observability [text="Observability"] @production @europe @application @internal_data @operations
+node payment_gateway [text="Payment processor"] @external
+node email_provider [text="Email provider"] @external
+node identity_provider [text="Identity provider"] @external
+
+web_portal -> customer_api [protocol="https"]
+web_portal -> catalogue_service [protocol="https"]
+customer_api -> identity_provider [protocol="oidc"]
+customer_api -> order_service [protocol="grpc"]
+customer_api -> customer_service [protocol="grpc"]
+order_service -> order_store [protocol="sql"]
+order_service -> customer_service [protocol="grpc"]
+order_service -> payment_service [protocol="grpc"]
+order_service -> catalogue_service [protocol="grpc"]
+order_service -> event_bus [protocol="pub", event="order_placed"]
+payment_service -> payment_store [protocol="sql"]
+payment_service -> payment_gateway [protocol="https"]
+payment_service -> fraud_service [protocol="grpc"]
+payment_service -> event_bus [protocol="pub", event="payment_settled"]
+customer_service -> customer_store [protocol="sql"]
+fraud_service -> event_bus [protocol="sub", event="order_placed"]
+fraud_service -> customer_store [protocol="sql"]
+fulfilment_service -> event_bus [protocol="sub", event="order_placed"]
+fulfilment_service -> order_store [protocol="sql"]
+notification_service -> event_bus [protocol="sub", event="order_placed"]
+notification_service -> event_bus [protocol="sub", event="payment_settled"]
+notification_service -> email_provider [protocol="https"]
+notification_service -> customer_store [protocol="sql"]
+catalogue_service -> catalogue_store [protocol="sql"]
+event_bus -> observability [protocol="sub", event="order_placed"]

@@ -1,0 +1,17 @@
+set application
+set commerce
+set confidential_data
+set europe
+set external
+set highly_confidential_data
+set internal_data
+set north_america
+set operations
+set platform
+set production
+set public
+set restricted
+set security
+set staging
+
+node payment_service @commerce @highly_confidential_data @north_america @production @restricted

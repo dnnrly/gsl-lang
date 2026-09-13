@@ -21,6 +21,7 @@ The [flagship examples](flagships/) are complete, runnable narratives: **problem
 - [`04-financial-network`](flagships/04-financial-network/) — the same operations as #1 in a non-software domain: GSL is graph-shaped knowledge, not software-shaped.
 - [`05-llm-assisted-modelling`](flagships/05-llm-assisted-modelling/) — an honest experiment: agent drafts → parser gate → canonical diff → human review.
 - [`06-enterprise-architecture-archaeology`](flagships/06-enterprise-architecture-archaeology/) — independent investigation fragments from many repositories, composed into one queryable enterprise graph.
+- [`07-architecture-across-boundaries`](flagships/07-architecture-across-boundaries/) — sets as five independent dimensions (environment, geography, trust, data, ownership) on one flat graph; every boundary a query, no hierarchy chosen.
 
 All flagship models, queries, committed canonical results, diagram conversions and README code blocks are exercised by `flagship_test.go`:
 

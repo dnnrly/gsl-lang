@@ -1,0 +1,22 @@
+set application
+set commerce
+set confidential_data
+set europe
+set external
+set highly_confidential_data
+set internal_data
+set north_america
+set operations
+set platform
+set production
+set public
+set restricted
+set security
+set staging
+
+node payment_service @commerce @highly_confidential_data @north_america @production @restricted
+node payment_store @highly_confidential_data @north_america @platform @production @restricted
+node event_bus [text="Event Bus"] @application @confidential_data @europe @highly_confidential_data @platform @production @staging
+
+payment_service->payment_store [protocol="sql"]
+payment_service->event_bus [event="payment_settled", protocol="pub"]
