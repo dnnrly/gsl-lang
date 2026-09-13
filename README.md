@@ -2,11 +2,24 @@
 
 > **The source of truth for the graphs behind your diagrams.**
 
-GSL is a canonical, diffable text format for modelling graph-shaped knowledge — architectures, dependencies, workflows, organisational and relationship structures — from which you derive the views you need.
+Architecture diagrams go stale. Not because drawing is hard — because the picture becomes the thing everyone maintains, while the information it represents has no authoritative home. Change a service boundary and you edit *N* diagrams by hand; "what breaks?" gets answered by gut feel.
 
-Keep the graph in version control. Every diagram, subset, report or analysis is a *view* derived from that one source:
+GSL makes the graph itself the source of truth — a canonical, diffable text format for graph-shaped knowledge (architectures, dependencies, workflows, organisational and relationship structures), kept in version control like any other source. Every diagram, subset, report or analysis is a *view* derived from that one graph:
 
 > **One graph, many views.** The diagram is a view; the graph is the asset.
+
+```text
+graph in Git
+   ├── architecture diagram
+   ├── team view
+   ├── blast radius
+   ├── dependency report
+   └── whatever view you need
+```
+
+Renderers like Mermaid, D2 and Graphviz draw one view extremely well. GSL is for the different case: the graph is the durable asset, the views are many, and they are derived from one source — in sync by construction rather than by discipline.
+
+> **Status: a serious experiment.** The implementation and specification are mature and heavily tested; the idea itself is young and unproven in the real world — whether this model genuinely helps people remains an open question. Evaluate it on its merits; [Project status](#project-status) is the honest detail.
 
 ---
 
@@ -46,7 +59,7 @@ node orders [team="orders"] @critical
 gateway->orders [protocol="http"]
 ```
 
-Retiring `orders` breaks the `@critical` gateway — a fact you derived from the model, not from gut feel. Re-run it any time the model changes; the answer stays in sync.
+Retiring `orders` breaks the `@critical` gateway — a fact you derived from the model, not from gut feel. Re-run it any time the model changes; the answer stays in sync. If the diagram were the source of truth, that is a trail you'd trace by eye across every outdated picture in your wiki.
 
 This is the whole idea. Everything below shows it at scale.
 
@@ -54,9 +67,7 @@ This is the whole idea. Everything below shows it at scale.
 
 ## Why GSL?
 
-Most teams draw diagrams and let them rot. The diagram is a picture of a system from one point in time; *N* diagrams mean *N* versions of the truth to maintain by hand.
-
-GSL reverses that. The graph is the asset — a text file with a deterministic canonical form that version control can diff, review and merge. Questions about your system become queries, and all the pictures you need are derived from the same source:
+Every picture is an output. GSL makes the graph the first-class thing you keep: questions about your system become queries, and all the pictures you need are re-derived, not re-drawn:
 
 - A component diagram for each audience
 - The blast radius of retiring a service
@@ -73,6 +84,7 @@ Concretely, GSL gives you:
 - **One source, many views.** Derive whatever subset, summary or diagram you need from a single graph — no duplicated structure, no drift.
 - **Relationships between relationships.** Edges can declare dependencies on other edges (a promotion that waits on an approval), so workflow prerequisites are data, not a hand-drawn arrow.
 - **Structure without a schema.** Carry arbitrary attributes (`team`, `protocol`, `owner`, `confidence`) and query on them. No schema step, no database to stand up.
+- **Text, not a picture.** The structure is plain text: a PR can review it, CI can check it, other tooling can consume it — and when a language model needs to understand a system, the graph itself is what it reads, not an image of it.
 
 Honest boundaries: GSL is a file format and a derivation tool. It does not do graph layout, schema validation, persistence or database-scale querying — and it does not try to. See [Project status](#project-status) and [Compared with alternatives](#gsl-compared-with-alternatives) for where that is a feature and where someone else is the better fit.
 
@@ -87,7 +99,7 @@ Honest boundaries: GSL is a file format and a derivation tool. It does not do gr
 | **Model workflow prerequisites** | A deploy edge that depends on an approval edge; query "what does the gate unlock?" | [03 — release prerequisites](examples/flagships/03-release-prerequisites/README.md) |
 | **Model relationship networks of any kind** | Financial exposure, org structures, relationship graphs — the same operations, a different domain | [04 — financial relationships](examples/flagships/04-financial-network/README.md) |
 
-GSL is a *graph* language. It is not software-only: the same text format, query language and derived views describe financial networks, organisational structures and any other relationship-shaped knowledge. The domain note is this one — the graph is the asset, whatever domain it lives in.
+GSL is a *graph* language. It is not software-only: the same text format, query language and derived views describe financial networks, organisational structures and any other relationship-shaped knowledge. Whatever the domain, the point is the same: the graph is the asset; the views are derived.
 
 ---
 
@@ -215,7 +227,7 @@ The CLI tools are Unix-composable: GSL in, canonical GSL or a diagram out, via s
 
 ## Project status
 
-**Young but extraordinarily specified.** The language is small and disciplined; this repository is its canonical home, and its claims are enforced by tests.
+**The implementation is mature; the adoption question is open.** The specification and reference implementation are small, disciplined and heavily tested — every claim here is enforced by tests, not by description — but this is an honest experiment, not an established standard. What remains genuinely open is whether the model proves useful to people beyond this repository.
 
 | Element | Maturity | Basis |
 |---|---|---|
