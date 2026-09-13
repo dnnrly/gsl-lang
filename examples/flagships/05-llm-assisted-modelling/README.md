@@ -183,12 +183,12 @@ What worked badly / is missing:
   production reliability; it proves the workflow produces reviewable
   artifacts.
 
-**Recommendation for Phase 5 (trust tooling):** a `gsl-validate`
-command that enforces required attributes and set-membership rules (e.g.
-"every load-bearing node must carry an owner") would move the semantic
-gate into tooling. Until then, the human + a diff + a few queries is the
-whole story — and that is a *defensible* story, because GSL makes the
-agent's work auditable.
+**Recommendation for Phase 5 (trust tooling):** a validation command that
+enforces required attributes and set-membership rules (e.g. "every
+load-bearing node must carry an owner") would move the semantic gate into
+tooling. Until then, the human + a diff + a few queries is the whole story —
+and that is a *defensible* story, because GSL makes the agent's work
+auditable.
 
 ---
 

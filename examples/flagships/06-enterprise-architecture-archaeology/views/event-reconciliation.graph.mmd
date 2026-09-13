@@ -1,0 +1,15 @@
+graph TD
+%% Generated: gsl-query -f q5-event-reconciliation.gql -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  payment_events["Kafka topic: payment_events"]
+  order_service["order_service"]
+  payment_service["payment_service"]
+  fulfilment_service["fulfilment_service"]
+  order_events["Kafka topic: order_events"]
+  notification_service["notification_service"]
+
+  fulfilment_service --> order_events
+  notification_service --> payment_events
+  notification_service --> order_events
+  order_service --> order_events
+  payment_service --> payment_events

@@ -33,6 +33,7 @@ gsl-query -f 01-service-many-views/q4-payments-team.gql -i 01-service-many-views
 | 3 | `03-release-prerequisites` | "When can we promote?" | A relationship *between edges* — a promotion that depends on an approval edge. Workflow as a graph, not a runbook. |
 | 4 | `04-financial-network` | "If the CCP fails, who's exposed?" | The same operations as #1, in a non-software domain — GSL is graph-shaped knowledge, not software-shaped. |
 | 5 | `05-llm-assisted-modelling` | "Can an agent turn an email into a model?" | Honest experiment: parser + canonical diff + queries make agent output reviewable. Flags a validation gap (Phase 5). |
+| 6 | `06-enterprise-architecture-archaeology` | "What does our enterprise architecture actually look like?" | Independent investigation fragments, composed into one queryable graph; cross-service questions answered by GQL. |
 
 ## Conventions
 
@@ -117,4 +118,10 @@ subgraph edge.instrument == "lending"
 
 ```gql
 subgraph edge.confidence == "low"
+```
+
+**06 — enterprise archaeology:** what needs verification after composing all fragments.
+
+```gql
+(subgraph edge.confidence == "low") as LOW | from * | (subgraph edge.confidence == "medium") as MED | LOW + MED
 ```

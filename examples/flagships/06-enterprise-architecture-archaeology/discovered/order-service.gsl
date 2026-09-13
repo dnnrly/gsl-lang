@@ -1,0 +1,26 @@
+# order-service -- investigation notes
+#
+# Investigated: order-service/
+#   * checkout.go: gRPC -> catalogue_service (Price), gRPC -> payment_service
+#     (Create), SQL read of the customer (customer_db), insert into order_db
+#   * events.go: PublishOrderCompleted -> topic "order_events"
+#   * config.yaml: order_db and customer_db DSNs, kafka endpoint
+#   * README: claims orders "reserve stock directly via the inventory API".
+#     NOT confirmed in code -- checkout goes via catalogue_service, and
+#     inventory's own README says nothing accepts direct orders. Recorded as
+#     a low-confidence, docs-only edge for human review.
+#
+# Conclusion: order_service is the order state machine. Load-bearing.
+
+set critical
+
+node order_service [team="orders", source="repo", confidence="high"] @critical
+node order_db [text="PostgreSQL", team="platform", source="config", confidence="high"] @critical
+node order_events [text="Kafka topic: order_events", team="platform", source="config", confidence="high"]
+
+order_service -> catalogue_service [protocol="grpc", source="code", confidence="high"]
+order_service -> customer_db [protocol="sql", source="code", confidence="medium"]
+order_service -> payment_service [protocol="grpc", source="code", confidence="high"]
+order_service -> order_db [protocol="sql", source="config", confidence="high"]
+order_service -> order_events [event="order_completed", protocol="pub", source="code", confidence="high"]
+order_service -> inventory_service [protocol="grpc", source="docs", confidence="low"]

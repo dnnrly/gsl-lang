@@ -1,0 +1,23 @@
+# notification-service -- investigation notes
+#
+# Investigated: notification-service/
+#   * listener.go: @KafkaListener(topics = "order.completed") and
+#     @KafkaListener(topics = "payment_settled")
+#   * email.go: HTTPS -> email_platform
+#   * config.yaml: email_platform base_url
+#
+# NOTE -- suspected naming inconsistency: order_service publishes
+# "order_completed" but this listener subscribes to "order.completed".
+# Either a different spelling of the same topic, or a listener wired to
+# nothing that publishes. Kept exactly as observed, flagged @suspected.
+# A human must reconcile the two.
+
+set external
+set suspected
+
+node notification_service [team="engagement", source="repo", confidence="high"]
+node email_platform [text="Email platform (SaaS)", team="external", source="config", confidence="high"] @external
+
+notification_service -> email_platform [protocol="https", source="code", confidence="high"]
+notification_service -> payment_events [event="payment_settled", protocol="sub", source="code", confidence="high"]
+notification_service -> order_events [event="order.completed", protocol="sub", source="code", confidence="medium"] @suspected

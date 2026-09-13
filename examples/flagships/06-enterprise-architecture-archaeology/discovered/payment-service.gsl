@@ -1,0 +1,22 @@
+# payment-service -- investigation notes
+#
+# Investigated: payment-service/
+#   * payment.go: HTTPS -> psp_gateway (external card processor),
+#     payments_db writes, publishes payment_settled on payment_events
+#   * config.yaml: payments-db DSN, psp_gateway base_url
+#   * README: "the payment_settled event is published for receipting"
+#
+# Conclusion: payment_service owns payments_db, reaches the outside world
+# via psp_gateway, and publishes asynchronous payment events. Load-bearing.
+
+set critical
+set external
+
+node payment_service [team="payments", source="repo", confidence="high"] @critical
+node payments_db [text="PostgreSQL", team="platform", source="config", confidence="high"] @critical
+node payment_events [text="Kafka topic: payment_events", team="platform", source="config", confidence="high"]
+node psp_gateway [text="Card processor (PSP)", team="external", source="config", confidence="high"] @external
+
+payment_service -> payments_db [protocol="sql", source="config", confidence="high"]
+payment_service -> psp_gateway [protocol="https", source="code", confidence="high"]
+payment_service -> payment_events [event="payment_settled", protocol="pub", source="code", confidence="high"]

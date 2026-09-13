@@ -13,6 +13,7 @@ The [flagship examples](flagships/) are complete, runnable narratives: **problem
 - [`03-release-prerequisites`](flagships/03-release-prerequisites/) — a relationship between relationships: a deploy edge gated on an approval edge.
 - [`04-financial-network`](flagships/04-financial-network/) — the same operations as #1 in a non-software domain: GSL is graph-shaped knowledge, not software-shaped.
 - [`05-llm-assisted-modelling`](flagships/05-llm-assisted-modelling/) — an honest experiment: agent drafts → parser gate → canonical diff → human review.
+- [`06-enterprise-architecture-archaeology`](flagships/06-enterprise-architecture-archaeology/) — independent investigation fragments from many repositories, composed into one queryable enterprise graph.
 
 All flagship models, queries, committed canonical results, diagram conversions and README code blocks are exercised by `flagship_test.go`:
 

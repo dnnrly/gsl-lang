@@ -1,0 +1,21 @@
+# customer-api -- investigation notes
+#
+# Investigated: customer-api/
+#   * main.go: checkout handler reads customer_db, calls catalogue.Flashes
+#     (gRPC) and orders.Place (HTTP)
+#   * config.yaml: customer-db DSN + identity-provider base URL (login)
+#   * README: "placing an order calls order_service"
+#
+# Conclusion: customer_api is the customer-facing entry point. It depends on
+# customer_db, identity_provider, catalogue_service and order_service.
+
+set external
+
+node customer_api [team="customer", source="repo", confidence="high"]
+node customer_db [text="PostgreSQL", team="platform", source="config", confidence="high"]
+node identity_provider [text="Identity provider (SaaS)", team="external", source="config", confidence="high"] @external
+
+customer_api -> customer_db [protocol="sql", source="config", confidence="high"]
+customer_api -> identity_provider [protocol="https", source="config", confidence="high"]
+customer_api -> catalogue_service [protocol="grpc", source="code", confidence="high"]
+customer_api -> order_service [protocol="http", source="code", confidence="high"]

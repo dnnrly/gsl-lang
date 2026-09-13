@@ -28,7 +28,7 @@ This index is the route from *first contact* to *competent use*. Each tier state
 ## How to read these tiers
 
 - **The journey is circular, not linear.** Concepts cross-reference each other; the Cookbook points back at the flagship examples; the Reference and Specification are there the moment you need *precision* rather than an explanation.
-- **The flagship examples are the spine.** Every tier links to the five runnable narratives under `examples/flagships/` — they are the same story told end to end: *problem → model → query → derived view*.
+- **The flagship examples are the spine.** Every tier links to the six runnable narratives under `examples/flagships/` — they are the same story told end to end: *problem → model → query → derived view*.
 - **GQL is deliberately a post-Concepts topic.** You can be productive with just a graph file and `gsl-query ""`; the concept page [Queries and derived views](concepts/queries-and-views.md) explains where queries fit before you meet their grammar.
 - **The advanced concept pages can wait.** Parsing rules and canonical form explain *why text graphs behave well in git*; they are not prerequisites for modelling or querying.
 - **Honest about maturity.** The core language is stable and heavily tested. GQL is an extensive, well-tested *Revised Draft* — the flagship examples only use behaviour covered by the tested query fixtures.
@@ -58,7 +58,7 @@ The mental model before the syntax: what a graph is in GSL, how edges represent 
 Three goal-oriented paths, all executable:
 
 - **Modelling with GSL** — deciding what belongs in a model (node, edge, attribute, set, nesting, edge dependency): [the modelling guide](tutorials/modelling-with-gsl.md).
-- **The flagship examples** — five complete narratives for real problems: [the flagship index](../examples/flagships/README.md).
+- **The flagship examples** — six complete narratives for real problems: [the flagship index](../examples/flagships/README.md).
 - **The query tutorial** — a step-by-step GQL learning path: [QUERY_TUTORIAL](../QUERY_TUTORIAL.md).
 
 See the [tutorials index](tutorials/README.md) for how the paths fit together.
@@ -82,4 +82,4 @@ The tools that consume and emit GSL — [implementations](../README.md#implement
 
 ### For AI agents and LLMs
 
-The agent-oriented index and embedded guides sit at the repository root: start at [llms.txt](../llms.txt), then [GSL_GUIDE](../GSL_GUIDE.md), [GQL_GUIDE](../GQL_GUIDE.md) and [GO_REFERENCE](../GO_REFERENCE.md). The [LLM-assisted modelling flagship](../examples/flagships/05-llm-assisted-modelling/README.md) is the worked experiment. The human learning path above does not require any LLM mental model.
+The agent-oriented index and embedded guides sit at the repository root: start at [llms.txt](../llms.txt), then [GSL_GUIDE](../GSL_GUIDE.md), [GQL_GUIDE](../GQL_GUIDE.md) and [GO_REFERENCE](../GO_REFERENCE.md). The [LLM-assisted modelling flagship](../examples/flagships/05-llm-assisted-modelling/README.md) is the worked experiment. The [enterprise architecture archaeology flagship](../examples/flagships/06-enterprise-architecture-archaeology/README.md) shows how that approach scales across many repositories. The human learning path above does not require any LLM mental model.

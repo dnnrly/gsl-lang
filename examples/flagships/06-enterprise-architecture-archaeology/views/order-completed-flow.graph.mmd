@@ -1,0 +1,9 @@
+graph TD
+%% Generated: gsl-query -f q2-order-completed-flow.gql -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  order_events["Kafka topic: order_events"]
+  order_service["order_service"]
+  fulfilment_service["fulfilment_service"]
+
+  fulfilment_service --> order_events
+  order_service --> order_events

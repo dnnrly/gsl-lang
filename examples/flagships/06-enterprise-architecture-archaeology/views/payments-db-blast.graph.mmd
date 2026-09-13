@@ -1,0 +1,11 @@
+graph TD
+%% Generated: gsl-query -f q3-payments-db-blast.gql -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  payments_db["PostgreSQL"]
+  customer_api["customer_api"]
+  order_service["order_service"]
+  payment_service["payment_service"]
+
+  customer_api --> order_service
+  order_service --> payment_service
+  payment_service --> payments_db

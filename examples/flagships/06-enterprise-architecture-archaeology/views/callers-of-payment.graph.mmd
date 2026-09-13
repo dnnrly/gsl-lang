@@ -1,0 +1,7 @@
+graph TD
+%% Generated: gsl-query -f q1-callers-of-payment.gql -i model.gsl | gsl-diagram -f mermaid -t graph
+
+  order_service["order_service"]
+  payment_service["payment_service"]
+
+  order_service --> payment_service

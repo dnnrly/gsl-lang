@@ -1,0 +1,19 @@
+# fulfilment-service -- investigation notes
+#
+# Investigated: fulfilment-service/
+#   * worker.go: SQL reads order_db (read-only), HTTPS -> wms_system,
+#     consumes the "order_events" topic
+#   * config.yaml: order-db DSN (read-only), wms base_url
+#   * README: "listens for order_completed on order_events to pick early"
+#
+# Conclusion: fulfilment_service reads orders and dispatches work to the
+# external warehouse system. Owning team: fulfilment (warehouse).
+
+set external
+
+node fulfilment_service [team="fulfilment", source="repo", confidence="high"]
+node wms_system [text="Warehouse management (SaaS)", team="external", source="config", confidence="high"] @external
+
+fulfilment_service -> order_db [protocol="sql", source="config", confidence="high"]
+fulfilment_service -> wms_system [protocol="https", source="code", confidence="high"]
+fulfilment_service -> order_events [event="order_completed", protocol="sub", source="code", confidence="high"]
