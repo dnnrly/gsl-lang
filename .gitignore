@@ -16,16 +16,7 @@ editors/vscode/*.vsix
 .quick-ref.md
 TODO.md
 WORK.md
-planning/phase-0-audit.md
-planning/phase-0-progress.md
-planning/phase-1-positioning.md
-planning/phase-1-progress.md
-planning/phase-2-progress.md
-planning/phase-3-progress.md
-planning/phase-4-progress.md
-planning/GSL-ADOPTION-PLAN.md
-planning/phase-5-assessment.md
-planning/phase-5-progress.md
+planning/
 
 # Ignore fuzz seed corpus cache
 testdata/fuzz
