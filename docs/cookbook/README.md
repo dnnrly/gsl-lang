@@ -30,4 +30,4 @@ GSL output is canonical — deterministic in any single implementation and versi
 | [5 — Render views in CI](render-a-view-for-ci.md) | "Keep diagrams and derived views fresh." | Regenerate, render, and diff |
 | [6 — What does the gate unlock?](what-does-the-gate-unlock.md) | "What can run once the approval gate has passed?" | Edge dependencies in a release workflow |
 
-Consumer notes: recipes 1–4 use only the core language and attributes; recipe 6 uses **scoped edge dependencies**, which (like GQL's edge-dependency predicates) are in the current reference implementation — the release binary may lag, so build the tools from source if that recipe's commands fail on your install (see [Getting Started](../getting-started/README.md#1-install-the-tools)).
+Consumer notes: recipes 1–4 use only the core language and attributes; recipe 6 uses **scoped edge dependencies**, which (like GQL's edge-dependency predicates) were introduced in the reference implementation and are included in the v0.5.0 release. If you build from source, use the latest tag (`go install github.com/dnnrly/gsl-lang/cmd/gsl-query@latest`).

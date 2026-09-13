@@ -4,7 +4,7 @@
 
 **At scale:** this is the whole of [flagship 03 — release prerequisites](../../examples/flagships/03-release-prerequisites/README.md), where two tracks rejoin before production.
 
-> **Version note:** this recipe uses **scoped edge dependencies** — edges that depend on other edges. This is a current-reference-implementation feature (and part of the language spec), but the release binary may lag: if the commands fail to parse, build the tools from source with `make build` or `go install ./cmd/gsl-query` ([Getting Started](../getting-started/README.md#1-install-the-tools)).
+> **Version note:** this recipe uses **scoped edge dependencies** — edges that depend on other edges. This is part of the language spec and the reference implementation; it first shipped with the v0.5.0 release, so commands here require at least v0.5.0 (`gsl-query version` shows your binary's version).
 
 ## The model
 

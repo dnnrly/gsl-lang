@@ -24,11 +24,12 @@ You need **Go 1.26 or newer** to install from source. The reference implementati
 ```bash
 go install github.com/dnnrly/gsl-lang/cmd/gsl-query@latest
 go install github.com/dnnrly/gsl-lang/cmd/gsl-diagram@latest
+go install github.com/dnnrly/gsl-lang/cmd/gsl-lsp@latest
 ```
 
 Prebuilt binaries for Linux, macOS and Windows are attached to the [GitHub releases](https://github.com/dnnrly/gsl-lang/releases) page (no Go required).
 
-If you are working inside this repository, `make build` compiles both tools into `tmp/`, and `go test ./examples -run Flagship` verifies every committed example result end-to-end.
+If you are working inside this repository, `make build` compiles the tools into `tmp/`, and `go test ./examples -run Flagship` verifies every committed example result end-to-end.
 
 > **A note on ordering.** GSL output is *canonical* — deterministic within a given implementation and version, so diffs stay small and reviewable. The exact line ordering can vary between implementations and versions and still be valid canonical GSL. The committed flagship results in this repository were produced by the current reference implementation; building the tools from this source reproduces them byte-for-byte.
 
