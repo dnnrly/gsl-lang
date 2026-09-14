@@ -24,7 +24,7 @@ graph in Git
 
 Renderers like Mermaid, D2 and Graphviz draw one view extremely well. GSL is for the different case: the graph is the durable asset, the views are many, and they are derived from one source — in sync by construction rather than by discipline. A diagram is one possible consumer of that graph, not the reason it has to exist: the same structure can feed a report, a CI check or a language model directly, with no picture involved.
 
-> **Status: a serious experiment.** The implementation and specification are mature and heavily tested; the idea itself is young and unproven in the real world — whether this model genuinely helps people remains an open question. Evaluate it on its merits; [Project status](#project-status) is the honest detail.
+> **Status: looking for early feedback.** The implementation and specification are mature and heavily tested; the idea itself is experimental, young and unproven in the real world — whether this model genuinely helps people remains an open question. Evaluate it on its merits; [Project status](#project-status) is the honest detail.
 
 ---
 
