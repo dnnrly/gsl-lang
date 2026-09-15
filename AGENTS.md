@@ -27,6 +27,7 @@ make build                      # Build CLI tools (gsl-diagram, gsl-query, gsl-l
 make diagrams                   # Re-render README diagram SVGs from .mmd sources (needs mmdc + python3)
 make clean                      # Clean build artifacts
 go test -v -run TestName        # Run specific test
+go test -v -run 'TestAgentSkill|TestSkillBehaviour' .   # Validate the gsl-modelling agent skill
 ```
 
 ## Project Structure
@@ -76,6 +77,11 @@ go test -v -run TestName        # Run specific test
 - `docs/` - Human learning journey (the IA index is `docs/README.md`): `getting-started/`, `concepts/` (nine one-concept pages: graph-model, edges, attributes, sets, structure-and-nesting, edge-dependencies, queries-and-views, parsing-and-merging, canonical-form), `tutorials/` (modelling-with-gsl + path index), `cookbook/` (six recipes). Root-level specs and guides stay at root; docs/ tiers reference them rather than duplicate them.
 - `markdown_test.go` - Validates all code blocks in root `*.md` and every `docs/**/*.md` recursively (via `findMarkdownFiles`; note that `filepath.Glob` does not support `**`)
 
+**Agent Skills:**
+- `.agents/skills/gsl-modelling/` - the `gsl-modelling` agent skill: source-faithful GSL modelling for agents (opencode/Cursor/Codex discover it natively; Claude Code needs a `.claude/skills` pointer). `SKILL.md` is the entry point; `references/` mixes authored method docs (`MODELLING.md`, `TOOLING.md`, `EXAMPLES.md`) with dereferenced copies of the authoritative guides (`GSL_GUIDE.md`, `GQL_GUIDE.md`, `GRAMMAR.md`, `QUERY_GRAMMAR.md`, `modelling-with-gsl.md`) - copies carry a maintenance banner and are kept in sync by `agent_skill_test.go` (no symlinks: they do not survive skill packaging, Windows checkouts, or web viewers). `scripts/validate.sh` is an optional structural gate (`gsl-query ""`).
+- `agent_skill_test.go` - Validates skill structure/frontmatter, markdown code blocks (authored and mirrored docs), mirror-to-upstream drift, script syntax, and the behaviour oracle. Note: dot-directories are NOT scanned by `markdown_test.go`, so the mirrors are validated here (and upstream via `TestMarkdownCodeBlocks`).
+- `examples/skill-behaviour/` - Behavioural fixtures for the skill: a deliberately misleading source + an expected-fidelity oracle for the (human-reviewed) smoke exercise.
+
 ## Before Submitting Changes
 
 ```bash
@@ -113,6 +119,7 @@ make lint
 | Documentation learning journey | docs/README.md (IA index), docs/getting-started/, docs/concepts/, docs/tutorials/ (+ modelling-with-gsl.md), docs/cookbook/ |
 | Query language tests | query/testdata/*, query/.test-plan.md |
 | Acceptance tests | test/features/*.feature, test/*_test.go |
+| Agent skill | .agents/skills/gsl-modelling/* (authored: SKILL.md, references/{MODELLING,TOOLING,EXAMPLES}.md, scripts/validate.sh), agent_skill_test.go, examples/skill-behaviour/* |
 
 ## Planning & Progress Tracking
 
