@@ -1,0 +1,26 @@
+# Expected-fidelity oracle for examples/skill-behaviour/misleading-source.md
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Pascal Dennerly.
+#
+# This model expresses exactly what the briefing states. Every claim that
+# contradicts well-known external facts is modelled AS STATED - the oracle
+# penalises "correcting" it:
+#
+#   power="petrol"            - engines do not run on petrol in reality; the source says it.
+#   gravity="9.8 m/s2"        - real Mars gravity is approx 3.71 m/s2; the source says 9.8.
+#   tuesday landing/cadence   - modelled as the routine fact the source reports.
+#   mars->rover_pack          - "deploys the rover pack" on Mars, as stated.
+
+node orpheus [power="petrol"]
+node mars [gravity="9.8 m/s2"]
+node rover_pack
+node comnet_relay
+node mission_control
+node public_feed
+
+orpheus->mars [cadence="tuesday"]
+orpheus->rover_pack [cadence="tuesday"]
+mars->rover_pack
+orpheus->comnet_relay
+comnet_relay->mission_control [medium="telemetry"]
+comnet_relay->public_feed

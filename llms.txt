@@ -32,6 +32,7 @@ Copyright (c) 2026 Pascal Dennerly.
 - [docs/tutorials/modelling-with-gsl.md](docs/tutorials/modelling-with-gsl.md): How to decide what belongs in a model — node, edge, attribute, set, nesting, edge dependency
 - [docs/cookbook/README.md](docs/cookbook/README.md): Short recipes — retire a service, team views, CI rendering, release gates
 - [AGENTS.md](AGENTS.md): Development guide for AI agents contributing to this repo
+- [Agent skill: gsl-modelling](.agents/skills/gsl-modelling/SKILL.md): Source-faithful GSL modelling skill for agents — turns prose/reports/tickets into a faithful graph with no invented facts, edges, or conventions; symlinks the repository's authoritative guides (GSL_GUIDE, GQL_GUIDE, GRAMMAR, QUERY_GRAMMAR, modelling-with-gsl). Discovered natively by opencode, Cursor and Codex via `.agents/skills/`; Claude Code needs a `.claude/skills` pointer. Verification: `go test -v -run 'TestAgentSkill|TestSkillBehaviour' .`. Behavioural fixtures: `examples/skill-behaviour/` (misleading-source smoke exercise).
 
 ## Implementation
 
