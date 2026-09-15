@@ -109,8 +109,9 @@ Without tooling, write queries to express intent (and explain them). With toolin
 step-up present, you may run them. Respect GQL's maturity: it is a Revised
 Draft — never present syntax that the specification or its tests do not
 support as established; use the spec and the fixture tests as authority.
-Restrict generated queries to constructs shown in
-`references/GQL_GUIDE.md` + `references/QUERY_GRAMMAR.md`.
+Generate GQL using constructs supported by the current GQL specification and
+documented guidance. Treat the specification and tests as authoritative; do
+not present draft, unsupported, or uncertain syntax as established behaviour.
 
 ## Authority
 
