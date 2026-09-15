@@ -131,9 +131,10 @@ not present draft, unsupported, or uncertain syntax as established behaviour.
 | Validate, run, render (tools) | `references/TOOLING.md` |
 | Behaviour anchors | `references/EXAMPLES.md` |
 
-Five `references/*.md` symlinks point to the repository's authoritative
-documents; the authored files (MODELLING / TOOLING / EXAMPLES) hold the
-method.
+Five `references/*.md` files carry copies of the repository's authoritative
+documents (maintained upstream; refresh them from the repo root — the
+mirror test in `agent_skill_test.go` catches drift); the authored files
+(MODELLING / TOOLING / EXAMPLES) hold the method.
 
 ## Output conventions to remember
 

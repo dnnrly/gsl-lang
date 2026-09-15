@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -12,10 +13,13 @@ import (
 
 const skillDir = ".agents/skills/gsl-modelling"
 
-// symlinkedDocs are the repository documents exposed inside the skill via
-// relative symlinks. They are validated upstream (TestMarkdownCodeBlocks),
-// so this test only asserts the links resolve.
-var symlinkedDocs = map[string]string{
+// mirroredDocs are the repository documents carried inside the skill.
+// They must be dereferenced copies (NOT symlinks): relative symlinks do
+// not survive skill packaging, Windows checkouts, or web viewers. Each
+// mirror is maintained upstream - TestAgentSkillStructure enforces that
+// every mirror still matches its upstream file once the banner is
+// stripped, so the copies cannot silently drift.
+var mirroredDocs = map[string]string{
 	"references/GSL_GUIDE.md":          "GSL_GUIDE.md",
 	"references/GQL_GUIDE.md":          "GQL_GUIDE.md",
 	"references/GRAMMAR.md":            "GRAMMAR.md",
@@ -23,10 +27,13 @@ var symlinkedDocs = map[string]string{
 	"references/modelling-with-gsl.md": "docs/tutorials/modelling-with-gsl.md",
 }
 
+// mirrorBanner is the maintenance banner prepended to each mirror.
+var mirrorBanner = regexp.MustCompile(`(?s)<!--\nMaintained upstream at .*?-->`)
+
 // TestAgentSkillStructure validates the skill's packaging contract:
 // frontmatter name matches the directory, a concise description with no
-// XML-style tags is present, a (CC) license is declared, and the symlinked
-// reference docs resolve to real repository files.
+// XML-style tags is present, a (CC) license is declared, and the mirrored
+// reference docs are regular files that still match their upstream source.
 func TestAgentSkillStructure(t *testing.T) {
 	skillFile := filepath.Join(skillDir, "SKILL.md")
 	frontmatter, err := readFrontmatter(skillFile)
@@ -54,31 +61,39 @@ func TestAgentSkillStructure(t *testing.T) {
 		t.Errorf("SKILL.md frontmatter is missing a license field")
 	}
 
-	for link, target := range symlinkedDocs {
-		linkPath := filepath.Join(skillDir, link)
-		fi, err := os.Lstat(linkPath)
+	for mirror, upstream := range mirroredDocs {
+		mirrorPath := filepath.Join(skillDir, mirror)
+		fi, err := os.Lstat(mirrorPath)
 		if err != nil {
-			t.Errorf("expected symlink %s: %v", linkPath, err)
+			t.Errorf("missing mirror %s: %v", mirrorPath, err)
 			continue
 		}
-		if fi.Mode()&os.ModeSymlink == 0 {
-			t.Errorf("%s is not a symlink (mode %v)", linkPath, fi.Mode())
+		if fi.Mode()&os.ModeSymlink != 0 {
+			t.Errorf("%s is a symlink; mirrors must be regular files (symlinks do not survive packaging)", mirrorPath)
 			continue
 		}
-		if _, err := os.Stat(linkPath); err != nil {
-			t.Errorf("symlink %s does not resolve: %v", linkPath, err)
+		mirrorContent, err := os.ReadFile(mirrorPath)
+		if err != nil {
+			t.Errorf("failed to read %s: %v", mirrorPath, err)
 			continue
 		}
-		if _, err := os.Stat(target); err != nil {
-			t.Errorf("symlink %s target %q does not exist", linkPath, target)
+		upstreamContent, err := os.ReadFile(upstream)
+		if err != nil {
+			t.Errorf("failed to read upstream %s: %v", upstream, err)
+			continue
+		}
+		got := strings.TrimSpace(mirrorBanner.ReplaceAllString(string(mirrorContent), ""))
+		want := strings.TrimSpace(string(upstreamContent))
+		if got != want {
+			t.Errorf("mirror %s has drifted from upstream %s; refresh it from the repository", mirror, upstream)
 		}
 	}
 }
 
 // TestAgentSkillCodeBlocks validates every gsl/gql/invalid-gsl/invalid-gql
-// block in the AUTHORED skill markdown. Symlinked repository docs are
-// skipped: they are already validated by TestMarkdownCodeBlocks, and on
-// filesystems without symlink support the link target text is not GSL.
+// block in the skill markdown, mirrors included. The mirrors re-validate
+// the same blocks TestMarkdownCodeBlocks covers upstream, so any drift is
+// caught in both places.
 func TestAgentSkillCodeBlocks(t *testing.T) {
 	var authored []string
 	err := filepath.WalkDir(skillDir, func(path string, d os.DirEntry, err error) error {
@@ -88,7 +103,7 @@ func TestAgentSkillCodeBlocks(t *testing.T) {
 		if d.IsDir() {
 			return nil
 		}
-		if strings.HasSuffix(path, ".md") && d.Type()&os.ModeSymlink == 0 {
+		if strings.HasSuffix(path, ".md") {
 			authored = append(authored, path)
 		}
 		return nil
