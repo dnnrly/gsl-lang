@@ -78,8 +78,8 @@ go test -v -run 'TestAgentSkill|TestSkillBehaviour' .   # Validate the gsl-model
 - `markdown_test.go` - Validates all code blocks in root `*.md` and every `docs/**/*.md` recursively (via `findMarkdownFiles`; note that `filepath.Glob` does not support `**`)
 
 **Agent Skills:**
-- `.agents/skills/gsl-modelling/` - the `gsl-modelling` agent skill: source-faithful GSL modelling for agents (opencode/Cursor/Codex discover it natively; Claude Code needs a `.claude/skills` pointer). `SKILL.md` is the entry point; `references/` mixes authored method docs (`MODELLING.md`, `TOOLING.md`, `EXAMPLES.md`) with relative symlinks to the authoritative guides (`GSL_GUIDE.md`, `GQL_GUIDE.md`, `GRAMMAR.md`, `QUERY_GRAMMAR.md`, `modelling-with-gsl.md`) - symlinked content is maintained upstream, never duplicated here. `scripts/validate.sh` is an optional structural gate (`gsl-query ""`).
-- `agent_skill_test.go` - Validates skill structure/frontmatter, authored markdown code blocks, script syntax, and the behaviour oracle. Note: dot-directories are NOT scanned by `markdown_test.go`; the symlinked docs skip the authored-block scan because they are validated upstream.
+- `.agents/skills/gsl-modelling/` - the `gsl-modelling` agent skill: source-faithful GSL modelling for agents (opencode/Cursor/Codex discover it natively; Claude Code needs a `.claude/skills` pointer). `SKILL.md` is the entry point; `references/` mixes authored method docs (`MODELLING.md`, `TOOLING.md`, `EXAMPLES.md`) with plain copies of the authoritative guides (`GSL_GUIDE.md`, `GQL_GUIDE.md`, `GRAMMAR.md`, `QUERY_GRAMMAR.md`, `modelling-with-gsl.md`) - copies are maintained upstream and refreshed from there (never symlinks: they do not survive packaging). `scripts/validate.sh` is an optional structural gate (`gsl-query ""`).
+- `agent_skill_test.go` - Validates skill structure/frontmatter, reference mirror drift against the authoritative docs, reference link resolution, authored markdown code blocks, script syntax, and the behaviour oracle. Note: dot-directories are NOT scanned by `markdown_test.go`; the reference mirrors re-validate the same `gsl`/`gql` blocks as upstream. Refresh mirrors with `go test -run TestAgentSkillMirrorDrift -update .`.
 - `examples/skill-behaviour/` - Behavioural fixtures for the skill: a deliberately misleading source + an expected-fidelity oracle for the (human-reviewed) smoke exercise.
 
 ## Before Submitting Changes
@@ -94,6 +94,7 @@ make lint
 
 - All `gsl` code blocks in markdown (root and `docs/`) must parse
 - All `invalid-gsl` blocks must fail to parse
+- If any mirrored reference guide (GSL_GUIDE, GQL_GUIDE, GRAMMAR, QUERY_GRAMMAR, modelling-with-gsl) is changed, refresh with `go test -run TestAgentSkillMirrorDrift -update .` before committing
 - Round-trip tests required for parser/serializer changes
 - Integration tests validate all example GSL files with both Mermaid and PlantUML converters
 - Update SPEC.md if changing language semantics
@@ -119,7 +120,7 @@ make lint
 | Documentation learning journey | docs/README.md (IA index), docs/getting-started/, docs/concepts/, docs/tutorials/ (+ modelling-with-gsl.md), docs/cookbook/ |
 | Query language tests | query/testdata/*, query/.test-plan.md |
 | Acceptance tests | test/features/*.feature, test/*_test.go |
-| Agent skill | .agents/skills/gsl-modelling/* (authored: SKILL.md, references/{MODELLING,TOOLING,EXAMPLES}.md, scripts/validate.sh), agent_skill_test.go, examples/skill-behaviour/* |
+| Agent skill | .agents/skills/gsl-modelling/* (authored: SKILL.md, references/{MODELLING,TOOLING,EXAMPLES}.md and mirrored guides, scripts/validate.sh), agent_skill_test.go (mirror drift: TestAgentSkillMirrorDrift), examples/skill-behaviour/* |
 
 ## Planning & Progress Tracking
 
