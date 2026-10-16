@@ -37,7 +37,7 @@ checkout->orders [retries="3", timeout_ms=500] @async
 
 Because values are untyped, comparison is **string-ish by default**: a predicate must agree with how the value was written. `replicas="4"` is a different value from `replicas=4`, and queries treat them differently. This is the price of no-type-migrations, and it is paid once, at the boundary: model in text, interpret where it matters.
 
-> **For the Go implementation:** reading an attribute returns an untyped value that you type-assert, with convenient accessors for the common cases — see the [Go reference](../../GO_REFERENCE.md#go-api-reference). That is an implementation detail, not part of the mental model.
+> **For the Go implementation:** reading an attribute returns an untyped value that you type-assert, with convenient accessors for the common cases — see the [Go reference](../../guides/GO_REFERENCE.md#go-api-reference). That is an implementation detail, not part of the mental model.
 
 ## One reserved key
 

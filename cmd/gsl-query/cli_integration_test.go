@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	gsl "github.com/dnnrly/gsl-lang"
+	gsl "github.com/dnnrly/gsl-lang/implementations/go"
 )
 
 // getBinaryPath returns the path to the gsl-query binary

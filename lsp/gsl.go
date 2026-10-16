@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/dnnrly/gsl-lang"
+	"github.com/dnnrly/gsl-lang/implementations/go"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )

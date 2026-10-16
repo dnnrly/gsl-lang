@@ -6,7 +6,7 @@ Copyright (c) 2026 Pascal Dennerly.
 # Concept: Queries and Derived Views
 
 **Audience:** everyone ready to ask questions of a graph. **Prerequisite:** [Edge dependencies](edge-dependencies.md) and the pages before it.
-**Next step:** [Modelling with GSL](../tutorials/modelling-with-gsl.md), then the [query tutorial](../../QUERY_TUTORIAL.md).
+**Next step:** [Modelling with GSL](../tutorials/modelling-with-gsl.md), then the [query tutorial](../../guides/QUERY_TUTORIAL.md).
 
 So far you have met two kinds of thing in a GSL file: **facts** (nodes, edges, structure) and **metadata about those facts** (attributes, sets). This page introduces the other two layers of the mental model, and the relationship between GSL's two languages.
 
@@ -60,10 +60,10 @@ Same graph, two views, both derived. Change the model and re-run the pipeline: t
 
 ## Where the mechanics live
 
-This page is the framing, not the reference. The step-by-step learning path is the [query tutorial](../../QUERY_TUTORIAL.md), the complete reference is the [GQL guide](../../GQL_GUIDE.md), and the [cookbook](../cookbook/README.md) shows small questions answered end to end. The flagship examples — especially [01 — one graph, many views](../../examples/flagships/01-service-many-views/README.md) — show the same pattern at 20-node scale.
+This page is the framing, not the reference. The step-by-step learning path is the [query tutorial](../../guides/QUERY_TUTORIAL.md), the complete reference is the [GQL guide](../../guides/GQL_GUIDE.md), and the [cookbook](../cookbook/README.md) shows small questions answered end to end. The flagship examples — especially [01 — one graph, many views](../../examples/flagships/01-service-many-views/README.md) — show the same pattern at 20-node scale.
 
 ---
 
-That completes the core mental model. From here, start [Modelling with GSL](../tutorials/modelling-with-gsl.md) or jump straight into the [query tutorial](../../QUERY_TUTORIAL.md). If you want the full picture before doing anything, the two remaining concept pages explain the behaviours that make a text graph a version-controlled asset: [lenient parsing and last-write-wins](parsing-and-merging.md), then [canonical form](canonical-form.md).
+That completes the core mental model. From here, start [Modelling with GSL](../tutorials/modelling-with-gsl.md) or jump straight into the [query tutorial](../../guides/QUERY_TUTORIAL.md). If you want the full picture before doing anything, the two remaining concept pages explain the behaviours that make a text graph a version-controlled asset: [lenient parsing and last-write-wins](parsing-and-merging.md), then [canonical form](canonical-form.md).
 
 **Next:** [Modelling with GSL](../tutorials/modelling-with-gsl.md) — what to put in a model in the first place.

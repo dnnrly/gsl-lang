@@ -253,6 +253,6 @@ go test ./examples -v
 
 ## More Information
 
-- See [SPEC.md](../SPEC.md) for the language specification
-- See [GRAMMAR.md](../GRAMMAR.md) for the formal grammar
+- See [SPEC.md](../spec/gsl/SPEC.md) for the language specification
+- See [GRAMMAR.md](../spec/gsl/GRAMMAR.md) for the formal grammar
 - See [README.md](../README.md) for an overview of GSL

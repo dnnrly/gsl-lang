@@ -187,7 +187,7 @@ node orders [team="orders"] @critical
 gateway->orders [protocol="http"]
 ```
 
-Reading left to right: *find everything that (transitively) depends on `orders`; name that graph `BLAST`; go back to the full model and pick out the `@critical` nodes as `CRIT`; keep only what is in both.* Subgraph and traversal you have just seen; *naming a graph* with `as` and *intersecting* graphs with `&` are Step 9 of the [query tutorial](../../QUERY_TUTORIAL.md). Even if you don't memorise the pipeline yet, the pieces it is made of are no longer mysterious.
+Reading left to right: *find everything that (transitively) depends on `orders`; name that graph `BLAST`; go back to the full model and pick out the `@critical` nodes as `CRIT`; keep only what is in both.* Subgraph and traversal you have just seen; *naming a graph* with `as` and *intersecting* graphs with `&` are Step 9 of the [query tutorial](../../guides/QUERY_TUTORIAL.md). Even if you don't memorise the pipeline yet, the pieces it is made of are no longer mysterious.
 
 > **Tip:** run `gsl-query "" < model.gsl` — the empty query canonises the graph. It strips comments, sorts what the specification sorts, and emits stable deterministic GSL that produces small, reviewable git diffs.
 
@@ -216,7 +216,7 @@ You just touched the whole mental model without realising it:
 | `set critical` / `@critical` | a named set and membership syntax | [Named sets](../concepts/sets.md) |
 | `gateway -> orders` | a directed edge | [Edges — relationships between nodes](../concepts/edges.md) |
 | `subgraph` / `traverse` | selecting and expanding a subgraph | [Queries and derived views](../concepts/queries-and-views.md) |
-| `(…) as BLAST` / `&` | named graphs and graph algebra | [Query tutorial](../../QUERY_TUTORIAL.md) |
+| `(…) as BLAST` / `&` | named graphs and graph algebra | [Query tutorial](../../guides/QUERY_TUTORIAL.md) |
 | `gsl-query ""` | canonicalisation | [Canonical form](../concepts/canonical-form.md) |
 | the canonical result | "one graph, many views" in miniature | [Queries and derived views](../concepts/queries-and-views.md) |
 
@@ -224,4 +224,4 @@ Guessing at `@critical` membership or drawing a blast-radius arrow by hand is ex
 
 ---
 
-**Next up:** [Concepts — the graph model](../concepts/graph-model.md) explains what a graph *is* in GSL, in plain language and without any grammar. From there, [Modelling with GSL](../tutorials/modelling-with-gsl.md) helps you decide what actually goes into a model, the [query tutorial](../../QUERY_TUTORIAL.md) is the step-by-step GQL learning path, and the [cookbook](../cookbook/README.md) has small jobs with exact answers — its first four recipes use only what you have seen here.
+**Next up:** [Concepts — the graph model](../concepts/graph-model.md) explains what a graph *is* in GSL, in plain language and without any grammar. From there, [Modelling with GSL](../tutorials/modelling-with-gsl.md) helps you decide what actually goes into a model, the [query tutorial](../../guides/QUERY_TUTORIAL.md) is the step-by-step GQL learning path, and the [cookbook](../cookbook/README.md) has small jobs with exact answers — its first four recipes use only what you have seen here.

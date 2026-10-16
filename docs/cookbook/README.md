@@ -7,7 +7,7 @@ Copyright (c) 2026 Pascal Dennerly.
 
 **Audience:** people with a graph to maintain or a question to answer.
 **Prerequisite:** [Concepts](../concepts/graph-model.md) + [Running queries](../tutorials/README.md).
-**Next step:** [Language Guide](../../GSL_GUIDE.md) / [Query Guide](../../GQL_GUIDE.md) — or straight to the [Specification](../../SPEC.md).
+**Next step:** [Language Guide](../../guides/GSL_GUIDE.md) / [Query Guide](../../guides/GQL_GUIDE.md) — or straight to the [Specification](../../spec/gsl/SPEC.md).
 
 Short, copy-pasteable jobs: the problem, a small model, the query, the answer, and a pointer to the flagship example doing it at real scale. Every recipe is **self-contained** — save the suggested file, run the commands, get the answer shown here.
 

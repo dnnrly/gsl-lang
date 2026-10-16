@@ -18,5 +18,9 @@ TODO.md
 WORK.md
 planning/
 
-# Ignore fuzz seed corpus cache
-testdata/fuzz
+# Ignore fuzz seed corpus cache (any depth, e.g. implementations/go/testdata/fuzz)
+**/testdata/fuzz
+
+# TypeScript workspace
+node_modules/
+implementations/typescript/dist/
