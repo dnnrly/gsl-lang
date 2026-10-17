@@ -1,25 +1,16 @@
 {
-  "name": "@gsl-lang/core",
-  "version": "0.0.0",
+  "name": "@gsl-lang/workspace",
   "private": true,
-  "description": "Work-in-progress TypeScript workspace for a GSL implementation (model types only; no parser yet).",
-  "license": "Apache-2.0",
+  "version": "0.0.0",
   "type": "module",
-  "engines": {
-    "node": ">=18"
-  },
-  "files": [
-    "dist",
-    "README.md"
+  "workspaces": [
+    "packages/core",
+    "packages/gql"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsc -p tsconfig.json && node --test dist/test",
-    "clean": "rm -rf dist"
-  },
-  "devDependencies": {
-    "@types/node": "^18.19.0",
-    "typescript": "^5.6.3"
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "clean": "npm run clean --workspaces"
   }
 }

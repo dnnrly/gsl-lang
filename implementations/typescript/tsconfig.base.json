@@ -4,8 +4,6 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
-    "rootDir": ".",
-    "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -16,6 +14,5 @@
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
-  },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  }
 }
