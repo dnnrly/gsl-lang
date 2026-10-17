@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsc -p tsconfig.json && node --test dist/test",
+    "test": "tsc -p tsconfig.json && node --test dist/test/*.test.js",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
