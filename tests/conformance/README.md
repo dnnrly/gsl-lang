@@ -43,6 +43,9 @@ exactly.
 ## Running the suite
 
 - Go reference implementation: `go test -v -run TestFixtures ./implementations/go/query`.
+- TypeScript implementation:
+  `npm test -w @gsl-lang/gql` (or `make test-typescript`), which runs every
+  fixture in `packages/gql/test/conformance.test.ts`.
 - The same fixtures seed the GQL fuzz targets
   (`implementations/go/query/fuzz_test.go`).
 - The LSP server also loads them as a validity corpus

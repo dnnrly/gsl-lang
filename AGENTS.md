@@ -41,8 +41,8 @@ shared test material are independent:
 - `spec/` — language-neutral normative specifications (`spec/gsl/` for GSL,
   `spec/gql/` for GQL).
 - `implementations/` — one directory per implementation (`implementations/go/`
-  is the canonical reference; `implementations/typescript/` is a minimal,
-  model-types-only npm workspace — no parser yet).
+  is the canonical reference; `implementations/typescript/` is an npm workspace
+  with GSL and GQL packages — see below).
 - `guides/` — explanatory, LLM/agent-oriented guides (embedded by the CLI `ai`
   command).
 - `tests/` — repository meta-tests and the shared, language-neutral conformance
@@ -58,9 +58,14 @@ shared test material are independent:
 - `query/` - the GQL library (package `query`)
 
 **TypeScript Workspace (`implementations/typescript/`):**
-- Model types only (`src/model.ts`, `src/index.ts`), `@gsl-lang/core`,
-  `private: true`, unpublished. Build/typecheck/test via `npm install`,
-  `npm run typecheck`, `npm test`. No parser, query engine or CLI yet.
+- An npm workspace with two packages: `@gsl-lang/core` (GSL parser, graph
+  build, canonical serializer) and `@gsl-lang/gql` (GQL parser and query
+  engine). `private: true`, unpublished. Build/typecheck/test via
+  `npm install`, `npm run typecheck`, `npm test`. No CLI or LSP.
+- Tests mirror the shared corpora: the GQL conformance fixtures
+  (`tests/conformance/gql`), the `examples/` round-trip corpus, the
+  flagship/advanced model+query fixtures, and the markdown `gsl`/`gql` blocks
+  (`packages/gql/test/*`).
 
 **Tests:**
 - `implementations/go/*_test.go` - Unit and fuzz tests for the Go library
