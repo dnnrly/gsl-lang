@@ -43,6 +43,16 @@ test: ## run tests with coverage checks
 	@echo "Coverage report generated at $(TMP_DIR)/coverage.txt"
 	@go tool cover -func=$(TMP_DIR)/coverage.txt | grep total | awk '{print "Total coverage: " $$3}'
 
+.PHONY: test-typescript
+test-typescript: ## run the TypeScript workspace tests (installs deps if needed; skips if npm is missing)
+	@command -v npm >/dev/null 2>&1 || { echo "npm not found; skipping TypeScript tests"; exit 0; }
+	cd implementations/typescript
+	[ -d node_modules ] || npm install
+	npm test
+
+.PHONY: test-all
+test-all: test test-typescript test-integration test-acceptance ## run every test suite (Go, TypeScript, integration, acceptance)
+
 .PHONY: fuzz
 fuzz: ## run a single fuzz test (set FUZZ to match a function, e.g. make fuzz FUZZ=FuzzParse; set FUZZTIME for duration; set PKG to target another package)
 	go test -tags fuzz -fuzz=$(or $(FUZZ),.) -fuzztime=$(FUZZTIME) $(or $(PKG),./implementations/go)

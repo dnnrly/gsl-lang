@@ -18,7 +18,9 @@ This document provides instructions for AI agents working on the GSL-Lang projec
 ## Quick Commands
 
 ```bash
-make test                       # Run all tests with coverage (query fixtures run silently; use `go test -v -run TestFixtures ./implementations/go/query` to watch them)
+make test                       # Run all Go tests with coverage (query fixtures run silently; use `go test -v -run TestFixtures ./implementations/go/query` to watch them)
+make test-typescript            # Run the TypeScript workspace tests (installs deps; skips if npm missing)
+make test-all                   # Run every test suite: Go, TypeScript, integration, acceptance
 make test-integration           # Run integration tests (skip if tools missing)
 make test-integration-strict    # Run integration tests (fail if tools missing)
 make test-acceptance            # Run acceptance tests (BDD/godog feature tests)
