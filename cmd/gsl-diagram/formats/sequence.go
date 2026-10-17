@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	gsl "github.com/dnnrly/gsl-lang"
+	gsl "github.com/dnnrly/gsl-lang/implementations/go"
 )
 
 type plantUMLSequenceConverter struct{}

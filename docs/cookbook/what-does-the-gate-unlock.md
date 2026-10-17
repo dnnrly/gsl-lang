@@ -73,7 +73,7 @@ Passing `GATE` unlocks promotion and the canary/smoke rollout; it does **not** u
 
 ## Turning it into a policy check
 
-- **"Hold until approved"** — the gate-holding query is the complement: `subgraph edge parent exists` minus the unlocked set. GQL lets you combine these as named graphs ([query tutorial Step 9](../../QUERY_TUTORIAL.md#step-9-named-graphs-and-graph-algebra)).
+- **"Hold until approved"** — the gate-holding query is the complement: `subgraph edge parent exists` minus the unlocked set. GQL lets you combine these as named graphs ([query tutorial Step 9](../../guides/QUERY_TUTORIAL.md#step-9-named-graphs-and-graph-algebra)).
 - **Reuse the flagships' vocabulary** — flagship 02 queries by `edge.stage`, exactly as here, at six times the size.
 
 **Next:** back to the [cookbook index](README.md), or up a level to the concept on [edge dependencies](../concepts/edge-dependencies.md).

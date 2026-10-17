@@ -198,10 +198,10 @@ Ordered for learning, not for reference completeness:
 
 1. **[Documentation](docs/README.md)** — the learning journey: Getting Started → Concepts → Tutorials → Cookbook, with the guides and specifications as reference tiers.
 2. **[Flagship examples](examples/flagships/README.md)** — why GSL exists, problem-first; the narratives the documentation links back to.
-3. **[GSL Guide](GSL_GUIDE.md)** — the language in one self-contained document (syntax, semantics, design notes).
-4. **[Query tutorial](QUERY_TUTORIAL.md)** — a step-by-step learning path for GQL, the query language.
-5. **[GQL Guide](GQL_GUIDE.md)** — GQL as a self-contained reference.
-6. **[Go reference](GO_REFERENCE.md)** — the Go API and algorithm patterns, for programmatic use.
+3. **[GSL Guide](guides/GSL_GUIDE.md)** — the language in one self-contained document (syntax, semantics, design notes).
+4. **[Query tutorial](guides/QUERY_TUTORIAL.md)** — a step-by-step learning path for GQL, the query language.
+5. **[GQL Guide](guides/GQL_GUIDE.md)** — GQL as a self-contained reference.
+6. **[Go reference](guides/GO_REFERENCE.md)** — the Go API and algorithm patterns, for programmatic use.
 7. **[Examples](examples/README.md)** — a catalog of graphs demonstrating individual language features.
 
 Targeted at AI and LLM tooling: start at **[llms.txt](llms.txt)** for the agent-oriented index.
@@ -212,21 +212,22 @@ Targeted at AI and LLM tooling: start at **[llms.txt](llms.txt)** for the agent-
 
 GSL is defined by a normative, RFC 2119-style specification, not by the implementation:
 
-- **[SPEC.md](SPEC.md)** — the authoritative language specification (v1.0.0 Draft): grammar, semantics, canonicalisation guarantee.
-- **[GRAMMAR.md](GRAMMAR.md)** — the formal grammar, for implementing a parser.
-- **[QUERY_SPEC.md](QUERY_SPEC.md)** — the query language specification (v0.4.0 Revised Draft).
-- **[QUERY_GRAMMAR.md](QUERY_GRAMMAR.md)** — the formal GQL grammar.
+- **[spec/gsl/SPEC.md](spec/gsl/SPEC.md)** — the authoritative language specification (v1.0.0 Draft): grammar, semantics, canonicalisation guarantee.
+- **[spec/gsl/GRAMMAR.md](spec/gsl/GRAMMAR.md)** — the formal grammar, for implementing a parser.
+- **[spec/gql/QUERY_SPEC.md](spec/gql/QUERY_SPEC.md)** — the query language specification (v0.4.0 Revised Draft).
+- **[spec/gql/QUERY_GRAMMAR.md](spec/gql/QUERY_GRAMMAR.md)** — the formal GQL grammar.
 
-Every `gsl` and `gql` code block in this repository's markdown — at the root and under [`docs/`](docs/README.md) — is automatically parsed on test. The documentation cannot drift from the language it describes.
+Every `gsl` and `gql` code block in this repository's markdown — at the root and under [`docs/`](docs/README.md), [`guides/`](guides/) and [`spec/`](spec/README.md) — is automatically parsed on test. The documentation cannot drift from the language it describes.
 
 ---
 
 ## Implementations
 
-- **Go library** — the reference implementation; a hand-written parser with a canonical-form guarantee (`parse(serialize(parse(x))) == parse(x)`), standard-library core only. `go get github.com/dnnrly/gsl-lang`.
+- **Go library** — the reference implementation; a hand-written parser with a canonical-form guarantee (`parse(serialize(parse(x))) == parse(x)`), standard-library core only. `go get github.com/dnnrly/gsl-lang/implementations/go`.
 - **`gsl-query`** — run GQL pipelines (subgraph, traverse, make, remove, collapse, graph algebra) against a GSL graph; emits canonical GSL.
 - **`gsl-diagram`** — render any GSL document (or derived view) to Mermaid or PlantUML.
 - **`gsl-lsp`** — a language server for GSL and GQL (completion, hover, diagnostics, formatting). Source lives in [`lsp/`](lsp/); a preliminary VS Code extension is in [`editors/vscode/`](editors/vscode/).
+- **TypeScript (work in progress)** — a minimal workspace at [`implementations/typescript/`](implementations/typescript/) with the implementation-neutral model types and a build/typecheck/test setup. No parser or CLI yet; the npm package name `@gsl-lang/core` is provisional and unpublished.
 
 The CLI tools are Unix-composable: GSL in, canonical GSL or a diagram out, via stdin/stdout.
 
@@ -239,7 +240,7 @@ The CLI tools are Unix-composable: GSL in, canonical GSL or a diagram out, via s
 | Element | Maturity | Basis |
 |---|---|---|
 | **Language & specification** | High | v1.0.0 Draft, RFC 2119 style, canonicalisation guarantee enforced by round-trip and fuzz tests |
-| **Go implementation** | High | Standard-library core, 68.8% statement coverage (measured by `make test`), 9 fuzz targets, acceptance tests |
+| **Go implementation** | High | Standard-library core, 68.5% statement coverage (measured by `make test`), 9 fuzz targets, acceptance tests |
 | **Query language (GQL)** | Medium | Large, well-tested surface — but a *Revised Draft* spec, unproven with real users |
 | **Tooling** | Medium | `gsl-query` and `gsl-diagram` work and are documented; the LSP and VS Code extension are early |
 | **Ecosystem** | Low | One reference implementation, no third-party integrations yet |
@@ -268,7 +269,7 @@ The original GSL work is authored and maintained by **Pascal Dennerly**, who hol
 | Content | Licence |
 |---|---|
 | **Implementation/source code** — Go sources, CLI tools, LSP server, VS Code extension, build and configuration files | [Apache-2.0](LICENSE) |
-| **GSL specification** — `SPEC.md`, `GRAMMAR.md`, `QUERY_SPEC.md`, `QUERY_GRAMMAR.md` | [CC-BY-4.0](LICENSE-CC-BY-4.0) |
+| **GSL specification** — `spec/gsl/SPEC.md`, `spec/gsl/GRAMMAR.md`, `spec/gql/QUERY_SPEC.md`, `spec/gql/QUERY_GRAMMAR.md` | [CC-BY-4.0](LICENSE-CC-BY-4.0) |
 | **Technical documentation/tutorials** — `docs/`, the guides, READMEs, contribution docs | [CC-BY-4.0](LICENSE-CC-BY-4.0) |
 | **Code examples** — `.gsl`/`.gql` files under `examples/` and the test fixtures, and fenced code blocks shown in the documentation | [Apache-2.0](LICENSE) |
 

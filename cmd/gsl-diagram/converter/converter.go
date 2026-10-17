@@ -3,7 +3,7 @@
 package converter
 
 import (
-	gsl "github.com/dnnrly/gsl-lang"
+	gsl "github.com/dnnrly/gsl-lang/implementations/go"
 )
 
 // Converter converts a GSL graph to diagram syntax

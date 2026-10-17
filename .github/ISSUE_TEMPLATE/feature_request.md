@@ -21,8 +21,8 @@ A clear and concise description of what you want to happen.
 Any alternative approaches you've considered.
 
 **Spec impact**
-Would this change the language specification (SPEC.md), the query language
-specification (QUERY_SPEC.md), the grammar (GRAMMAR.md), or only tooling?
+Would this change the language specification (`spec/gsl/SPEC.md`), the query language
+specification (`spec/gql/QUERY_SPEC.md`), the grammar (`spec/gsl/GRAMMAR.md`), or only tooling?
 Note that while specs are in draft, language changes must still be
 quantified in the tests and round-trip guarantees.
 

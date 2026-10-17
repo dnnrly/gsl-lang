@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	gsl "github.com/dnnrly/gsl-lang"
 	"github.com/dnnrly/gsl-lang/cmd/gsl-diagram/formats"
 	"github.com/dnnrly/gsl-lang/cmd/internal/cli"
+	"github.com/dnnrly/gsl-lang/guides"
 	"github.com/spf13/cobra"
 )
 
@@ -67,9 +67,9 @@ func main() {
 	}
 
 	// Load guides and build AI command tree
-	gslDesc, _, gslErr := cli.LoadGuide(gsl.Guides, "GSL_GUIDE.md")
-	_, goGuideContent, _ := cli.LoadGuide(gsl.Guides, "GO_REFERENCE.md")
-	seqDesc, seqContent, seqErr := cli.LoadGuide(gsl.Guides, "SEQUENCE_GUIDE.md")
+	gslDesc, _, gslErr := cli.LoadGuide(guides.Guides, "GSL_GUIDE.md")
+	_, goGuideContent, _ := cli.LoadGuide(guides.Guides, "GO_REFERENCE.md")
+	seqDesc, seqContent, seqErr := cli.LoadGuide(guides.Guides, "SEQUENCE_GUIDE.md")
 
 	cli.BuildAICommand(rootCmd, []cli.GuideSpec{
 		{Use: "gsl", Desc: gslDesc, Content: goGuideContent, Err: gslErr},

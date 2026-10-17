@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dnnrly/gsl-lang"
+	"github.com/dnnrly/gsl-lang/implementations/go"
 	"github.com/dnnrly/gsl-lang/cmd/gsl-diagram/formats"
-	"github.com/dnnrly/gsl-lang/query"
+	"github.com/dnnrly/gsl-lang/implementations/go/query"
 )
 
 // TestAdvancedModelValidation ensures every advanced-study model parses

@@ -1108,5 +1108,5 @@ When you don't know the exact GQL syntax, say so rather than inventing.
 
 ---
 
-**For a step-by-step learning path**, see [QUERY_TUTORIAL.md](../../../../QUERY_TUTORIAL.md).
+**For a step-by-step learning path**, see [QUERY_TUTORIAL.md](../../../../guides/QUERY_TUTORIAL.md).
 

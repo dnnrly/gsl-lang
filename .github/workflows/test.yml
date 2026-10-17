@@ -34,6 +34,22 @@ jobs:
         files: ./tmp/coverage.txt
         fail_ci_if_error: false
 
+  typescript:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: npm
+        cache-dependency-path: implementations/typescript/package-lock.json
+
+    - name: Run TypeScript tests
+      run: make test-typescript
+
   lint:
     runs-on: ubuntu-latest
     

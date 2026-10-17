@@ -42,7 +42,7 @@ The team slice is *exactly* their three nodes and the two edges joining them —
 ## Variations
 
 - **Plus the callers** — `subgraph node.team == "payments" traverse in 1` also pulls in the services that call payments-team endpoints (here, `orders`).
-- **Overlay reach** — combine with a set to ask "what do we have that is *both* mine and critical?" — e.g. `(subgraph node.team == "orders") as MINE | (subgraph node in @critical) as CRIT | MINE & CRIT` (named-graph intersection, from [query tutorial Step 9](../../QUERY_TUTORIAL.md#step-9-named-graphs-and-graph-algebra)).
+- **Overlay reach** — combine with a set to ask "what do we have that is *both* mine and critical?" — e.g. `(subgraph node.team == "orders") as MINE | (subgraph node in @critical) as CRIT | MINE & CRIT` (named-graph intersection, from [query tutorial Step 9](../../guides/QUERY_TUTORIAL.md#step-9-named-graphs-and-graph-algebra)).
 - **Render it** — `gsl-query 'subgraph node.team == "payments"' < model.gsl | gsl-diagram -f mermaid -t component` makes the team diagram.
 
 **Next:** [What is `@critical`?](what-is-critical.md) — the flip side: the set, not the team.

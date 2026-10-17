@@ -12,7 +12,7 @@ GSL's parser is deliberately **lenient** and its declarations follow **last-writ
 
 ## Lenient: warnings, not walls
 
-Unknown syntax, duplicate member declarations, out-of-order sets — the parser reports these as **warnings, not errors**. The graph still builds; nothing you already wrote is thrown away for a warning you might not care about. In Go, `Parse` returns `(graph, warnings, err)`: only genuine corruption produces `err`, and you are expected to *check the warnings too* ([Go reference](../../GO_REFERENCE.md#parse-correctly)).
+Unknown syntax, duplicate member declarations, out-of-order sets — the parser reports these as **warnings, not errors**. The graph still builds; nothing you already wrote is thrown away for a warning you might not care about. In Go, `Parse` returns `(graph, warnings, err)`: only genuine corruption produces `err`, and you are expected to *check the warnings too* ([Go reference](../../guides/GO_REFERENCE.md#parse-correctly)).
 
 What GSL does **not** do is police your graph's *meaning*:
 

@@ -41,9 +41,9 @@ make fuzz                       # fuzz tests
 ```
 
 `make test` includes `TestMarkdownCodeBlocks`, which validates every `gsl`
-code block in the committed markdown (root and `docs/`). All `gsl` blocks
-must parse and all `invalid-gsl` blocks must fail to parse. Keep this green
-when editing documentation.
+code block in the committed markdown (root and `docs/`, `guides/`, `spec/`).
+All `gsl` blocks must parse and all `invalid-gsl` blocks must fail to parse.
+Keep this green when editing documentation.
 
 ## Before submitting changes
 
@@ -52,14 +52,14 @@ when editing documentation.
 - [ ] `make test-integration-strict` (or `make test-integration` if tools are unavailable)
 - [ ] `make test-acceptance`
 - [ ] Existing markdown examples updated, or new ones added, with valid `gsl` blocks
-- [ ] SPEC.md updated if language semantics changed
-- [ ] GRAMMAR.md updated if syntax changed
+- [ ] `spec/gsl/SPEC.md` updated if language semantics changed
+- [ ] `spec/gsl/GRAMMAR.md` updated if syntax changed
 
 ## Versioning and compatibility policy
 
 GSL does not use SemVer for the language itself.
 
-- The language specification (SPEC.md) is a normative draft until it is
+- The language specification (`spec/gsl/SPEC.md`) is a normative draft until it is
   promoted to "Version 1.0.0". Draft status means the language can change
   between GSL releases while the project is pre-1.0.
 - The GQL specification is a "Revised Draft RFC" and can likewise change.
