@@ -35,6 +35,18 @@ jobs:
 
     - name: Run TypeScript tests
       run: make test-typescript
+
+    - name: Run acceptance tests
+      run: make test-acceptance
+
+    - name: Install plantuml
+      run: sudo apt-get update && sudo apt-get install -y plantuml
+
+    - name: Install mermaid-cli
+      run: npm install -g @mermaid-js/mermaid-cli
+
+    - name: Run integration tests
+      run: make test-integration-strict
     
     - name: Run linter
       uses: golangci/golangci-lint-action@v6

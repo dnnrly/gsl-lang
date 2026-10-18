@@ -7,6 +7,7 @@ SHELL := /bin/bash
 
 TMP_DIR?=./tmp
 FUZZTIME ?= 30s
+COVERAGE_MIN ?= 60
 BASE_DIR=$(shell pwd)
 MAKEFILE_ABSPATH := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 MAKEFILE_RELPATH := $(call MAKEFILE_ABSPATH)
@@ -36,12 +37,22 @@ lint: ## run linting
 	golangci-lint run
 
 .PHONY: test
-test: ## run tests with coverage checks
+test: ## run tests with coverage checks (fails if below COVERAGE_MIN)
 	mkdir -p $(TMP_DIR)
 	go test -run COMPILE_ONLY ./...
 	go test -race -cover -count=1 -coverprofile=$(TMP_DIR)/coverage.txt ./...
 	@echo "Coverage report generated at $(TMP_DIR)/coverage.txt"
-	@go tool cover -func=$(TMP_DIR)/coverage.txt | grep total | awk '{print "Total coverage: " $$3}'
+	@$(MAKE) --no-print-directory coverage-check
+
+.PHONY: coverage-check
+coverage-check: ## fail if total Go coverage is below COVERAGE_MIN (default 60)
+	@test -f "$(TMP_DIR)/coverage.txt" || { echo "error: $(TMP_DIR)/coverage.txt not found; run 'make test' first"; exit 1; }
+	@total=$$(go tool cover -func="$(TMP_DIR)/coverage.txt" | awk '/^total:/{gsub(/%/,"",$$3); print $$3}'); \
+	echo "Total coverage: $${total}% (minimum $(COVERAGE_MIN)%)"; \
+	if awk "BEGIN{exit !($$total < $(COVERAGE_MIN))}"; then \
+		echo "error: total coverage $${total}% is below the $(COVERAGE_MIN)% minimum"; \
+		exit 1; \
+	fi
 
 .PHONY: test-typescript
 test-typescript: ## run the TypeScript workspace tests (installs deps if needed; skips if npm is missing)
