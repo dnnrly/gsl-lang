@@ -27,7 +27,7 @@ func checkMermaidCLI(t *testing.T) {
 // checkPlantUMLCLI checks if plantuml is available.
 // If INTEGRATION_STRICT env var is set, fails the test. Otherwise skips.
 func checkPlantUMLCLI(t *testing.T) {
-	cmd := exec.Command("plantuml", "-version")
+	cmd := exec.Command("plantuml", "-help")
 	if err := cmd.Run(); err != nil {
 		if os.Getenv("INTEGRATION_STRICT") != "" {
 			t.Fatalf("plantuml not available: %v (set by INTEGRATION_STRICT)", err)
