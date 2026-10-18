@@ -227,7 +227,7 @@ Every `gsl` and `gql` code block in this repository's markdown — at the root a
 - **`gsl-query`** — run GQL pipelines (subgraph, traverse, make, remove, collapse, graph algebra) against a GSL graph; emits canonical GSL.
 - **`gsl-diagram`** — render any GSL document (or derived view) to Mermaid or PlantUML.
 - **`gsl-lsp`** — a language server for GSL and GQL (completion, hover, diagnostics, formatting). Source lives in [`lsp/`](lsp/); a preliminary VS Code extension is in [`editors/vscode/`](editors/vscode/).
-- **TypeScript (work in progress)** — a minimal workspace at [`implementations/typescript/`](implementations/typescript/) with the implementation-neutral model types and a build/typecheck/test setup. No parser or CLI yet; the npm package name `@gsl-lang/core` is provisional and unpublished.
+- **TypeScript** — `@gsl-lang/core` (GSL parser, graph build, canonical serializer) and `@gsl-lang/gql` (GQL parser/query engine) in [`implementations/typescript/`](implementations/typescript/) (npm workspace). Parity with the Go reference is enforced by shared conformance fixtures and the canonical-form corpus.
 
 The CLI tools are Unix-composable: GSL in, canonical GSL or a diagram out, via stdin/stdout.
 
