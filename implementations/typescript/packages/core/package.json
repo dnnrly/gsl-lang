@@ -1,15 +1,25 @@
 {
   "name": "@gsl-lang/core",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "GSL core implementation for TypeScript",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dnnrly/gsl-lang.git",
+    "directory": "implementations/typescript/packages/core"
+  },
+  "homepage": "https://github.com/dnnrly/gsl-lang/tree/main/implementations/typescript/packages/core",
+  "bugs": "https://github.com/dnnrly/gsl-lang/issues",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "type": "module",
   "engines": {
     "node": ">=18"
   },
   "files": [
-    "dist",
+    "dist/src",
     "README.md"
   ],
   "main": "./dist/src/index.js",
