@@ -1,0 +1,48 @@
+name: Publish npm packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: implementations/typescript
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        registry-url: 'https://registry.npmjs.org'
+        cache: npm
+        cache-dependency-path: implementations/typescript/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build
+      run: npm run build
+
+    - name: Publish packages
+      run: |
+        for pkg in core gql; do
+          name="@gsl-lang/$pkg"
+          ver=$(node -p "require('./packages/$pkg/package.json').version")
+          if npm view "$name@$ver" version >/dev/null 2>&1; then
+            echo "$name@$ver is already on npm — skipping"
+          else
+            npm publish -w "packages/$pkg"
+          fi
+        done
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISHING_KEY }}

@@ -1,15 +1,25 @@
 {
   "name": "@gsl-lang/gql",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "GQL implementation for TypeScript",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dnnrly/gsl-lang.git",
+    "directory": "implementations/typescript/packages/gql"
+  },
+  "homepage": "https://github.com/dnnrly/gsl-lang/tree/main/implementations/typescript/packages/gql",
+  "bugs": "https://github.com/dnnrly/gsl-lang/issues",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "type": "module",
   "engines": {
     "node": ">=18"
   },
   "files": [
-    "dist",
+    "dist/src",
     "README.md"
   ],
   "main": "./dist/src/index.js",
@@ -21,7 +31,7 @@
     }
   },
   "dependencies": {
-    "@gsl-lang/core": "0.0.0"
+    "@gsl-lang/core": "^0.1.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
