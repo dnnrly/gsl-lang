@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 Pascal Dennerly.
 
-import type { GslGraph, GslNode, GslEdge, Attributes } from "./model.js";
+import { isNodeRef, type GslGraph, type GslNode, type GslEdge, type Attributes } from "./model.js";
 
 export function serialize(graph: GslGraph): string {
   if (!graph) return "";
@@ -348,6 +348,9 @@ function serializeAttr(key: string, value: unknown): string {
   if (value === null || value === undefined) {
     return key;
   }
+  if (isNodeRef(value)) {
+    return key + "=" + value.id;
+  }
   if (typeof value === "string") {
     if (key === "parent") {
       return key + "=" + value;
@@ -387,10 +390,36 @@ function escapeString(s: string): string {
 }
 
 function formatNumber(f: number): string {
-  if (Number.isFinite(f) && Math.floor(f) === f) {
-    return f.toFixed(0);
+  if (!Number.isFinite(f)) {
+    return String(f);
   }
-  return String(f);
+  if (Number.isInteger(f)) {
+    // Exact integer digits, matching Go's strconv.FormatFloat(f, 'f', 0, 64).
+    return BigInt(f).toString();
+  }
+  return expandExponential(String(f));
+}
+
+/**
+ * Renders a JavaScript shortest-round-trip number string without exponential
+ * notation, matching Go's `strconv.FormatFloat(f, 'f', -1, 64)`.
+ */
+function expandExponential(s: string): string {
+  const m = /^(-?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/.exec(s);
+  if (!m) return s;
+  const sign = m[1]!;
+  const intPart = m[2]!;
+  const fracPart = m[3] ?? "";
+  const exp = Number.parseInt(m[4]!, 10);
+  const digits = intPart + fracPart;
+  const pointPos = intPart.length + exp;
+  if (pointPos <= 0) {
+    return sign + "0." + "0".repeat(-pointPos) + digits;
+  }
+  if (pointPos >= digits.length) {
+    return sign + digits + "0".repeat(pointPos - digits.length);
+  }
+  return sign + digits.slice(0, pointPos) + "." + digits.slice(pointPos);
 }
 
 function indentBlock(s: string, indent: string): string {

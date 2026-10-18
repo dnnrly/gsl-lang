@@ -81,6 +81,8 @@ Attribute existence, inequality, type-sensitive equality, and set membership.
 | `12_node_not_in_set` | `node not in @set` set non-membership |
 | `13_edge_not_in_set` | `edge not in @set` set non-membership |
 | `14_node_in_missing_set` | `in @missing_set` is false; `not in @missing_set` is true |
+| `15_node_in_set_bare` | bare `in set` (no `@`) set membership |
+| `16_node_not_in_set_bare` | bare `not in set` set non-membership |
 
 **Key Semantic Notes:**
 - Predicates are type-sensitive: `"42" != 42`
@@ -143,6 +145,7 @@ Follow edges from a start node up to a depth limit (`out`, `in`, `both`).
 | `05_subgraph_traverse_all_depth` | `traverse out` (unbounded, handles cycles) |
 | `06_cyclic_graph_traversal` | Cycles don't infinite loop (visited set) |
 | `07_wide_fanout` | High fan-out correctly traversed |
+| `08_subgraph_scope_traverse` | `scope` combined with `traverse` (both apply) |
 
 **Key Semantic Notes:**
 - `traverse` requires matching predicate first
@@ -182,6 +185,7 @@ Query and traverse edges based on their position in the dependency tree (`parent
 | `10_scope_no_matching_edges` | `scope` on edge predicate with no matches → empty |
 | `11_traverse_up_from_root` | `traverse up 1` from root edge → no-op (same result) |
 | `12_traverse_down_no_children` | `traverse down 1` from leaf node → no-op (same result) |
+| `13_edge_depth_string` | `edge.depth == "0"` accepts a string depth value |
 
 **Key Semantic Notes:**
 - `parent exists` = edge has `parent` set
@@ -269,6 +273,7 @@ Minimal and unusual graph structures.
 | `02_disconnected_components` | Multiple disconnected subgraphs |
 | `03_duplicate_edges_preserved` | Multiple edges between same nodes |
 | `04_self_referencing_parent` | Edge with Label == Parent (self-reference in parent chain) |
+| `star_graph_algebra` | `* & *` algebra over the input graph itself |
 
 **Key Semantic Notes:**
 - Empty graph is valid result

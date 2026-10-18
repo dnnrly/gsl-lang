@@ -1,0 +1,5 @@
+node service {
+    node handler [span = 0.0000001]
+}
+node client
+client -> service

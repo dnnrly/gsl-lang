@@ -267,6 +267,16 @@ func TestRemoveAttributeBasic(t *testing.T) {
 	}
 }
 
+// TestRemoveAttributeRequiresWhere verifies that removing an attribute without
+// a "where" predicate is a parse error (QUERY_GRAMMAR.md requires it).
+func TestRemoveAttributeRequiresWhere(t *testing.T) {
+	for _, input := range []string{"remove node.team", "remove edge.protocol"} {
+		if _, err := NewQueryParser(input).Parse(); err == nil {
+			t.Errorf("expected parse error for %q, got none", input)
+		}
+	}
+}
+
 // TestRemoveAttributeWithPredicate tests attribute removal with predicate
 func TestRemoveAttributeWithPredicate(t *testing.T) {
 	graph := newTestGraph(testGraphInput{

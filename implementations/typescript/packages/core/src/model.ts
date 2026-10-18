@@ -3,9 +3,34 @@
 
 export const SPEC_VERSION = "1.0.0";
 
-export type NodeRef = string & { readonly __brand: 'NodeRef' };
+/**
+ * A reference to another node, produced by a bare identifier in a node
+ * attribute list (e.g. `node A [friend=B]`). Distinct from a plain string at
+ * runtime so serialization can emit it unquoted (`friend=B`) and so queries can
+ * tell a reference from a string value.
+ */
+export class NodeRef {
+  readonly id: string;
+
+  constructor(id: string) {
+    this.id = id;
+  }
+
+  toString(): string {
+    return this.id;
+  }
+
+  toJSON(): string {
+    return this.id;
+  }
+}
+
 export function makeNodeRef(id: string): NodeRef {
-  return id as NodeRef;
+  return new NodeRef(id);
+}
+
+export function isNodeRef(value: unknown): value is NodeRef {
+  return value instanceof NodeRef;
 }
 
 export type AttributeValue = string | number | boolean | NodeRef | null | undefined;
@@ -46,6 +71,7 @@ export function isAttributeValue(value: unknown): value is AttributeValue {
   return (
     typeof value === "string" ||
     typeof value === "number" ||
-    typeof value === "boolean"
+    typeof value === "boolean" ||
+    value instanceof NodeRef
   );
 }

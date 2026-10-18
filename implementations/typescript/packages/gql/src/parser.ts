@@ -126,7 +126,8 @@ class Parser {
     if (this.at("Ident", "scope")) {
       this.next();
       traversal = { directions: ["down"], depth: ALL_DEPTH };
-    } else if (this.at("Ident", "traverse")) {
+    }
+    if (this.at("Ident", "traverse")) {
       this.next();
       const directions: string[] = [];
       while (this.at("Ident") && DIRECTIONS.has(this.peek().value)) {
@@ -171,11 +172,8 @@ class Parser {
       return new RemoveEdgeExpr(pred);
     }
     const { element, attr } = this.parseAttributePath();
-    let pred: Predicate = new ExistsPredicate();
-    if (this.at("Ident", "where")) {
-      this.next();
-      pred = this.parsePredicate();
-    }
+    this.expectKeyword("where");
+    const pred = this.parsePredicate();
     return new RemoveAttributeExpr(element, attr, pred);
   }
 
@@ -200,11 +198,11 @@ class Parser {
   }
 
   private parseGraphAlgebra(): Expression {
-    const left = this.at("Star") ? "*" : this.next().value;
+    const left = this.at("Star") ? (this.next(), "*") : this.next().value;
     if (!isValidGraphRef(left)) throw new GqlParseError(`invalid graph reference: ${left}`);
     this.expect("AlgebraOp");
     const op = this.tokens[this.pos - 1]!.value;
-    const right = this.at("Star") ? "*" : this.expect("Ident").value;
+    const right = this.at("Star") ? (this.next(), "*") : this.expect("Ident").value;
     if (!isValidGraphRef(right)) throw new GqlParseError(`invalid graph reference: ${right}`);
     return new GraphAlgebraExpr(left, op, right);
   }
@@ -237,20 +235,18 @@ class Parser {
       return new ExistsPredicate();
     }
 
-    // Bare "in @set"
+    // Bare "in set" (element-prefixed form "node in @set" is handled above).
     if (this.at("Ident", "in")) {
       this.next();
-      this.expect("At");
       const name = this.expect("Ident").value;
       return new SetMembershipPredicate("", name);
     }
 
-    // "not" prefix: "not in @set" or "not <predicate>"
+    // "not" prefix: "not in set" or "not <predicate>"
     if (this.at("Ident", "not")) {
       this.next();
       if (this.at("Ident", "in")) {
         this.next();
-        this.expect("At");
         const name = this.expect("Ident").value;
         return new SetNotMembershipPredicate("", name);
       }
@@ -308,10 +304,12 @@ class Parser {
     const attr = this.expect("Ident").value;
 
     if (element === "edge" && attr === "depth") {
-      if (this.at("Operator")) {
+      if (this.at("Operator") || this.at("Assign")) {
         const op = this.next().value;
-        const num = this.expect("Number").value;
-        const value = Number.parseInt(num, 10);
+        const v = this.parseValue();
+        if (typeof v !== "string") throw new GqlParseError("depth must be a numeric value");
+        const value = Number.parseInt(v, 10);
+        if (Number.isNaN(value)) throw new GqlParseError(`invalid depth value: ${v}`);
         return new DepthPredicate(op === "=" ? "==" : op, value);
       }
       if (this.at("Ident", "exists")) {

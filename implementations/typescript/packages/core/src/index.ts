@@ -8,7 +8,7 @@
 export { parse } from "./parse.js";
 export { serialize } from "./serialize.js";
 export { ParseError, type ParseErrorDetail, type Diagnostic } from "./errors.js";
-export { SPEC_VERSION, isAttributeValue, makeNodeRef, type NodeRef } from "./model.js";
+export { SPEC_VERSION, NodeRef, isAttributeValue, isNodeRef, makeNodeRef } from "./model.js";
 export type {
   AttributeValue,
   Attributes,

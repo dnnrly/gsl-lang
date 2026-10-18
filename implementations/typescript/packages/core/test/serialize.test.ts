@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { parse, serialize } from "../src/index.js";
+import { isNodeRef, parse, serialize } from "../src/index.js";
 
 function roundTrip(src: string): string {
   return serialize(parse(src).graph);
@@ -60,4 +60,21 @@ test("edge attributes are sorted by key", () => {
 test("string escaping round-trips", () => {
   const out = roundTrip('node A [text="line\\nbreak"]');
   assert.equal(out, 'node A [text="line\\nbreak"]');
+});
+
+test("node reference attributes serialize unquoted", () => {
+  const out = roundTrip("node A [friend=B]");
+  assert.equal(out, "node A [friend=B]");
+});
+
+test("node reference attributes re-parse as NodeRef", () => {
+  const graph = parse("node A [friend=B]").graph;
+  const attr = graph.nodes.find((n) => n.id === "A")!.attributes["friend"];
+  assert.equal(isNodeRef(attr), true);
+  assert.equal(String(attr), "B");
+});
+
+test("string value equal to a node id stays quoted", () => {
+  const out = roundTrip('node A [friend="B"]');
+  assert.equal(out, 'node A [friend="B"]');
 });

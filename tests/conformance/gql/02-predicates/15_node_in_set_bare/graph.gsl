@@ -1,0 +1,8 @@
+set s
+
+node A @s
+node B @s
+node C
+
+A -> B
+A -> C

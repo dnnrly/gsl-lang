@@ -16,14 +16,14 @@ fixtures are independent of any particular implementation.
 tests/conformance/
   gql/        # GQL query fixtures (graph.gsl + query.gql + result.gsl)
     README.md # catalog, learning path and semantic notes
+  gsl/        # GSL canonical-form fixtures (input.gsl + expected.gsl)
+    README.md # catalog and fixture contract
 ```
 
-GSL parse/serialize conformance is currently covered by the Go parser and
-round-trip tests (`implementations/go/*_test.go`), which assert the canonical
-form guarantee `parse(serialize(parse(x))) == parse(x)` over the examples and
-corpus. A dedicated `gsl/` fixture set may be added here as further
-implementations appear; the intent is that any implementation can run the whole
-suite from this directory alone.
+The GQL suite checks query semantics; the GSL suite pins the **canonical serialized
+form** of a parsed graph (numeric formatting, node-reference quoting, nesting)
+by comparing against the literal bytes of `expected.gsl`. Together they let any
+implementation run the whole suite from this directory alone.
 
 ## Fixture contract (GQL)
 
@@ -58,8 +58,10 @@ comparing canonical output with `result.gsl`.
 ## Adding or changing fixtures
 
 See [`gql/README.md`](gql/README.md) for the catalog, the numbered learning
-path, per-group semantic notes, and the maintenance checklist. Keep the
-`gql/README.md` catalog in sync whenever fixtures are added or changed.
+path, per-group semantic notes, and the maintenance checklist. See
+[`gsl/README.md`](gsl/README.md) for the canonical-form corpus and how to add
+to it. Keep the relevant `README.md` catalog in sync whenever fixtures are
+added or changed.
 
 ## Normative references
 

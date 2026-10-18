@@ -70,6 +70,20 @@ test("empty query returns the input graph unchanged", () => {
   assert.equal(serialize(result), serialize(graph()));
 });
 
+const DEPS = ["E1: a->b", "E2: b->c [parent=E1]"].join("\n");
+
+test("edge.depth accepts == and = interchangeably", () => {
+  const deps = parse(DEPS).graph;
+  const expected = "node a\nnode b\n\nE1: a->b";
+  assert.equal(serialize(runQuery(deps, "subgraph edge.depth == 0")), expected);
+  assert.equal(serialize(runQuery(deps, "subgraph edge.depth = 0")), expected);
+});
+
 test("executing a query against an unbound named graph fails", () => {
   assert.throws(() => runQuery(graph(), "from SOMEGRAPH"), /named graph not found/);
+});
+
+test("removing an attribute requires a where predicate", () => {
+  assert.throws(() => runQuery(graph(), "remove node.team"), /where/);
+  assert.throws(() => runQuery(graph(), "remove edge.protocol"), /where/);
 });

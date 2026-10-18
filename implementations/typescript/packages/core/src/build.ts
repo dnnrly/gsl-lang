@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Pascal Dennerly.
 
 import type { Program, Statement, NodeDecl, EdgeDecl, SetDecl } from "./ast.js";
-import { makeNodeRef, type GslGraph, type GslNode, type GslEdge, type GslSet } from "./model.js";
+import { isNodeRef, makeNodeRef, type GslGraph, type GslNode, type GslEdge, type GslSet } from "./model.js";
 import { ParseError } from "./errors.js";
 
 interface EdgeScope {
@@ -56,7 +56,7 @@ class GraphBuilder {
     if (!this.sets.has(name)) {
       this.sets.set(name, { id: name, attributes: {}, declared: !implicit });
       if (implicit) {
-        this.warnings.push({ message: `implicit set creation: ${name}` });
+        this.warnings.push({ message: `implicit set creation: "${name}"` });
       }
     }
   }
@@ -111,10 +111,8 @@ function processNodeDecl(b: GraphBuilder, nd: NodeDecl, enclosingParent?: string
   }
 
   const ref = node.attributes["parent"];
-  if (ref && typeof ref === "string") {
-    node.parent = ref;
-  } else if (ref && typeof ref === "object" && (ref as any).__brand) {
-    node.parent = String(ref);
+  if (isNodeRef(ref)) {
+    node.parent = ref.id;
   }
 
   for (const setName of nd.memberships) {
@@ -123,7 +121,7 @@ function processNodeDecl(b: GraphBuilder, nd: NodeDecl, enclosingParent?: string
   }
 
   if (b.sets.has(nd.name)) {
-    b.warnings.push({ message: `node and set name collision: ${nd.name}` });
+    b.warnings.push({ message: `node and set name collision: "${nd.name}"` });
   }
 
   for (const child of nd.block) {
@@ -149,15 +147,15 @@ function convertAttrValue(v: any): any {
 
 function processSetDecl(b: GraphBuilder, sd: SetDecl): void {
   if (b.nodes.has(sd.name)) {
-    b.warnings.push({ message: `node and set name collision: ${sd.name}` });
+    b.warnings.push({ message: `node and set name collision: "${sd.name}"` });
   }
   b.ensureSet(sd.name, false);
   const s = b.sets.get(sd.name)!;
   s.declared = true;
   for (const attr of sd.attrs) {
     const v = convertAttrValue(attr.value);
-    if (v && typeof v === "object" && (v as any).__brand) {
-      b.errors.push({ message: `NodeRef not allowed in set attribute ${attr.key}`, line: attr.line, column: attr.col });
+    if (isNodeRef(v)) {
+      b.errors.push({ message: `NodeRef not allowed in set attribute "${attr.key}"`, line: attr.line, column: attr.col });
       continue;
     }
     s.attributes[attr.key] = v;
@@ -174,7 +172,7 @@ function processEdgeDecl(b: GraphBuilder, ed: EdgeDecl, insideScope = false): vo
   if (edgeLabel) {
     for (let scope: EdgeScope | undefined = b.scope; scope; scope = scope.outer) {
       if (scope.labels.has(edgeLabel)) {
-        b.errors.push({ message: `duplicate edge label ${edgeLabel}`, line: ed.line, column: ed.col });
+        b.errors.push({ message: `duplicate edge label "${edgeLabel}"`, line: ed.line, column: ed.col });
         return;
       }
     }
@@ -217,8 +215,8 @@ function processEdgeDecl(b: GraphBuilder, ed: EdgeDecl, insideScope = false): vo
           continue;
         }
         const v = convertAttrValue(attr.value);
-        if (v && typeof v === "object" && (v as any).__brand) {
-          b.errors.push({ message: `NodeRef not allowed in edge attribute ${attr.key}`, line: attr.line, column: attr.col });
+        if (isNodeRef(v)) {
+          b.errors.push({ message: `NodeRef not allowed in edge attribute "${attr.key}"`, line: attr.line, column: attr.col });
           continue;
         }
         edge.attributes[attr.key] = v;
@@ -299,7 +297,7 @@ function validateDeps(b: GraphBuilder): void {
   }
   for (const edge of b.edges) {
     if (edge.parent && !allLabels.has(edge.parent)) {
-      b.errors.push({ message: `edge parent references unknown label ${edge.parent}` });
+      b.errors.push({ message: `edge parent references unknown label "${edge.parent}"` });
     }
   }
 }
