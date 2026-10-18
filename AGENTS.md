@@ -7,17 +7,20 @@ Copyright (c) 2026 Pascal Dennerly.
 
 This document provides instructions for AI agents working on the GSL-Lang project.
 
-**For comprehensive language specification, see [SPEC.md](SPEC.md).**  
-**For formal grammar, see [GRAMMAR.md](GRAMMAR.md).**  
-**For a description of the query language, see [QUERY_SPEC.md](QUERY_SPEC.md) and [QUERY_GRAMMAR.md](QUERY_GRAMMAR.md).**
-**LLM specific advice, see [GSL_GUIDE.md](GSL_GUIDE.md) and [GQL_GUIDE.md](GQL_GUIDE.md).**
-**See [GO_REFERENCE.md](GO_REFERENCE.md) for Go reference implementation patterns and algorithms.**
+**For comprehensive language specification, see [spec/gsl/SPEC.md](spec/gsl/SPEC.md).**  
+**For formal grammar, see [spec/gsl/GRAMMAR.md](spec/gsl/GRAMMAR.md).**  
+**For a description of the query language, see [spec/gql/QUERY_SPEC.md](spec/gql/QUERY_SPEC.md) and [spec/gql/QUERY_GRAMMAR.md](spec/gql/QUERY_GRAMMAR.md).**
+**LLM specific advice, see [GSL_GUIDE.md](guides/GSL_GUIDE.md) and [GQL_GUIDE.md](guides/GQL_GUIDE.md).**
+**See [GO_REFERENCE.md](guides/GO_REFERENCE.md) for Go reference implementation patterns and algorithms.**
 **For a quick LLM-oriented overview, start with [llms.txt](llms.txt).**
+**The repository hosts multiple implementations under [implementations/](implementations/); Go is the canonical, reference implementation.**
 
 ## Quick Commands
 
 ```bash
-make test                       # Run all tests with coverage (query fixtures run silently; use `go test -v -run TestFixtures ./query` to watch them)
+make test                       # Run all Go tests with coverage (query fixtures run silently; use `go test -v -run TestFixtures ./implementations/go/query` to watch them)
+make test-typescript            # Run the TypeScript workspace tests (installs deps; skips if npm missing)
+make test-all                   # Run every test suite: Go, TypeScript, integration, acceptance
 make test-integration           # Run integration tests (skip if tools missing)
 make test-integration-strict    # Run integration tests (fail if tools missing)
 make test-acceptance            # Run acceptance tests (BDD/godog feature tests)
@@ -27,20 +30,49 @@ make build                      # Build CLI tools (gsl-diagram, gsl-query, gsl-l
 make diagrams                   # Re-render README diagram SVGs from .mmd sources (needs mmdc + python3)
 make clean                      # Clean build artifacts
 go test -v -run TestName        # Run specific test
-go test -v -run 'TestAgentSkill|TestSkillBehaviour' .   # Validate the gsl-modelling agent skill
+go test -v -run 'TestAgentSkill|TestSkillBehaviour' ./tests   # Validate the gsl-modelling agent skill
 ```
 
 ## Project Structure
 
-**Core Implementation:**
+The repository is organised so that language definitions, implementations and
+shared test material are independent:
+
+- `spec/` — language-neutral normative specifications (`spec/gsl/` for GSL,
+  `spec/gql/` for GQL).
+- `implementations/` — one directory per implementation (`implementations/go/`
+  is the canonical reference; `implementations/typescript/` is an npm workspace
+  with GSL and GQL packages — see below).
+- `guides/` — explanatory, LLM/agent-oriented guides (embedded by the CLI `ai`
+  command).
+- `tests/` — repository meta-tests and the shared, language-neutral conformance
+  suite.
+- `cmd/`, `lsp/`, `editors/`, `examples/`, `docs/` — the CLI tools, language
+  server, editor extension, examples and human documentation.
+
+**Go Implementation (`implementations/go/`, package `gsl`):**
 - `lexer.go`, `parser.go`, `ast.go` - Parsing pipeline
 - `model.go`, `build.go` - Graph construction
 - `serialize.go` - Serialization to canonical form
 - `gsl.go` - Public API
+- `query/` - the GQL library (package `query`)
+
+**TypeScript Workspace (`implementations/typescript/`):**
+- An npm workspace with two packages: `@gsl-lang/core` (GSL parser, graph
+  build, canonical serializer) and `@gsl-lang/gql` (GQL parser and query
+  engine). `private: true`, unpublished. Build/typecheck/test via
+  `npm install`, `npm run typecheck`, `npm test`. No CLI or LSP.
+- Tests mirror the shared corpora: the GQL conformance fixtures
+  (`tests/conformance/gql`), the `examples/` round-trip corpus, the
+  flagship/advanced model+query fixtures, and the markdown `gsl`/`gql` blocks
+  (`packages/gql/test/*`).
 
 **Tests:**
-- `*_test.go` files - Unit and integration tests
-- `markdown_test.go` - Validates all code blocks in `.md` files
+- `implementations/go/*_test.go` - Unit and fuzz tests for the Go library
+- `implementations/go/query/*_test.go` - GQL library tests and fixtures
+- `tests/conformance/` - shared, language-neutral conformance fixtures (`gql/`)
+- `tests/` - repository meta-tests: `markdown_test.go` (validates all code
+  blocks in `.md` files), `agent_skill_test.go`, and `harness.go`/`main_test.go`
 - `cmd/gsl-diagram/cli_integration_test.go` - CLI tool integration tests (requires `mmdc` and `plantuml`)
 - `test/` - Acceptance tests using godog (BDD/Gherkin feature files)
 
@@ -70,16 +102,17 @@ go test -v -run 'TestAgentSkill|TestSkillBehaviour' .   # Validate the gsl-model
 - `examples/advanced_test.go` - the same guarantees for `advanced/`
 
 **Documentation:**
-- `SPEC.md` - Normative spec (source of truth for language rules)
-- `GSL_GUIDE.md` - GSL language reference for LLMs and AI agents
+- `spec/gsl/SPEC.md` - Normative spec (source of truth for language rules)
+- `spec/gsl/GRAMMAR.md` - Formal grammar
+- `spec/gql/QUERY_SPEC.md`, `spec/gql/QUERY_GRAMMAR.md` - GQL specification and grammar
+- `guides/` - explanatory guides embedded by the CLI `ai` command (`GSL_GUIDE.md`, `GQL_GUIDE.md`, `GO_REFERENCE.md`, `QUERY_TUTORIAL.md`, `SEQUENCE_GUIDE.md`)
 - `README.md` - User-facing examples and storefront
-- `GRAMMAR.md` - Formal grammar
-- `docs/` - Human learning journey (the IA index is `docs/README.md`): `getting-started/`, `concepts/` (nine one-concept pages: graph-model, edges, attributes, sets, structure-and-nesting, edge-dependencies, queries-and-views, parsing-and-merging, canonical-form), `tutorials/` (modelling-with-gsl + path index), `cookbook/` (six recipes). Root-level specs and guides stay at root; docs/ tiers reference them rather than duplicate them.
-- `markdown_test.go` - Validates all code blocks in root `*.md` and every `docs/**/*.md` recursively (via `findMarkdownFiles`; note that `filepath.Glob` does not support `**`)
+- `docs/` - Human learning journey (the IA index is `docs/README.md`): `getting-started/`, `concepts/` (nine one-concept pages: graph-model, edges, attributes, sets, structure-and-nesting, edge-dependencies, queries-and-views, parsing-and-merging, canonical-form), `tutorials/` (modelling-with-gsl + path index), `cookbook/` (six recipes). The specs and guides live in `spec/` and `guides/`; docs/ tiers reference them rather than duplicate them.
+- `tests/markdown_test.go` - Validates all code blocks in root `*.md` and every `docs/**/*.md`, `guides/**/*.md`, `spec/**/*.md`, `implementations/**/*.md` recursively (via `findMarkdownFiles`; note that `filepath.Glob` does not support `**`)
 
 **Agent Skills:**
 - `.agents/skills/gsl-modelling/` - the `gsl-modelling` agent skill: source-faithful GSL modelling for agents (opencode/Cursor/Codex discover it natively; Claude Code needs a `.claude/skills` pointer). `SKILL.md` is the entry point; `references/` mixes authored method docs (`MODELLING.md`, `TOOLING.md`, `EXAMPLES.md`) with plain copies of the authoritative guides (`GSL_GUIDE.md`, `GQL_GUIDE.md`, `GRAMMAR.md`, `QUERY_GRAMMAR.md`, `modelling-with-gsl.md`) - copies are maintained upstream and refreshed from there (never symlinks: they do not survive packaging). `scripts/validate.sh` is an optional structural gate (`gsl-query ""`).
-- `agent_skill_test.go` - Validates skill structure/frontmatter, reference mirror drift against the authoritative docs, reference link resolution, authored markdown code blocks, script syntax, and the behaviour oracle. Note: dot-directories are NOT scanned by `markdown_test.go`; the reference mirrors re-validate the same `gsl`/`gql` blocks as upstream. Refresh mirrors with `go test -run TestAgentSkillMirrorDrift -update .`.
+- `tests/agent_skill_test.go` - Validates skill structure/frontmatter, reference mirror drift against the authoritative docs, reference link resolution, authored markdown code blocks, script syntax, and the behaviour oracle. Note: dot-directories are NOT scanned by `markdown_test.go`; the reference mirrors re-validate the same `gsl`/`gql` blocks as upstream. Refresh mirrors with `go test -run TestAgentSkillMirrorDrift -update ./tests`.
 - `examples/skill-behaviour/` - Behavioural fixtures for the skill: a deliberately misleading source + an expected-fidelity oracle for the (human-reviewed) smoke exercise.
 
 ## Before Submitting Changes
@@ -88,17 +121,17 @@ go test -v -run 'TestAgentSkill|TestSkillBehaviour' .   # Validate the gsl-model
 make test
 make test-integration           # if mmdc and plantuml available
 make test-integration-strict    # to enforce tool availability
-go test -v -run TestMarkdownCodeBlocks
+go test -v -run TestMarkdownCodeBlocks ./tests
 make lint
 ```
 
-- All `gsl` code blocks in markdown (root and `docs/`) must parse
+- All `gsl` code blocks in markdown (root and `docs/`, `guides/`, `spec/`) must parse
 - All `invalid-gsl` blocks must fail to parse
-- If any mirrored reference guide (GSL_GUIDE, GQL_GUIDE, GRAMMAR, QUERY_GRAMMAR, modelling-with-gsl) is changed, refresh with `go test -run TestAgentSkillMirrorDrift -update .` before committing
+- If any mirrored reference guide (GSL_GUIDE, GQL_GUIDE, GRAMMAR, QUERY_GRAMMAR, modelling-with-gsl) is changed, refresh with `go test -run TestAgentSkillMirrorDrift -update ./tests` before committing
 - Round-trip tests required for parser/serializer changes
 - Integration tests validate all example GSL files with both Mermaid and PlantUML converters
-- Update SPEC.md if changing language semantics
-- Update GRAMMAR.md if changing syntax
+- Update `spec/gsl/SPEC.md` if changing language semantics
+- Update `spec/gsl/GRAMMAR.md` if changing syntax
 - Add or update `docs/` pages if changing the learning narrative; keep docs/ errors-free so `TestMarkdownCodeBlocks` stays green
 - Commit message should reference relevant files
 
@@ -106,21 +139,22 @@ make lint
 
 | Task | Files |
 |------|-------|
-| Add new syntax | token.go, lexer.go, parser.go, ast.go, parser_test.go, GRAMMAR.md |
-| Fix parsing bug | parser.go, parser_test.go, gsl_test.go |
-| Serialization | serialize.go, serialize_test.go, gsl_test.go |
-| Graph structure | model.go, build.go, build_test.go |
-| Language rules | SPEC.md, GRAMMAR.md, markdown_test.go |
+| Add new syntax | implementations/go/{token,lexer,parser,ast}.go, implementations/go/parser_test.go, spec/gsl/GRAMMAR.md |
+| Fix parsing bug | implementations/go/parser.go, implementations/go/parser_test.go, implementations/go/gsl_test.go |
+| Serialization | implementations/go/serialize.go, implementations/go/serialize_test.go, implementations/go/gsl_test.go |
+| Graph structure | implementations/go/model.go, implementations/go/build.go, implementations/go/build_test.go |
+| Language rules | spec/gsl/SPEC.md, spec/gsl/GRAMMAR.md, tests/markdown_test.go |
 | CLI diagram tool | cmd/gsl-diagram/*, cli_integration_test.go |
 | CLI query tool | cmd/gsl-query/* |
 | LSP server | lsp/*, cmd/gsl-lsp/main.go |
 | VS Code extension | editors/vscode/* |
-| Documentation examples | README.md, SPEC.md, GSL_GUIDE.md |
+| TypeScript workspace | implementations/typescript/{package,tsconfig}.json, implementations/typescript/src/*, implementations/typescript/test/* |
+| Documentation examples | README.md, spec/gsl/SPEC.md, guides/GSL_GUIDE.md |
 | Flagship/advanced examples | examples/flagship_test.go, examples/advanced_test.go, examples/flagships/*, examples/advanced/* |
 | Documentation learning journey | docs/README.md (IA index), docs/getting-started/, docs/concepts/, docs/tutorials/ (+ modelling-with-gsl.md), docs/cookbook/ |
-| Query language tests | query/testdata/*, query/.test-plan.md |
+| Query language tests | tests/conformance/gql/*, tests/conformance/gql/README.md |
 | Acceptance tests | test/features/*.feature, test/*_test.go |
-| Agent skill | .agents/skills/gsl-modelling/* (authored: SKILL.md, references/{MODELLING,TOOLING,EXAMPLES}.md and mirrored guides, scripts/validate.sh), agent_skill_test.go (mirror drift: TestAgentSkillMirrorDrift), examples/skill-behaviour/* |
+| Agent skill | .agents/skills/gsl-modelling/* (authored: SKILL.md, references/{MODELLING,TOOLING,EXAMPLES}.md and mirrored guides, scripts/validate.sh), tests/agent_skill_test.go (mirror drift: TestAgentSkillMirrorDrift), examples/skill-behaviour/* |
 
 ## Planning & Progress Tracking
 
@@ -158,7 +192,7 @@ Each subsystem may contain:
 
 ## Test Fixture Documentation
 
-**Query Language Fixtures** — `query/testdata/README.md`
+**Query Language Fixtures** — `tests/conformance/gql/README.md`
 
 To avoid context bloat when working with many test fixtures:
 - **All fixtures cataloged** in a single README with quick navigation table
@@ -168,9 +202,9 @@ To avoid context bloat when working with many test fixtures:
 
 **When adding/modifying query fixtures:**
 1. Create fixture directory with `graph.gsl`, `query.gql`, `result.gsl`
-2. Place it in the appropriate numbered group under `query/testdata/`
-3. Verify it passes: `go test -v -run TestFixtures ./query`
-4. Update `query/testdata/README.md`:
+2. Place it in the appropriate numbered group under `tests/conformance/gql/`
+3. Verify it passes: `go test -v -run TestFixtures ./implementations/go/query`
+4. Update `tests/conformance/gql/README.md`:
    - Add entry to appropriate group table
    - Include brief description (one line)
    - Add semantic note if behavior is non-obvious
@@ -191,14 +225,14 @@ Before submitting changes:
 - [ ] All tests pass: `make test`
 - [ ] Integration tests pass: `make test-integration` (or `make test-integration-strict`)
 - [ ] Lint passes: `make lint`
-- [ ] Markdown validates: `go test -v -run TestMarkdownCodeBlocks`
+- [ ] Markdown validates: `go test -v -run TestMarkdownCodeBlocks ./tests`
 - [ ] Round-trip tests added (if touching parser/serializer)
 - [ ] Example fixture (`.gsl` file in `examples/`) added for serialization round-trip fixes
 - [ ] Integration tests added (if modifying CLI tools or converters)
 - [ ] LSP tests pass: `go test ./lsp/...`
 - [ ] LSP file structure updated in this file if reorganizing lsp/
-- [ ] SPEC.md updated (if changing language semantics)
-- [ ] GRAMMAR.md updated (if changing syntax)
+- [ ] spec/gsl/SPEC.md updated (if changing language semantics)
+- [ ] spec/gsl/GRAMMAR.md updated (if changing syntax)
 - [ ] New code examples in markdown are valid `gsl` blocks
 - [ ] Commit message references relevant files
 

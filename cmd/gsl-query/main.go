@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	gsl "github.com/dnnrly/gsl-lang"
 	"github.com/dnnrly/gsl-lang/cmd/internal/cli"
+	"github.com/dnnrly/gsl-lang/guides"
 	"github.com/spf13/cobra"
 )
 
@@ -72,8 +72,8 @@ func main() {
 	}
 
 	// Load guides
-	gslDesc, gslContent, gslErr := cli.LoadGuide(gsl.Guides, "GSL_GUIDE.md")
-	queryDesc, queryContent, queryErr := cli.LoadGuide(gsl.Guides, "GQL_GUIDE.md")
+	gslDesc, gslContent, gslErr := cli.LoadGuide(guides.Guides, "GSL_GUIDE.md")
+	queryDesc, queryContent, queryErr := cli.LoadGuide(guides.Guides, "GQL_GUIDE.md")
 
 	guides := []cli.GuideSpec{
 		{Use: "gsl", Desc: gslDesc, Content: gslContent, Err: gslErr},

@@ -1,0 +1,6 @@
+set s
+
+node A @s
+node B @s
+
+A->B

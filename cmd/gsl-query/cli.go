@@ -8,8 +8,8 @@ import (
 	"io"
 	"os"
 
-	gsl "github.com/dnnrly/gsl-lang"
-	"github.com/dnnrly/gsl-lang/query"
+	gsl "github.com/dnnrly/gsl-lang/implementations/go"
+	"github.com/dnnrly/gsl-lang/implementations/go/query"
 )
 
 // Config holds the query execution configuration

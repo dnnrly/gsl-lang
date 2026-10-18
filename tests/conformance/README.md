@@ -1,0 +1,69 @@
+<!--
+SPDX-License-Identifier: CC-BY-4.0
+Copyright (c) 2026 Pascal Dennerly.
+-->
+
+# Conformance Suite
+
+This directory holds the **shared, language-neutral conformance fixtures** for
+GSL and GQL. They are the observable-behaviour contract: an implementation is
+conformant when it agrees with the expected output for every fixture, and the
+fixtures are independent of any particular implementation.
+
+## Layout
+
+```
+tests/conformance/
+  gql/        # GQL query fixtures (graph.gsl + query.gql + result.gsl)
+    README.md # catalog, learning path and semantic notes
+  gsl/        # GSL canonical-form fixtures (input.gsl + expected.gsl)
+    README.md # catalog and fixture contract
+```
+
+The GQL suite checks query semantics; the GSL suite pins the **canonical serialized
+form** of a parsed graph (numeric formatting, node-reference quoting, nesting)
+by comparing against the literal bytes of `expected.gsl`. Together they let any
+implementation run the whole suite from this directory alone.
+
+## Fixture contract (GQL)
+
+Every fixture is a directory containing exactly three files:
+
+| File | Role |
+|------|------|
+| `graph.gsl` | Input graph (must parse with no errors or warnings). |
+| `query.gql` | GQL query to run against the input graph. |
+| `result.gsl` | Expected result, in canonical serialized form. |
+
+Comparison is on **canonical serialized GSL**: an implementation serializes its
+result graph and compares it byte-for-byte with `result.gsl`. Attribute values,
+node and edge ordering, and set expansion must therefore match the specification
+exactly.
+
+## Running the suite
+
+- Go reference implementation: `go test -v -run TestFixtures ./implementations/go/query`.
+- TypeScript implementation:
+  `npm test -w @gsl-lang/gql` (or `make test-typescript`), which runs every
+  fixture in `packages/gql/test/conformance.test.ts`.
+- The same fixtures seed the GQL fuzz targets
+  (`implementations/go/query/fuzz_test.go`).
+- The LSP server also loads them as a validity corpus
+  (`lsp/gql_test.go`).
+
+An implementation in another language runs the suite by walking the group
+directories under `gql/`, applying each `query.gql` to its `graph.gsl`, and
+comparing canonical output with `result.gsl`.
+
+## Adding or changing fixtures
+
+See [`gql/README.md`](gql/README.md) for the catalog, the numbered learning
+path, per-group semantic notes, and the maintenance checklist. See
+[`gsl/README.md`](gsl/README.md) for the canonical-form corpus and how to add
+to it. Keep the relevant `README.md` catalog in sync whenever fixtures are
+added or changed.
+
+## Normative references
+
+- [`../../spec/gsl/SPEC.md`](../../spec/gsl/SPEC.md) — GSL language.
+- [`../../spec/gql/QUERY_SPEC.md`](../../spec/gql/QUERY_SPEC.md) — GQL language.

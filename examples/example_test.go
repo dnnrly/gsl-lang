@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	gsl "github.com/dnnrly/gsl-lang"
+	gsl "github.com/dnnrly/gsl-lang/implementations/go"
 )
 
 // Example_parseSimpleWorkflow demonstrates parsing a basic workflow graph.

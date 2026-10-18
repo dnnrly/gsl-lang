@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/dnnrly/gsl-lang"
-	"github.com/dnnrly/gsl-lang/query"
+	"github.com/dnnrly/gsl-lang/implementations/go"
+	"github.com/dnnrly/gsl-lang/implementations/go/query"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )

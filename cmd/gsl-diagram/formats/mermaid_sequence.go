@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	gsl "github.com/dnnrly/gsl-lang"
+	gsl "github.com/dnnrly/gsl-lang/implementations/go"
 )
 
 type mermaidSequenceConverter struct{}

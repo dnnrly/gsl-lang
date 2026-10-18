@@ -24,10 +24,10 @@ This index is the route from *first contact* to *competent use*. Each tier state
 | **[Modelling with GSL](tutorials/modelling-with-gsl.md)** | How to decide what goes in a model: node, edge, attribute, set, nested, or edge dependency? | Concepts (through queries) | Tutorials |
 | **[Tutorials](tutorials/README.md)** | Goal-oriented paths: the flagship examples, the GQL learning path, and the modelling guide | Concepts + Modelling | Cookbook |
 | **[Cookbook](cookbook/README.md)** | Short recipes: problem → GSL → answer → diagram | Concepts + basic queries | Language Guide / Query Guide |
-| **[Language Guide](../GSL_GUIDE.md)** | The language, systematically, in one document | Concepts + Cookbook | Reference |
-| **[Query Guide](../GQL_GUIDE.md)** · **[Query tutorial](../QUERY_TUTORIAL.md)** | GQL, the query/transformation language, as reference + a step-by-step learning path | Concepts + Tutorials | Reference / Specification |
-| **[Reference](../GRAMMAR.md)** · **[Query grammar](../QUERY_GRAMMAR.md)** · **[Go reference](../GO_REFERENCE.md)** · **[Sequence guide](../SEQUENCE_GUIDE.md)** | Precise syntax and behavioural detail, including the Go API and the sequence-diagram dialect | When you need precision | Specification |
-| **[Specification](../SPEC.md)** · **[Query spec](../QUERY_SPEC.md)** | The normative, RFC 2119-style definition of the language — implementation-facing, never diluted | When you must be exact | — |
+| **[Language Guide](../guides/GSL_GUIDE.md)** | The language, systematically, in one document | Concepts + Cookbook | Reference |
+| **[Query Guide](../guides/GQL_GUIDE.md)** · **[Query tutorial](../guides/QUERY_TUTORIAL.md)** | GQL, the query/transformation language, as reference + a step-by-step learning path | Concepts + Tutorials | Reference / Specification |
+| **[Reference](../spec/gsl/GRAMMAR.md)** · **[Query grammar](../spec/gql/QUERY_GRAMMAR.md)** · **[Go reference](../guides/GO_REFERENCE.md)** · **[Sequence guide](../guides/SEQUENCE_GUIDE.md)** | Precise syntax and behavioural detail, including the Go API and the sequence-diagram dialect | When you need precision | Specification |
+| **[Specification](../spec/gsl/SPEC.md)** · **[Query spec](../spec/gql/QUERY_SPEC.md)** | The normative, RFC 2119-style definition of the language — implementation-facing, never diluted | When you must be exact | — |
 | **[Ecosystem](../README.md#implementations)** | `gsl-query`, `gsl-diagram`, `gsl-lsp` and the VS Code extension | Whenever | — |
 
 ## How to read these tiers
@@ -64,7 +64,7 @@ Three goal-oriented paths, all executable:
 
 - **Modelling with GSL** — deciding what belongs in a model (node, edge, attribute, set, nesting, edge dependency): [the modelling guide](tutorials/modelling-with-gsl.md).
 - **The flagship examples** — five complete narratives for real problems: [the flagship index](../examples/flagships/README.md).
-- **The query tutorial** — a step-by-step GQL learning path: [QUERY_TUTORIAL](../QUERY_TUTORIAL.md).
+- **The query tutorial** — a step-by-step GQL learning path: [QUERY_TUTORIAL](../guides/QUERY_TUTORIAL.md).
 
 See the [tutorials index](tutorials/README.md) for how the paths fit together.
 
@@ -74,12 +74,12 @@ Recipes for specific jobs — *"retire a service — who breaks?"*, *"what's in 
 
 ### Language Guide, Query Guide, Reference, Specification
 
-These tiers live at the repository root and stay there:
+These tiers live in dedicated top-level directories — [`guides/`](../guides/) for the explanatory guides and [`spec/`](../spec/README.md) for the normative specifications:
 
-- **Language Guide** → [GSL_GUIDE.md](../GSL_GUIDE.md)
-- **Query Guide** → [GQL_GUIDE.md](../GQL_GUIDE.md) and the [query tutorial](../QUERY_TUTORIAL.md)
-- **Reference** → [GRAMMAR.md](../GRAMMAR.md), [QUERY_GRAMMAR.md](../QUERY_GRAMMAR.md), [GO_REFERENCE.md](../GO_REFERENCE.md), [SEQUENCE_GUIDE.md](../SEQUENCE_GUIDE.md)
-- **Specification** → [SPEC.md](../SPEC.md), [QUERY_SPEC.md](../QUERY_SPEC.md)
+- **Language Guide** → [GSL_GUIDE.md](../guides/GSL_GUIDE.md)
+- **Query Guide** → [GQL_GUIDE.md](../guides/GQL_GUIDE.md) and the [query tutorial](../guides/QUERY_TUTORIAL.md)
+- **Reference** → [GRAMMAR.md](../spec/gsl/GRAMMAR.md), [QUERY_GRAMMAR.md](../spec/gql/QUERY_GRAMMAR.md), [GO_REFERENCE.md](../guides/GO_REFERENCE.md), [SEQUENCE_GUIDE.md](../guides/SEQUENCE_GUIDE.md)
+- **Specification** → [SPEC.md](../spec/gsl/SPEC.md), [QUERY_SPEC.md](../spec/gql/QUERY_SPEC.md)
 
 ### Ecosystem
 
@@ -87,4 +87,4 @@ The tools that consume and emit GSL — [implementations](../README.md#implement
 
 ### For AI agents and LLMs
 
-The agent-oriented index and embedded guides sit at the repository root: start at [llms.txt](../llms.txt), then [GSL_GUIDE](../GSL_GUIDE.md), [GQL_GUIDE](../GQL_GUIDE.md) and [GO_REFERENCE](../GO_REFERENCE.md). The [LLM-assisted modelling flagship](../examples/flagships/05-llm-assisted-modelling/README.md) is the worked experiment. The [architecture archaeology study](../examples/advanced/architecture-archaeology/README.md) shows how that approach scales from one system to many repositories. The [gsl-modelling skill](../.agents/skills/gsl-modelling/SKILL.md) packages faithful-modelling behaviour for agents (opencode/Cursor/Codex discover it natively at `.agents/skills/`). The human learning path above does not require any LLM mental model.
+The agent-oriented index sits at the repository root, and the embedded guides live in [`guides/`](../guides/): start at [llms.txt](../llms.txt), then [GSL_GUIDE](../guides/GSL_GUIDE.md), [GQL_GUIDE](../guides/GQL_GUIDE.md) and [GO_REFERENCE](../guides/GO_REFERENCE.md). The [LLM-assisted modelling flagship](../examples/flagships/05-llm-assisted-modelling/README.md) is the worked experiment. The [architecture archaeology study](../examples/advanced/architecture-archaeology/README.md) shows how that approach scales from one system to many repositories. The [gsl-modelling skill](../.agents/skills/gsl-modelling/SKILL.md) packages faithful-modelling behaviour for agents (opencode/Cursor/Codex discover it natively at `.agents/skills/`). The human learning path above does not require any LLM mental model.

@@ -609,8 +609,9 @@ func TestGQLFormatting_Unsupported(t *testing.T) {
 // TestGQLAllFixturesValid loads every query.gql in testdata and verifies
 // the LSP reports zero diagnostics (all fixture queries are valid GQL).
 func findQueryFixtures() []string {
-	// Test may run from package dir (lsp/) or module root
-	roots := []string{"../query/testdata", "query/testdata"}
+	// Test may run from package dir (lsp/) or module root. Fixtures live in the
+	// shared, language-neutral conformance suite.
+	roots := []string{"../tests/conformance/gql", "tests/conformance/gql"}
 	for _, root := range roots {
 		var matches []string
 		err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {

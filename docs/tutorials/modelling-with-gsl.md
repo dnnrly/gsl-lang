@@ -7,7 +7,7 @@ Copyright (c) 2026 Pascal Dennerly.
 
 **Audience:** people about to write their first real model.
 **Prerequisite:** [Concepts](../concepts/graph-model.md) through [Queries and derived views](../concepts/queries-and-views.md).
-**Next step:** the [query tutorial](../../QUERY_TUTORIAL.md), or a [cookbook recipe](../cookbook/README.md) to see a full question answered.
+**Next step:** the [query tutorial](../../guides/QUERY_TUTORIAL.md), or a [cookbook recipe](../cookbook/README.md) to see a full question answered.
 
 The syntax pages tell you what GSL accepts. This page is about the other question:
 
@@ -175,4 +175,4 @@ gsl-query 'subgraph node.team == "payments"' < model.gsl
 
 Each answer is a derived view. Nothing was duplicated, nothing was hand-drawn.
 
-**Next:** learn the query language step by step in the [query tutorial](../../QUERY_TUTORIAL.md), or jump to a [cookbook recipe](../cookbook/README.md) for a small question answered end to end.
+**Next:** learn the query language step by step in the [query tutorial](../../guides/QUERY_TUTORIAL.md), or jump to a [cookbook recipe](../cookbook/README.md) for a small question answered end to end.

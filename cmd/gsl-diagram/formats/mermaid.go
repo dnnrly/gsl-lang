@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	gsl "github.com/dnnrly/gsl-lang"
+	gsl "github.com/dnnrly/gsl-lang/implementations/go"
 	"github.com/dnnrly/gsl-lang/cmd/gsl-diagram/converter"
 )
 

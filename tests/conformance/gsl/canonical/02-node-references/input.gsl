@@ -1,0 +1,3 @@
+node A [friend = B]
+node B
+node C [friend = B, self = C]

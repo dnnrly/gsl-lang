@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	gsl "github.com/dnnrly/gsl-lang"
+	gsl "github.com/dnnrly/gsl-lang/implementations/go"
 )
 
 func TestExecuteWithStdin(t *testing.T) {

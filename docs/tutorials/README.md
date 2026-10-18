@@ -7,7 +7,7 @@ Copyright (c) 2026 Pascal Dennerly.
 
 **Audience:** people who have grasped the [concepts](../concepts/graph-model.md) and want to *do* something.
 **Prerequisite:** [Concepts](../concepts/graph-model.md) (or at least [Getting Started](../getting-started/README.md)).
-**Next step:** [Cookbook recipes](../cookbook/README.md) — or start the [query tutorial](../../QUERY_TUTORIAL.md) now.
+**Next step:** [Cookbook recipes](../cookbook/README.md) — or start the [query tutorial](../../guides/QUERY_TUTORIAL.md) now.
 
 Three learning paths, all executable, all leading to the same depth:
 
@@ -33,22 +33,22 @@ The [flagship index](../../examples/flagships/README.md) explains how the suite 
 
 ## The query tutorial — the GQL learning path
 
-When you have a graph, the interesting work is **selecting from it**. [QUERY_TUTORIAL.md](../../QUERY_TUTORIAL.md) is a step-by-step, ten-step path through GQL — the query/transformation language that derives views:
+When you have a graph, the interesting work is **selecting from it**. [QUERY_TUTORIAL.md](../../guides/QUERY_TUTORIAL.md) is a step-by-step, ten-step path through GQL — the query/transformation language that derives views:
 
 1. from **Step 1** — the mechanics of `gsl-query` — to
 2. **Step 6** — subgraph + traversal, the blast-radius move — to
 3. **Step 9** — named graphs and pipelines — to
 4. **Step 10** — your own queries.
 
-Every step is runnable (the examples use the canonical ordering rules you saw in [Canonical form](../concepts/canonical-form.md)), so you can type your way through it in an afternoon. The same material exists in reference form in [GQL_GUIDE.md](../../GQL_GUIDE.md) — the tutorial teaches, the guide answers.
+Every step is runnable (the examples use the canonical ordering rules you saw in [Canonical form](../concepts/canonical-form.md)), so you can type your way through it in an afternoon. The same material exists in reference form in [GQL_GUIDE.md](../../guides/GQL_GUIDE.md) — the tutorial teaches, the guide answers.
 
 ## Which road to take
 
 - **Not sure what your model should contain?** Read [Modelling with GSL](modelling-with-gsl.md), then the query tutorial.
 - **Want the full sweep of GSL first?** Run [01 — one graph, many views](../../examples/flagships/01-service-many-views/README.md), then take the query tutorial.
-- **Iterate fast on a small model?** Start the [query tutorial](../../QUERY_TUTORIAL.md) directly — it needs nothing but the tools.
-- **Ready to look something up?** Jump to [GQL_GUIDE.md](../../GQL_GUIDE.md) or the [cookbook](../cookbook/README.md).
+- **Iterate fast on a small model?** Start the [query tutorial](../../guides/QUERY_TUTORIAL.md) directly — it needs nothing but the tools.
+- **Ready to look something up?** Jump to [GQL_GUIDE.md](../../guides/GQL_GUIDE.md) or the [cookbook](../cookbook/README.md).
 
 ---
 
-**Next:** the [cookbook](../cookbook/README.md) is small jobs with exact answers; the deeper language reference is [GSL_GUIDE.md](../../GSL_GUIDE.md).
+**Next:** the [cookbook](../cookbook/README.md) is small jobs with exact answers; the deeper language reference is [GSL_GUIDE.md](../../guides/GSL_GUIDE.md).

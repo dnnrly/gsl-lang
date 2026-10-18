@@ -15,7 +15,7 @@ Copyright (c) 2026 Pascal Dennerly.
 1. **Deterministic serialization.** Within a given implementation and version, given the same graph, the serializer emits the same bytes — with defined ordering rules, not "whatever a map iterate gave us".
 2. **Round-trip stability.** `parse(serialize(parse(x)))` is semantically identical to `parse(x)`. You can always describe what canonization did, because it provably changed nothing but the shape of the text.
 
-The formal ordering rules are in [SPEC §11 Canonicalisation](../../SPEC.md#11-canonicalisation); the short version for everyday use:
+The formal ordering rules are in [SPEC §11 Canonicalisation](../../spec/gsl/SPEC.md#11-canonicalisation); the short version for everyday use:
 
 - **Sets** — sorted by ID.
 - **Nodes** — ordered by *first appearance in an edge declaration*; nodes that appear in no edge are sorted by ID.

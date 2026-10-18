@@ -5,7 +5,7 @@ package converter
 import (
 	"fmt"
 
-	gsl "github.com/dnnrly/gsl-lang"
+	gsl "github.com/dnnrly/gsl-lang/implementations/go"
 )
 
 // GetNodeLabel returns the display label for a node

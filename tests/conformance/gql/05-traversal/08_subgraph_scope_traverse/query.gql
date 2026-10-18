@@ -1,0 +1,1 @@
+subgraph node.id == "A" scope traverse out 1
