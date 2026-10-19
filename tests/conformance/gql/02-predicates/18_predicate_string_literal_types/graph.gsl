@@ -1,0 +1,4 @@
+node numeric [replicas=3]
+node text [replicas="3"]
+
+numeric -> text

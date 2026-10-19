@@ -307,9 +307,17 @@ class Parser {
       if (this.at("Operator") || this.at("Assign")) {
         const op = this.next().value;
         const v = this.parseValue();
-        if (typeof v !== "string") throw new GqlParseError("depth must be a numeric value");
-        const value = Number.parseInt(v, 10);
-        if (Number.isNaN(value)) throw new GqlParseError(`invalid depth value: ${v}`);
+        // Numeric literals retain their numeric type (spec §3.3); string
+        // depth values are also accepted for backward compatibility.
+        let value: number;
+        if (typeof v === "number") {
+          value = v;
+        } else if (typeof v === "string") {
+          value = Number.parseInt(v, 10);
+          if (Number.isNaN(value)) throw new GqlParseError(`invalid depth value: ${v}`);
+        } else {
+          throw new GqlParseError("depth must be a numeric value");
+        }
         return new DepthPredicate(op === "=" ? "==" : op, value);
       }
       if (this.at("Ident", "exists")) {
@@ -356,7 +364,8 @@ class Parser {
     }
     if (token.type === "Number") {
       this.next();
-      return token.value;
+      // Numeric literals retain their numeric type (spec §3.3: 42 != "42").
+      return Number(token.value);
     }
     if (token.type === "Ident") {
       this.next();

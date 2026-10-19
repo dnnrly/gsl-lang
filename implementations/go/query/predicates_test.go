@@ -329,8 +329,8 @@ func TestParsePredicate_EdgeAttribute(t *testing.T) {
 	if attrPred.Name != "weight" {
 		t.Fatalf("Expected name=weight, got %s", attrPred.Name)
 	}
-	if attrPred.Value != "42" {
-		t.Fatalf("Expected value=42 (string), got %v", attrPred.Value)
+	if attrPred.Value != float64(42) {
+		t.Fatalf("Expected value=42 (float64), got %v", attrPred.Value)
 	}
 }
 

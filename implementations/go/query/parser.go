@@ -4,6 +4,7 @@ package query
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -348,13 +349,21 @@ func convertAttrPredicate(ast *AttrPredicateAST) (Predicate, error) {
 	if element == "edge" && attr == "depth" {
 		if ast.Operator != "" {
 			value := convertValue(ast.Value)
-			s, ok := value.(string)
-			if !ok {
+			var depth int
+			switch v := value.(type) {
+			case float64:
+				if v != math.Trunc(v) {
+					return nil, fmt.Errorf("invalid depth value: %v", v)
+				}
+				depth = int(v)
+			case string:
+				d, err := strconv.Atoi(v)
+				if err != nil {
+					return nil, fmt.Errorf("invalid depth value: %s", v)
+				}
+				depth = d
+			default:
 				return nil, fmt.Errorf("depth must be a numeric value")
-			}
-			depth, err := strconv.Atoi(s)
-			if err != nil {
-				return nil, fmt.Errorf("invalid depth value: %s", s)
 			}
 			operator := ast.Operator
 			if operator == "=" {
@@ -449,6 +458,12 @@ func convertValue(v *ValueAST) interface{} {
 	}
 
 	if v.Number != nil {
+		// Numeric literals retain their numeric type (spec §3.3: equality is
+		// type-sensitive, so 42 != "42"). Store as float64 to match the
+		// representation used by GSL numeric attributes.
+		if f, err := strconv.ParseFloat(*v.Number, 64); err == nil {
+			return f
+		}
 		return *v.Number
 	}
 

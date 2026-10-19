@@ -1,1 +1,1 @@
-node api [priority="1", team="api"]
+node api [priority=1, team="api"]
