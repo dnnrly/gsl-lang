@@ -1,9 +1,11 @@
 # GSL Dialect Specification
 
-**Status:** Consolidated design draft
-**Version:** `0.1.0-draft`
+**Status:** Design draft (revision `0.2.0-draft`)
+**Version:** `0.2.0-draft`
 **Target:** GSL v1.0 draft
 **Schema standard:** JSON Schema Draft 2020-12
+**Normative companion:** [SUPPORTED_GQL_SUBSET.md](SUPPORTED_GQL_SUBSET.md)
+**Reference implementation:** `implementations/go/dialect` (Go); conformance fixtures in `tests/conformance/dialects/`
 
 ## 1. Purpose
 
@@ -226,7 +228,7 @@ The schema is ordinary JSON Schema. Dialect authors SHOULD use standard JSON Sch
 
 Implementations MUST reject a dialect if an `attributes` schema is invalid under Draft 2020-12 or cannot be compiled for validation.
 
-Whether external `$ref` targets are permitted, and what resolution policy applies to them, remains an open issue. Implementations MUST NOT silently resolve references using arbitrary network access.
+For this revision the following `$ref` policy applies. A schema MAY use `$ref` to targets defined within the same dialect document (for example `#/$defs/...`); such internal references MUST resolve during compilation. A schema MUST NOT use `$ref` to external `http` or `file` targets; an implementation MUST reject such a dialect at load time and MUST NOT silently resolve references using arbitrary network or filesystem access. The `$ref` policy remains provisional and may be extended by a later revision.
 
 ### 6.4 Description and guidance
 
@@ -254,7 +256,7 @@ The initial subset MUST NOT include:
 - Graph transformations.
 - Other unsupported query forms.
 
-The exact grammar and expression semantics of the supported subset MUST be documented against the actual GQL specification before implementation is considered complete.
+The exact grammar and expression semantics of the supported subset are documented normatively in the companion profile [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md), which defines the accepted `subgraph` predicate forms and the observable distinction between an out-of-subset query and a syntax error.
 
 Implementations MUST reject unsupported query forms. They MUST NOT approximate an unsupported query with different semantics.
 
@@ -284,6 +286,12 @@ Consequently, a graph may conform to a dialect even when none of its elements ma
 An invalid, unsupported or unevaluable query MUST produce a matching error.
 
 A matching error is distinct from an attribute constraint violation. If a matching error prevents the validator from completing the required checks, the graph MUST NOT be reported as conforming.
+
+### 7.5 Set selection in the initial subset
+
+The initial `subgraph` subset operates on nodes and edges; it has no predicate that targets a specific named set. A `subgraph` expression therefore copies every declared set of the input graph into its result, regardless of attributes.
+
+As a consequence, an element definition with `representation: set` selects **all** sets present in the input graph. Dialect authors SHOULD write permissive set schemas under the initial subset, and MUST NOT rely on set selection to discriminate one set from another. This restriction is a property of the current GQL engine, not of dialects, and may be relaxed if GQL gains set-targeting predicates (see [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md)).
 
 ## 8. GSL-to-JSON projection
 
@@ -317,7 +325,7 @@ The following mappings are normative:
 | Empty | `{"$gslEmpty": true}` |
 | Node reference | `{"$gslRef": "<node-id>"}` |
 
-The node-reference representation shown here is the proposed compact form for this draft. It is deliberately explicit so that a node reference is distinguishable from an ordinary string. This choice remains provisional until the reference contract is finalised.
+The node-reference representation shown here is the compact form confirmed for this revision. It is deliberately explicit so that a node reference is distinguishable from an ordinary string.
 
 #### String
 
@@ -329,7 +337,7 @@ Implementations MUST NOT convert a string containing numeric characters into a J
 
 A GSL number MUST be projected as a JSON number, preserving its numeric value.
 
-Implementations MUST NOT silently round a value or change its meaning during projection. The precise numeric interoperability and precision requirements remain to be specified, particularly for implementations using different numeric representations.
+Implementations MUST NOT silently round a value or change its meaning during projection. GSL numbers project to JSON numbers; because JSON Schema's `integer` type accepts any number with a zero fractional part, a dialect MAY use `type: integer` for attributes that are always whole. The broader numeric interoperability and precision requirements remain to be specified, particularly for implementations using different numeric representations.
 
 #### Boolean
 
@@ -504,7 +512,7 @@ If matching or validation fails in a way that prevents required checks from comp
 
 Implementations SHOULD distinguish incomplete validation from a completed validation that found violations.
 
-The precise external result model for incomplete validation remains to be finalised.
+The precise external result model for incomplete validation remains to be finalised. The reference command-line implementation distinguishes the three principal outcomes by exit code — `0` for a conforming graph, `1` for a non-conforming graph and `2` for incomplete validation — as a provisional convention pending standardisation.
 
 ## 11. Diagnostics
 
@@ -687,26 +695,23 @@ Each stage should have independent tests. In particular, the implementation shou
 
 ## 16. Open decisions
 
-The following items remain to be resolved before this draft should be treated as implementation-ready.
+The following items remain to be resolved before this draft should be treated as implementation-ready. Items marked *Resolved in 0.2.0-draft* were confirmed during implementation of the Go reference.
 
 ### 16.1 GSL-to-JSON projection
 
-- Confirm the exact node-reference representation.
-- Specify numeric precision and interoperability requirements.
+- *Resolved in 0.2.0-draft:* the node-reference representation is `{"$gslRef": "<node-id>"}` and the explicitly present Empty value is `{"$gslEmpty": true}` (Section 8.3).
+- *Resolved in 0.2.0-draft:* GSL numbers project to JSON numbers; a whole value may satisfy `type: integer`. Full precision and interoperability requirements for differing numeric representations remain open.
 - Specify behaviour for any GSL value types added in future versions.
-- Confirm the final treatment of special projected values in dialect examples.
 
 ### 16.2 GQL subset
 
-- Document the exact grammar and semantics of the supported `subgraph` predicate.
-- Confirm the expression syntax against the actual GQL specification and implementation.
-- Define the required diagnostic behaviour for query evaluation failures.
+- *Resolved in 0.2.0-draft:* the supported `subgraph` predicate grammar and semantics are documented in [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md), including the observable distinction between an out-of-subset query and a syntax error.
+- *Resolved in 0.2.0-draft:* failures to evaluate a match query are reported as a matching error that yields the incomplete outcome (Sections 7.4 and 10.4), distinct from a conformance violation.
 
 ### 16.3 JSON Schema reference resolution
 
-- Decide whether `$ref` is supported within attribute schemas.
-- Define permitted reference scopes and resolution behaviour.
-- Prevent unsafe or unpredictable external resource resolution.
+- *Resolved in 0.2.0-draft:* `$ref` to targets within the same dialect document is permitted and MUST resolve at compile time; external `http`/`file` `$ref` targets MUST be rejected at dialect load (Section 6.3).
+- Define whether the permitted internal reference scope extends beyond the single document in a later revision.
 
 ### 16.4 Diagnostics and validation results
 
@@ -727,14 +732,16 @@ The following items remain to be resolved before this draft should be treated as
 
 ## 17. Status of this specification
 
-This document consolidates the agreed design and provides a basis for implementation and review.
+This document consolidates the agreed design and provides a basis for implementation and review. Revision `0.2.0-draft` incorporates decisions confirmed against the Go reference implementation.
 
 The following architectural decisions are treated as settled for this draft:
 
 - YAML dialect documents.
 - JSON Schema Draft 2020-12 for attribute constraints.
-- GQL for matching, with a restricted initial subset.
+- GQL for matching, with a restricted initial subset (`SUPPORTED_GQL_SUBSET.md`).
 - Explicit projection of GSL attribute values into JSON.
+- The compact `{"$gslRef": ...}` and `{"$gslEmpty": true}` projections for node references and explicit Empty values.
+- Internal-document `$ref` permitted; external `$ref` rejected at load.
 - Validation of projected attribute maps only.
 - No graph-wide constraints or inferred classifications.
 - Independent validation of each matched element definition.
@@ -742,4 +749,4 @@ The following architectural decisions are treated as settled for this draft:
 - Explicit distinction between conformance violations and failures to complete validation.
 - Permissive handling of unknown fields.
 
-The projection details, GQL subset, reference resolution policy, diagnostic contract and versioning rules still require final decisions. These should be resolved before declaring the specification implementation-ready.
+The diagnostic contract, dialect-document schema and full versioning rules still require final decisions. These should be resolved before declaring the specification implementation-ready.

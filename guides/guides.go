@@ -10,5 +10,5 @@ import "embed"
 // print via the `ai` subcommand; //go:embed cannot reference parent
 // directories, so the files must sit alongside this package.
 //
-//go:embed GSL_GUIDE.md GQL_GUIDE.md GO_REFERENCE.md QUERY_TUTORIAL.md SEQUENCE_GUIDE.md
+//go:embed GSL_GUIDE.md GQL_GUIDE.md GO_REFERENCE.md QUERY_TUTORIAL.md SEQUENCE_GUIDE.md DIALECT_GUIDE.md
 var Guides embed.FS
