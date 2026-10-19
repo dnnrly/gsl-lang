@@ -1,0 +1,15 @@
+id: required-present
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'subgraph node.kind == "service"'
+    attributes:
+      type: object
+      required: [kind, name]
+      properties:
+        kind:
+          const: service
+        name:
+          type: string

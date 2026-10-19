@@ -1,0 +1,8 @@
+id: element-missing-representation
+version: "1"
+elements:
+  Service:
+    match:
+      query: 'subgraph node.kind == "service"'
+    attributes:
+      type: object

@@ -1,0 +1,12 @@
+id: wrong-type
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'subgraph node.kind == "service"'
+    attributes:
+      type: object
+      properties:
+        name:
+          type: string

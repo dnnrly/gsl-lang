@@ -1,0 +1,2 @@
+node platform_team
+node a [kind="thing", s="true", b=true, e, r=platform_team]

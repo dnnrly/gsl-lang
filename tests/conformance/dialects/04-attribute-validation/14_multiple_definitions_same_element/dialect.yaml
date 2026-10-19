@@ -1,0 +1,23 @@
+id: multiple-definitions
+version: "1"
+elements:
+  ServiceName:
+    representation: node
+    match:
+      query: 'subgraph node.kind == "service"'
+    attributes:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+  ServiceReplicas:
+    representation: node
+    match:
+      query: 'subgraph node.kind == "service"'
+    attributes:
+      type: object
+      required: [replicas]
+      properties:
+        replicas:
+          type: integer

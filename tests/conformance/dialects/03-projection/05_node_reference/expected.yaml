@@ -1,0 +1,7 @@
+outcome: conforming
+projection:
+  Thing:
+    a:
+      kind: thing
+      owner:
+        $gslRef: platform_team

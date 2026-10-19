@@ -1,0 +1,13 @@
+id: numeric-minimum
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'subgraph node.kind == "service"'
+    attributes:
+      type: object
+      properties:
+        replicas:
+          type: integer
+          minimum: 1

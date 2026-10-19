@@ -1,0 +1,9 @@
+id: projection-booleans
+version: "1"
+elements:
+  Thing:
+    representation: node
+    match:
+      query: 'subgraph node.kind == "thing"'
+    attributes:
+      type: object

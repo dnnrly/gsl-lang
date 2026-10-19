@@ -1,0 +1,9 @@
+id: invalid-syntax
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'subgraph node.kind =='
+    attributes:
+      type: object

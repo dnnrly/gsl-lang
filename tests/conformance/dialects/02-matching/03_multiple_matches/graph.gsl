@@ -1,0 +1,5 @@
+node api [kind="service", name="API"]
+node worker [kind="service", name="Worker"]
+node cache [kind="cache", name="Cache"]
+
+api -> worker

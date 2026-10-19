@@ -1,0 +1,3 @@
+node a [kind="service", name="A"]
+node b [kind="team"]
+node c [kind="database"]

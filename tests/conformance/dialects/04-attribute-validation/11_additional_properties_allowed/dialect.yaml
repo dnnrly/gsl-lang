@@ -1,0 +1,13 @@
+id: additional-properties-allowed
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'subgraph node.kind == "service"'
+    attributes:
+      type: object
+      properties:
+        kind:
+          type: string
+      additionalProperties: true

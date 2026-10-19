@@ -1,0 +1,2 @@
+node platform_team
+node a [kind="service", owner=platform_team]

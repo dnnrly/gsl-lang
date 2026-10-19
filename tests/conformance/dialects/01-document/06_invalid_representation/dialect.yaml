@@ -1,0 +1,9 @@
+id: invalid-representation
+version: "1"
+elements:
+  Widget:
+    representation: widget
+    match:
+      query: 'subgraph node.kind == "service"'
+    attributes:
+      type: object

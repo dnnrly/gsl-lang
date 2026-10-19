@@ -1,0 +1,17 @@
+id: node-reference-schema
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'subgraph node.kind == "service"'
+    attributes:
+      type: object
+      properties:
+        owner:
+          type: object
+          properties:
+            "$gslRef":
+              type: string
+          required: ["$gslRef"]
+          additionalProperties: false

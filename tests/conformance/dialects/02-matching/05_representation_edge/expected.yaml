@@ -1,0 +1,5 @@
+outcome: conforming
+projection:
+  HttpEdge:
+    api->payments:
+      protocol: http

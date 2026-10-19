@@ -1,0 +1,5 @@
+set critical
+set deprecated
+
+node api [kind="service"] @critical
+node debug [kind="service"] @deprecated

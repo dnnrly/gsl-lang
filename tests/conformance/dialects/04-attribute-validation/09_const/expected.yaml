@@ -1,0 +1,5 @@
+outcome: non-conforming
+violations:
+  - definition: Service
+    element: a
+    location: /kind

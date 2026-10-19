@@ -1,0 +1,9 @@
+id: pipeline-rejected
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'subgraph node.kind == "service" | remove orphans'
+    attributes:
+      type: object

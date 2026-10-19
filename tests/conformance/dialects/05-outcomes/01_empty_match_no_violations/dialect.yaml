@@ -1,0 +1,13 @@
+id: empty-match-no-violations
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'subgraph node.kind == "service"'
+    attributes:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
