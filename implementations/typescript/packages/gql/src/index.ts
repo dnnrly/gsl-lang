@@ -6,7 +6,14 @@
  */
 
 export { parseQuery, GqlParseError } from "./parser.js";
-export { Query, type QueryContext, type Value, type Expression } from "./expressions.js";
+export {
+  Query,
+  SubgraphExpr,
+  type QueryContext,
+  type Value,
+  type Expression,
+  type TraversalConfig,
+} from "./expressions.js";
 export type { Predicate } from "./predicates.js";
 export {
   GraphBuilder,

@@ -6,20 +6,23 @@ Copyright (c) 2026 Pascal Dennerly.
 # TypeScript implementation
 
 This directory is an npm workspace containing TypeScript implementations of the
-GSL and GQL languages:
+GSL language family:
 
 - **`@gsl-lang/core`** — GSL parsing, graph construction and canonical
   serialization (`packages/core`).
 - **`@gsl-lang/gql`** — GQL query parsing and execution, depending on
   `@gsl-lang/core` (`packages/gql`).
+- **`@gsl-lang/dialect`** — dialect loading, element matching, GSL-to-JSON
+  projection and JSON Schema conformance validation, depending on
+  `@gsl-lang/core` and `@gsl-lang/gql` (`packages/dialect`).
 
-Both packages are ESM, written with strict TypeScript, and build to `dist/`.
+All packages are ESM, written with strict TypeScript, and build to `dist/`.
 They are validated against the shared, language-neutral conformance fixtures
 under [`tests/conformance/`](../../tests/conformance/README.md); serialization
 matches the Go reference implementation byte-for-byte.
 
-- **Status:** functional (parser, serializer, query engine). No CLI or LSP.
-  Not published.
+- **Status:** functional (parser, serializer, query engine, dialect
+  validator). No CLI or LSP. Not published.
 - **Licence:** Apache-2.0.
 
 ## What is here
@@ -30,6 +33,7 @@ implementations/typescript/
   tsconfig.base.json  # strict, NodeNext
   packages/core/      # @gsl-lang/core
   packages/gql/       # @gsl-lang/gql
+  packages/dialect/   # @gsl-lang/dialect
 ```
 
 ## Commands
