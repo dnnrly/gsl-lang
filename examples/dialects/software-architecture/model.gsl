@@ -1,0 +1,29 @@
+set critical
+set deprecated
+
+node platform_team [kind="team", name="Platform Team", active=true]
+
+node gateway [
+  kind="service",
+  name="Gateway",
+  owner=platform_team,
+  replicas=3,
+  description="Public entry point"
+] @critical
+
+node payments [
+  kind="service",
+  name="Payments",
+  owner=platform_team,
+  replicas=2
+] @critical
+
+node legacy_reporting [
+  kind="service",
+  name="Legacy Reporting",
+  owner=platform_team,
+  replicas=1
+] @deprecated
+
+gateway -> payments [protocol="grpc"]
+payments -> legacy_reporting [protocol="tcp"]

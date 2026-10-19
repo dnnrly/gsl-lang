@@ -2,6 +2,7 @@
 tmp/
 /gsl-diagram
 /gsl-query
+/gsl-dialect
 bin/
 /gsl-lsp
 editors/vscode/node_modules/
