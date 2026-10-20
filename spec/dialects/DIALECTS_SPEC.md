@@ -1,7 +1,7 @@
 # GSL Dialect Specification
 
-**Status:** Design draft (revision `0.2.0-draft`)
-**Version:** `0.2.0-draft`
+**Status:** Design draft
+**Version:** `0.3.0-draft`
 **Target:** GSL v1.0 draft
 **Schema standard:** JSON Schema Draft 2020-12
 **Normative companion:** [SUPPORTED_GQL_SUBSET.md](SUPPORTED_GQL_SUBSET.md)
@@ -184,16 +184,34 @@ The representation field MUST NOT be interpreted as a claim that GSL itself has 
 
 `match` MUST be a mapping containing a `query` field.
 
-The value of `query` MUST be a non-empty string containing a supported GQL query.
+The value of `query` MUST be a non-empty string containing a supported match expression.
 
-Example:
+A match expression is written as an **attribute predicate without an element prefix**. The `subgraph` wrapper and the element namespace are both implicit and are supplied by the definition's `representation` (Section 6.1). An implementation MUST expand the expression by prefixing every attribute reference with the representation before evaluation: the two queries below are equivalent, and the second is the canonical expansion of the first.
 
 ```yaml
+representation: node
+match:
+  query: 'kind == "service"'
+```
+
+```yaml
+representation: node
 match:
   query: 'subgraph node.kind == "service"'
 ```
 
-This example is illustrative; the exact expression MUST conform to the GQL grammar and supported subset implemented by the validator.
+This keeps dialect match expressions focused on the question dialects actually ask — *which elements does this rule apply to?* — and removes the possibility of a mismatch between the namespace in the query and the definition's representation.
+
+The expansion is exactly the `subgraph` form of the full GQL grammar with the representation used as the element prefix. Because the expansion is defined this way, the match expression is a strict subset of GQL and introduces no new syntax; later revisions may accept the explicit `subgraph` form unchanged.
+
+An implementation MUST reject, as an invalid dialect, a `query` that:
+
+- is empty;
+- is not a single attribute predicate (for example it contains a pipeline `|`, traversal, graph algebra, a graph transformation, or more than one top-level predicate);
+- contains an explicit element prefix (`node.`, `edge.` or `set.`) rather than a bare attribute name; or
+- otherwise does not conform to the supported subset in [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md).
+
+This example is illustrative; the exact expression MUST conform to the supported subset implemented by the validator.
 
 Matching determines which graph elements are subject to the definition's constraints. It does not establish that those elements are valid.
 
@@ -228,7 +246,7 @@ The schema is ordinary JSON Schema. Dialect authors SHOULD use standard JSON Sch
 
 Implementations MUST reject a dialect if an `attributes` schema is invalid under Draft 2020-12 or cannot be compiled for validation.
 
-For this revision the following `$ref` policy applies. A schema MAY use `$ref` to targets defined within the same dialect document (for example `#/$defs/...`); such internal references MUST resolve during compilation. A schema MUST NOT use `$ref` to external `http` or `file` targets; an implementation MUST reject such a dialect at load time and MUST NOT silently resolve references using arbitrary network or filesystem access. The `$ref` policy remains provisional and may be extended by a later revision.
+The following `$ref` policy applies. A schema MAY use `$ref` to targets defined within the same dialect document (for example `#/$defs/...`); such internal references MUST resolve during compilation. A schema MUST NOT use `$ref` to external `http` or `file` targets; an implementation MUST reject such a dialect at load time and MUST NOT silently resolve references using arbitrary network or filesystem access. The `$ref` policy remains provisional and may be extended.
 
 ### 6.4 Description and guidance
 
@@ -244,9 +262,9 @@ Guidance may explain, for example, when a concept should be represented as a nod
 
 ### 7.1 Query language
 
-GQL is the query language for selecting elements. This specification does not define a separate dialect matching language.
+GQL is the query language for selecting elements. This specification does not define a separate dialect matching language: a `match.query` is expanded into a full GQL `subgraph` expression (Section 6.2) and evaluated with GQL semantics.
 
-The initial implementation MUST support the agreed subset based on a single `subgraph` predicate.
+A match expression is a single **attribute predicate** whose element prefix is supplied by the definition's `representation`. This is the initial supported subset.
 
 The initial subset MUST NOT include:
 
@@ -254,9 +272,10 @@ The initial subset MUST NOT include:
 - Query pipelines.
 - Graph algebra.
 - Graph transformations.
+- An explicit element prefix in the match expression.
 - Other unsupported query forms.
 
-The exact grammar and expression semantics of the supported subset are documented normatively in the companion profile [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md), which defines the accepted `subgraph` predicate forms and the observable distinction between an out-of-subset query and a syntax error.
+The exact grammar and expression semantics of the supported subset are documented normatively in the companion profile [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md), which defines the accepted predicate forms, the expansion rule, and the observable distinction between an out-of-subset query and a syntax error.
 
 Implementations MUST reject unsupported query forms. They MUST NOT approximate an unsupported query with different semantics.
 
@@ -264,10 +283,13 @@ Implementations MUST reject unsupported query forms. They MUST NOT approximate a
 
 For each element definition, an implementation MUST:
 
-1. Evaluate its supported match query against the input graph.
-2. Identify the elements returned by the query.
-3. Select only elements whose representation matches the definition's `representation`.
-4. Validate the attributes of each selected element against the definition's schema.
+1. Expand its match expression into a `subgraph` predicate using the definition's representation as the element prefix (Section 6.2).
+2. Evaluate the expanded query against the input graph.
+3. Identify the elements returned by the query.
+4. Select only elements whose representation matches the definition's `representation`.
+5. Validate the attributes of each selected element against the definition's schema.
+
+Because the expansion fixes the element prefix to the representation, steps 1 and 4 agree by construction: a match expression cannot select elements of a kind other than its definition's representation.
 
 An element may be selected by more than one element definition. There is no one-to-one relationship between graph elements and dialect definitions.
 
@@ -325,7 +347,7 @@ The following mappings are normative:
 | Empty | `{"$gslEmpty": true}` |
 | Node reference | `{"$gslRef": "<node-id>"}` |
 
-The node-reference representation shown here is the compact form confirmed for this revision. It is deliberately explicit so that a node reference is distinguishable from an ordinary string.
+The node-reference representation is deliberately explicit so that a node reference is distinguishable from an ordinary string.
 
 #### String
 
@@ -693,25 +715,27 @@ A practical implementation should proceed in the following order:
 
 Each stage should have independent tests. In particular, the implementation should not depend on the JSON Schema library to interpret GSL values or perform graph matching.
 
-## 16. Open decisions
+## 16. Decisions and open questions
 
-The following items remain to be resolved before this draft should be treated as implementation-ready. Items marked *Resolved in 0.2.0-draft* were confirmed during implementation of the Go reference.
+The following items record the design decisions taken for this draft and the questions that remain open before it should be treated as implementation-ready.
 
 ### 16.1 GSL-to-JSON projection
 
-- *Resolved in 0.2.0-draft:* the node-reference representation is `{"$gslRef": "<node-id>"}` and the explicitly present Empty value is `{"$gslEmpty": true}` (Section 8.3).
-- *Resolved in 0.2.0-draft:* GSL numbers project to JSON numbers; a whole value may satisfy `type: integer`. Full precision and interoperability requirements for differing numeric representations remain open.
+- The node-reference representation is `{"$gslRef": "<node-id>"}` and the explicitly present Empty value is `{"$gslEmpty": true}` (Section 8.3).
+- GSL numbers project to JSON numbers; a whole value may satisfy `type: integer`. Full precision and interoperability requirements for differing numeric representations remain open.
 - Specify behaviour for any GSL value types added in future versions.
 
 ### 16.2 GQL subset
 
-- *Resolved in 0.2.0-draft:* the supported `subgraph` predicate grammar and semantics are documented in [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md), including the observable distinction between an out-of-subset query and a syntax error.
-- *Resolved in 0.2.0-draft:* failures to evaluate a match query are reported as a matching error that yields the incomplete outcome (Sections 7.4 and 10.4), distinct from a conformance violation.
+- The supported `subgraph` predicate grammar and semantics are documented in [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md), including the observable distinction between an out-of-subset query and a syntax error.
+- Failures to evaluate a match query are reported as a matching error that yields the incomplete outcome (Sections 7.4 and 10.4), distinct from a conformance violation.
+- The `subgraph` wrapper and the element namespace are implicit; a `match.query` is a bare attribute predicate expanded with the definition's `representation` as the element prefix (Sections 6.2 and 7.1). Explicit `node.`/`edge.`/`set.` prefixes are rejected.
+- Whether later revisions broaden the accepted predicate operators beyond attribute value matching (for example traversal-derived selection or set targeting) remains open.
 
 ### 16.3 JSON Schema reference resolution
 
-- *Resolved in 0.2.0-draft:* `$ref` to targets within the same dialect document is permitted and MUST resolve at compile time; external `http`/`file` `$ref` targets MUST be rejected at dialect load (Section 6.3).
-- Define whether the permitted internal reference scope extends beyond the single document in a later revision.
+- `$ref` to targets within the same dialect document is permitted and MUST resolve at compile time; external `http`/`file` `$ref` targets MUST be rejected at dialect load (Section 6.3).
+- Whether the permitted internal reference scope extends beyond the single document remains open.
 
 ### 16.4 Diagnostics and validation results
 
@@ -732,13 +756,16 @@ The following items remain to be resolved before this draft should be treated as
 
 ## 17. Status of this specification
 
-This document consolidates the agreed design and provides a basis for implementation and review. Revision `0.2.0-draft` incorporates decisions confirmed against the Go reference implementation.
+This document consolidates the agreed design and provides a basis for implementation and review.
+
+**Implementation note:** the implicit-namespace match expression (Section 6.2) is specified here but the reference implementations in `implementations/` still accept the explicit `subgraph node.…` form. The implementation work to expand bare attribute predicates and reject explicit prefixes and wrappers is tracked separately; until it lands, this document describes the target form and the implementations describe the current form.
 
 The following architectural decisions are treated as settled for this draft:
 
 - YAML dialect documents.
 - JSON Schema Draft 2020-12 for attribute constraints.
 - GQL for matching, with a restricted initial subset (`SUPPORTED_GQL_SUBSET.md`).
+- Match expressions written as bare attribute predicates, with the `subgraph` wrapper and element namespace implied by the definition's `representation`.
 - Explicit projection of GSL attribute values into JSON.
 - The compact `{"$gslRef": ...}` and `{"$gslEmpty": true}` projections for node references and explicit Empty values.
 - Internal-document `$ref` permitted; external `$ref` rejected at load.
