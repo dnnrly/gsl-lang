@@ -104,15 +104,21 @@ gsl-dialect project -d software-architecture.dialect.yaml -i model.gsl
 ```json
 {
   "Service": {
-    "gateway": {
-      "kind": "service",
-      "name": "Gateway",
-      "owner": { "$gslRef": "platform_team" },
-      "replicas": 3
-    }
+    "gateway": [
+      {
+        "kind": "service",
+        "name": "Gateway",
+        "owner": { "$gslRef": "platform_team" },
+        "replicas": 3
+      }
+    ]
   }
 }
 ```
+
+Each element descriptor maps to a **list** of projected instances. This keeps
+duplicate descriptors — for example two unlabelled edges between the same
+endpoints — from collapsing: every selected element appears exactly once.
 
 ## Next
 

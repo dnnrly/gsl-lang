@@ -67,19 +67,24 @@ contract (see `spec/dialects/DIALECTS_SPEC.md` §16.4):
 ## `project`
 
 Loads the dialect and prints the projected attribute map for every matched
-element, keyed by definition and element reference. This is the JSON instance a
-dialect's schemas validate; it is useful for debugging projection
-independently of JSON Schema validation.
+element, keyed by definition and element reference. Each reference maps to a
+**list** of projected instances, so two elements that share a reference (for
+example two unlabelled edges between the same endpoints) are both reported
+rather than one overwriting the other. This is the JSON instance a dialect's
+schemas validate; it is useful for debugging projection independently of JSON
+Schema validation.
 
 ```json
 {
   "Service": {
-    "gateway": {
-      "kind": "service",
-      "owner": { "$gslRef": "platform_team" },
-      "replicas": 3,
-      "enabled": { "$gslEmpty": true }
-    }
+    "gateway": [
+      {
+        "kind": "service",
+        "owner": { "$gslRef": "platform_team" },
+        "replicas": 3,
+        "enabled": { "$gslEmpty": true }
+      }
+    ]
   }
 }
 ```

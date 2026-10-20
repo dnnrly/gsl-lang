@@ -104,12 +104,17 @@ func runProject(cfg *projectConfig) error {
 		return &exitError{code: ExitIncomplete, err: err}
 	}
 
-	projected := map[string]map[string]any{}
+	// Every selected element is reported, even when two distinct elements
+	// share a descriptor (for example duplicate unlabelled edges between the
+	// same endpoints). The value for each descriptor is therefore always a
+	// list of projected attribute maps, so no selection is silently dropped
+	// and the shape does not vary with the number of matches.
+	projected := map[string]map[string][]map[string]any{}
 	for _, s := range selected {
 		if projected[s.Definition] == nil {
-			projected[s.Definition] = map[string]any{}
+			projected[s.Definition] = map[string][]map[string]any{}
 		}
-		projected[s.Definition][s.Element] = s.Attributes
+		projected[s.Definition][s.Element] = append(projected[s.Definition][s.Element], s.Attributes)
 	}
 
 	out, err := json.MarshalIndent(projected, "", "  ")

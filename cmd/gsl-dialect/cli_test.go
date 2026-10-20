@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -101,6 +102,58 @@ func TestValidateGraphParseError(t *testing.T) {
 	}
 }
 
+func TestProjectDuplicateEdgesCollapse(t *testing.T) {
+	// Two distinct, unlabelled edges between the same endpoints. Both resolve
+	// to the same descriptor ("a->b") and differ only in an attribute.
+	graph := "node a\nnode b\n" +
+		"a -> b [protocol=\"http\", weight=1]\n" +
+		"a -> b [protocol=\"grpc\", weight=2]\n"
+
+	const edgeDialect = `
+id: edge-dialect
+version: "1"
+elements:
+  Link:
+    representation: edge
+    match:
+      query: 'subgraph edge.protocol exists'
+    attributes:
+      type: object
+`
+
+	var out bytes.Buffer
+	if err := runProject(&projectConfig{
+		DialectFile: writeTemp(t, "d.yaml", edgeDialect),
+		Stdin:       strings.NewReader(graph),
+		Stdout:      &out,
+	}); err != nil {
+		t.Fatalf("runProject: %v", err)
+	}
+
+	var projected map[string]map[string][]map[string]any
+	if err := json.Unmarshal(out.Bytes(), &projected); err != nil {
+		t.Fatalf("project output is not JSON: %v\n%s", err, out.String())
+	}
+
+	links := projected["Link"]
+	if len(links) != 1 {
+		t.Fatalf("projected %d Link descriptors, want 1 distinct descriptor key: %v", len(links), links)
+	}
+
+	// Both edges match the same descriptor ("a->b"), so both must appear under
+	// it. Before the fix the map keyed by descriptor kept only the last one.
+	instances := links["a->b"]
+	if len(instances) != 2 {
+		t.Fatalf("only %d of 2 matching edges survived projection: %v", len(instances), instances)
+	}
+
+	// Both attribute sets must be present, in graph order.
+	got := []any{instances[0]["protocol"], instances[1]["protocol"]}
+	if got[0] != "http" || got[1] != "grpc" {
+		t.Errorf("projected edges = %v, want [http grpc]", got)
+	}
+}
+
 func TestValidateJSONOutput(t *testing.T) {
 	var out bytes.Buffer
 	_ = runValidate(&validateConfig{
@@ -132,5 +185,14 @@ func TestProject(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("projection output missing %q:\n%s", want, got)
 		}
+	}
+
+	// Each descriptor maps to a list of instances, even for a single match.
+	var projected map[string]map[string][]map[string]any
+	if err := json.Unmarshal(out.Bytes(), &projected); err != nil {
+		t.Fatalf("project output is not JSON: %v\n%s", err, out.String())
+	}
+	if instances := projected["Service"]["a"]; len(instances) != 1 {
+		t.Errorf("Service \"a\" projected %d instances, want 1: %v", len(instances), instances)
 	}
 }
