@@ -308,13 +308,19 @@ class Parser {
         const op = this.next().value;
         const v = this.parseValue();
         // Numeric literals retain their numeric type (spec §3.3); string
-        // depth values are also accepted for backward compatibility.
+        // depth values are also accepted for backward compatibility. Either
+        // way the depth must be an integer, matching the Go implementation.
         let value: number;
         if (typeof v === "number") {
+          if (!Number.isInteger(v)) {
+            throw new GqlParseError(`invalid depth value: ${v}`);
+          }
           value = v;
         } else if (typeof v === "string") {
+          if (!/^[+-]?\d+$/.test(v)) {
+            throw new GqlParseError(`invalid depth value: ${v}`);
+          }
           value = Number.parseInt(v, 10);
-          if (Number.isNaN(value)) throw new GqlParseError(`invalid depth value: ${v}`);
         } else {
           throw new GqlParseError("depth must be a numeric value");
         }

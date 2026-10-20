@@ -20,8 +20,8 @@ import (
 // rawDialect mirrors the supported root fields of a dialect document. Unknown
 // fields are ignored (and therefore tolerated) by the YAML decoder.
 type rawDialect struct {
-	ID          *string   `yaml:"id"`
-	Version     *string   `yaml:"version"`
+	ID          yaml.Node `yaml:"id"`
+	Version     yaml.Node `yaml:"version"`
 	Title       string    `yaml:"title"`
 	Description string    `yaml:"description"`
 	Guidance    string    `yaml:"guidance"`
@@ -62,11 +62,13 @@ func load(r io.Reader) (*Dialect, error) {
 		return nil, loadError("", "not a valid YAML mapping: %v", err)
 	}
 
-	if raw.ID == nil || strings.TrimSpace(*raw.ID) == "" {
-		return nil, loadError("id", "required non-empty string")
+	id, err := requiredString(&raw.ID, "id")
+	if err != nil {
+		return nil, err
 	}
-	if raw.Version == nil || strings.TrimSpace(*raw.Version) == "" {
-		return nil, loadError("version", "required non-empty string")
+	version, err := requiredString(&raw.Version, "version")
+	if err != nil {
+		return nil, err
 	}
 	if raw.Elements.Kind == 0 {
 		return nil, loadError("elements", "required mapping (may be empty)")
@@ -76,8 +78,8 @@ func load(r io.Reader) (*Dialect, error) {
 	}
 
 	d := &Dialect{
-		ID:          *raw.ID,
-		Version:     *raw.Version,
+		ID:          id,
+		Version:     version,
 		Title:       raw.Title,
 		Description: raw.Description,
 		Guidance:    raw.Guidance,
@@ -98,6 +100,41 @@ func load(r io.Reader) (*Dialect, error) {
 	})
 
 	return d, nil
+}
+
+// requiredString validates a required scalar string field such as `id` or
+// `version`.
+//
+// The YAML tag is inspected rather than the value: a plain scalar like
+// `version: 1` resolves to !!int and is rejected instead of being silently
+// coerced to "1". Spec §5.1/§5.2 require both fields to be strings, and the
+// TypeScript loader applies the same rule, so the two implementations agree.
+func requiredString(node *yaml.Node, path string) (string, error) {
+	if node.Kind == 0 {
+		return "", loadError(path, "required non-empty string")
+	}
+	if node.Kind != yaml.ScalarNode || node.Tag != "!!str" {
+		return "", loadError(path, "must be a non-empty string (got %s)", nodeTag(node))
+	}
+	if strings.TrimSpace(node.Value) == "" {
+		return "", loadError(path, "required non-empty string")
+	}
+	return node.Value, nil
+}
+
+// nodeTag reports a parsed node's YAML tag, falling back to its kind so that a
+// diagnostic never names an empty tag.
+func nodeTag(node *yaml.Node) string {
+	if node.Tag != "" {
+		return node.Tag
+	}
+	switch node.Kind {
+	case yaml.MappingNode:
+		return "!!map"
+	case yaml.SequenceNode:
+		return "!!seq"
+	}
+	return "!!null"
 }
 
 func parseElement(name string, node *yaml.Node) (*ElementDefinition, error) {

@@ -130,13 +130,16 @@ Typical selection queries:
 match:
   query: 'subgraph edge.protocol exists'          # every edge with a protocol
 match:
-  query: 'subgraph node.replicas > 1'             # nodes with more than one replica
+  query: 'subgraph node.replicas != 0'            # nodes whose replicas are not zero
 match:
   query: 'subgraph node.tier == "frontend"'       # attribute equality
 ```
 
 Not supported in this subset: graph traversal, query pipelines, graph algebra,
-and transformations. An unsupported or unevaluable query is a **matching
+transformations, and range comparisons — the GQL grammar has no `>`, `>=`, `<`
+or `<=` operators, so `subgraph node.replicas > 1` is rejected at load. Select
+with equality, inequality, `exists`, set membership or depth instead. An
+unsupported or unevaluable query is a **matching
 error**, not a conformance violation — the graph must not be reported as
 conforming. The precise grammar is documented in
 [`SUPPORTED_GQL_SUBSET.md`](../../../../spec/dialects/SUPPORTED_GQL_SUBSET.md); the full

@@ -91,7 +91,7 @@ and a dialect that requires a service name and at least one replica:
 
 ```yaml
 id: software-architecture
-version: 1
+version: "1"
 elements:
   Service:
     representation: node

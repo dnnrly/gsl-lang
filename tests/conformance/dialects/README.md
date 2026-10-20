@@ -89,6 +89,8 @@ tests/conformance/dialects/
 | `11_unknown_fields_ignored` | Unknown root and element fields are ignored |
 | `12_empty_elements_mapping` | Empty `elements` mapping loads and conforms |
 | `13_not_a_mapping` | The document is not a YAML mapping |
+| `14_id_not_a_string` | `id` given as a non-string scalar (`!!int`) is rejected, not coerced |
+| `15_version_not_a_string` | `version` given as a non-string scalar (`!!int`) is rejected, not coerced |
 
 All `01-document` fixtures except `11` and `12` expect `invalid-dialect`.
 

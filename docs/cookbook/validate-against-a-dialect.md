@@ -36,7 +36,7 @@ attributes with JSON Schema:
 
 ```yaml
 id: software-architecture
-version: 1
+version: "1"
 elements:
   Service:
     representation: node

@@ -302,6 +302,23 @@ func TestInvalidDialectRejected(t *testing.T) {
 			wantPath: "version",
 		},
 		{
+			// A plain `version: 1` resolves to !!int; it must be rejected
+			// rather than coerced, so Go and TypeScript agree (spec §5.2).
+			name:     "version not a string",
+			yaml:     "id: x\nversion: 1\nelements: {}\n",
+			wantPath: "version",
+		},
+		{
+			name:     "id not a string",
+			yaml:     "id: 123\nversion: \"1\"\nelements: {}\n",
+			wantPath: "id",
+		},
+		{
+			name:     "id is a mapping",
+			yaml:     "id: {a: 1}\nversion: \"1\"\nelements: {}\n",
+			wantPath: "id",
+		},
+		{
 			name:     "missing elements",
 			yaml:     "id: x\nversion: \"1\"\n",
 			wantPath: "elements",

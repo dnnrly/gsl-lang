@@ -638,6 +638,42 @@ func TestDepthPredicate(t *testing.T) {
 	})
 }
 
+// TestDepthPredicateRejectsNonIntegerValues verifies that a fractional or
+// otherwise non-integer depth literal fails to parse, in both numeric and
+// string form. The TypeScript parser applies the same rule so that both
+// implementations accept the same dialect match queries (spec §3.3).
+func TestDepthPredicateRejectsNonIntegerValues(t *testing.T) {
+	rejected := []string{
+		`subgraph edge.depth == 1.5`,
+		`subgraph edge.depth != 1.5`,
+		`subgraph edge.depth = 1.5`,
+		`subgraph edge.depth == "1.5"`,
+		`subgraph edge.depth == "one"`,
+		`subgraph edge.depth == true`,
+	}
+	for _, q := range rejected {
+		t.Run(q, func(t *testing.T) {
+			if _, err := NewQueryParser(q).Parse(); err == nil {
+				t.Errorf("expected a parse error for %s", q)
+			}
+		})
+	}
+
+	accepted := []string{
+		`subgraph edge.depth == 0`,
+		`subgraph edge.depth == 2`,
+		`subgraph edge.depth = 0`,
+		`subgraph edge.depth == "0"`,
+	}
+	for _, q := range accepted {
+		t.Run(q, func(t *testing.T) {
+			if _, err := NewQueryParser(q).Parse(); err != nil {
+				t.Errorf("unexpected parse error for %s: %v", q, err)
+			}
+		})
+	}
+}
+
 // TestParentPredicate tests edge depends on <predicate>
 func TestParentPredicate(t *testing.T) {
 	// Create a parent edge
