@@ -4,7 +4,7 @@ elements:
   ServiceName:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [name]
@@ -14,7 +14,7 @@ elements:
   ServiceReplicas:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [replicas]

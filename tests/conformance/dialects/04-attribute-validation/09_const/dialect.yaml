@@ -4,7 +4,7 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind exists'
+      query: 'kind exists'
     attributes:
       type: object
       properties:

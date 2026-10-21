@@ -64,7 +64,7 @@ func TestLoadWorkedExample(t *testing.T) {
 	if el.Representation != RepresentationNode {
 		t.Errorf("Representation = %q", el.Representation)
 	}
-	if el.Query != `subgraph node.kind == "service"` {
+	if el.Query != `kind == "service"` {
 		t.Errorf("Query = %q", el.Query)
 	}
 }
@@ -107,7 +107,7 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       properties:
@@ -271,7 +271,7 @@ elements:
     representation: node
     future_field: whatever
     match:
-      query: 'subgraph node.kind == "thing"'
+      query: 'kind == "thing"'
     attributes:
       type: object
 `)
@@ -335,7 +335,7 @@ version: "1"
 elements:
   T:
     match:
-      query: 'subgraph exists'
+      query: 'kind exists'
     attributes:
       type: object
 `,
@@ -349,7 +349,7 @@ elements:
   T:
     representation: vertex
     match:
-      query: 'subgraph exists'
+      query: 'kind exists'
     attributes:
       type: object
 `,
@@ -388,7 +388,7 @@ elements:
   T:
     representation: node
     match:
-      query: 'subgraph exists'
+      query: 'kind exists'
 `,
 			wantPath: "elements[T].attributes",
 		},
@@ -400,7 +400,7 @@ elements:
   T:
     representation: node
     match:
-      query: 'subgraph exists'
+      query: 'kind exists'
     attributes:
       type: 7
 `,
@@ -434,11 +434,11 @@ elements:
 // supported subset are rejected at dialect-load time (spec §7.1).
 func TestUnsupportedQueriesRejected(t *testing.T) {
 	queries := []string{
-		`subgraph node.kind == "service" traverse out 1`,
-		`subgraph node.kind == "service" scope`,
-		`subgraph node.kind == "service" | remove edge where edge.x == "y"`,
+		`kind == "service" traverse out 1`,
+		`kind == "service" scope`,
+		`kind == "service" | remove edge where edge.x == "y"`,
 		`from API`,
-		`subgraph node.kind == "service" | make node.x = 1 where exists`,
+		`kind == "service" | make node.x = 1 where exists`,
 		`subgraph`,
 	}
 	for _, q := range queries {
@@ -464,7 +464,7 @@ elements:
   HttpEdge:
     representation: edge
     match:
-      query: 'subgraph edge.protocol == "http"'
+      query: 'protocol == "http"'
     attributes:
       type: object
       required: [protocol]
@@ -494,7 +494,7 @@ elements:
   HttpEdge:
     representation: edge
     match:
-      query: 'subgraph edge.protocol == "https"'
+      query: 'protocol == "https"'
     attributes:
       type: object
       properties:
@@ -521,7 +521,7 @@ elements:
   Group:
     representation: set
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [label]
@@ -561,14 +561,14 @@ elements:
   WithName:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [name]
   Replicas:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [replicas]
@@ -602,7 +602,7 @@ elements:
   Thing:
     representation: node
     match:
-      query: 'subgraph node.kind == "thing"'
+      query: 'kind == "thing"'
     attributes:
       type: object
       required: [owner]
@@ -640,7 +640,7 @@ elements:
   Thing:
     representation: node
     match:
-      query: 'subgraph node.kind == "thing"'
+      query: 'kind == "thing"'
     attributes:
       $ref: 'https://example.com/never-loaded.json'
 `))
@@ -678,5 +678,106 @@ func TestProjectValueKinds(t *testing.T) {
 
 	if _, err := projectAttributes(gsl.AttributeMap{"weird": struct{}{}}); err == nil {
 		t.Error("expected an error for an unsupported GSL value type")
+	}
+}
+
+// TestMatchQueryIsBarePredicate checks that a match query is written as a bare
+// attribute predicate and expanded with the definition's representation
+// (spec §6.2).
+func TestMatchQueryIsBarePredicate(t *testing.T) {
+	d := mustLoad(t, `
+id: bare
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'kind == "service" AND active exists'
+    attributes:
+      type: object
+      properties:
+        kind:
+          const: service
+`)
+
+	// The stored Query is the author's bare text, not the expanded form.
+	els := d.Elements()
+	if got := els[0].Query; got != `kind == "service" AND active exists` {
+		t.Errorf("Query = %q, want the bare authored text", got)
+	}
+
+	g := mustGraph(t, `
+node a [kind="service", active=true]
+node b [kind="team", active=true]
+node c [kind="service"]
+`)
+	selected, err := d.Match(g)
+	if err != nil {
+		t.Fatalf("Match: %v", err)
+	}
+	if len(selected) != 1 || selected[0].Element != "a" {
+		t.Fatalf("expected only node a selected, got %+v", selected)
+	}
+}
+
+// TestMatchQueryRejectsExpandedForms checks that writing the element prefix or
+// the subgraph wrapper is an invalid dialect (spec §6.2).
+func TestMatchQueryRejectsExpandedForms(t *testing.T) {
+	tests := []struct {
+		name  string
+		query string
+	}{
+		{"explicit node prefix", `node.kind == "service"`},
+		{"explicit edge prefix", `edge.protocol == "http"`},
+		{"explicit set prefix", `set.kind == "service"`},
+		{"explicit subgraph wrapper", `subgraph node.kind == "service"`},
+		{"explicit subgraph with bare predicate", `subgraph kind == "service"`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := "id: x\nversion: \"1\"\nelements:\n  T:\n    representation: node\n    match:\n      query: '" + tt.query + "'\n    attributes:\n      type: object\n"
+			_, err := Load(strings.NewReader(doc))
+			if err == nil {
+				t.Fatalf("expected %q to be rejected", tt.query)
+			}
+			if !strings.Contains(err.Error(), "match.query") {
+				t.Errorf("error should reference match.query, got %v", err)
+			}
+		})
+	}
+}
+
+// TestSetMatchQueryIsValidatedNotEvaluated checks that a set definition's bare
+// predicate must be well-formed but never filters sets (spec §6.2, §7.5).
+func TestSetMatchQueryIsValidatedNotEvaluated(t *testing.T) {
+	// Well-formed: selects all sets even though no set has kind "service".
+	d := mustLoad(t, `
+id: sets
+version: "1"
+elements:
+  Group:
+    representation: set
+    match:
+      query: 'kind == "service"'
+    attributes:
+      type: object
+`)
+	g := mustGraph(t, `
+set alpha
+set beta
+node a [kind="service"] @alpha
+`)
+	selected, err := d.Match(g)
+	if err != nil {
+		t.Fatalf("Match: %v", err)
+	}
+	if len(selected) != 2 {
+		t.Fatalf("expected both sets selected, got %+v", selected)
+	}
+
+	// Ill-formed: still an invalid dialect.
+	bad := "id: x\nversion: \"1\"\nelements:\n  G:\n    representation: set\n    match:\n      query: 'kind =='\n    attributes:\n      type: object\n"
+	if _, err := Load(strings.NewReader(bad)); err == nil {
+		t.Fatal("expected an ill-formed set predicate to be rejected")
 	}
 }

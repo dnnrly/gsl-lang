@@ -4,6 +4,6 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind =='
+      query: 'kind =='
     attributes:
       type: object

@@ -69,6 +69,14 @@ selects only the elements whose kind matches the definition's `representation`
 (spec §7.2). Because the expansion fixes the element prefix to the
 representation, the raw match set and the selected kind agree by construction.
 
+**Set representation.** The `subgraph` grammar admits only `node.` and `edge.`
+element prefixes; there is no `set.` prefix. A `representation: set` definition
+therefore cannot be expanded with its representation as the prefix. Its `query`
+MUST still be a well-formed in-subset attribute predicate, and implementations
+MUST validate it for syntax and subset membership, but they MUST NOT evaluate it
+to filter sets: a `set` definition selects every set in the input graph (spec
+§7.5).
+
 ## 2. Predicates
 
 Any predicate accepted by the full grammar (§4–§13) is supported, provided it is
@@ -256,8 +264,9 @@ protocol == "http"
 
 Match sets usable by a `representation: set` definition. Because a GQL
 `subgraph` carries every set declared in the input graph, any in-subset
-expression selects all sets; dialect authors SHOULD NOT rely on the predicate to
-filter sets (see the known limitation recorded in `DIALECTS_SPEC.md`).
+expression selects all sets; the predicate is validated but never evaluated, so
+dialect authors SHOULD NOT rely on it to filter sets (see the known limitation
+recorded in `DIALECTS_SPEC.md`).
 
 ```text
 kind == "service"

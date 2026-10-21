@@ -204,6 +204,8 @@ This keeps dialect match expressions focused on the question dialects actually a
 
 The expansion is exactly the `subgraph` form of the full GQL grammar with the representation used as the element prefix. Because the expansion is defined this way, the match expression is a strict subset of GQL and introduces no new syntax; later revisions may accept the explicit `subgraph` form unchanged.
 
+The GQL `subgraph` grammar has no `set.` element prefix: it admits only `node.` and `edge.` (Section 7.5). A `representation: set` definition therefore cannot be expanded with its representation as the prefix. For such a definition the `query` is still REQUIRED to be a well-formed in-subset attribute predicate, but it is **not evaluated**: a `set` definition selects every set in the input graph, and the predicate has no filtering effect (Section 7.5). An implementation MUST validate the predicate's syntax and subset membership and MUST NOT branch on its value when selecting sets.
+
 An implementation MUST reject, as an invalid dialect, a `query` that:
 
 - is empty;
@@ -311,9 +313,9 @@ A matching error is distinct from an attribute constraint violation. If a matchi
 
 ### 7.5 Set selection in the initial subset
 
-The initial `subgraph` subset operates on nodes and edges; it has no predicate that targets a specific named set. A `subgraph` expression therefore copies every declared set of the input graph into its result, regardless of attributes.
+The initial `subgraph` subset operates on nodes and edges; it has no predicate that targets a specific named set, and the `subgraph` grammar admits only `node.` and `edge.` element prefixes, not `set.`. A `subgraph` expression therefore copies every declared set of the input graph into its result, regardless of attributes.
 
-As a consequence, an element definition with `representation: set` selects **all** sets present in the input graph. Dialect authors SHOULD write permissive set schemas under the initial subset, and MUST NOT rely on set selection to discriminate one set from another. This restriction is a property of the current GQL engine, not of dialects, and may be relaxed if GQL gains set-targeting predicates (see [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md)).
+As a consequence, an element definition with `representation: set` selects **all** sets present in the input graph. Its `match.query` MUST still be a well-formed in-subset attribute predicate (Section 6.2), but the predicate is validated for syntax and subset membership only and MUST NOT be evaluated to filter sets. Dialect authors SHOULD write permissive set schemas under the initial subset, and MUST NOT rely on set selection to discriminate one set from another. This restriction is a property of the current GQL engine, not of dialects, and may be relaxed if GQL gains set-targeting predicates (see [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md)).
 
 ## 8. GSL-to-JSON projection
 
@@ -758,7 +760,7 @@ The following items record the design decisions taken for this draft and the que
 
 This document consolidates the agreed design and provides a basis for implementation and review.
 
-**Implementation note:** the implicit-namespace match expression (Section 6.2) is specified here but the reference implementations in `implementations/` still accept the explicit `subgraph node.…` form. The implementation work to expand bare attribute predicates and reject explicit prefixes and wrappers is tracked separately; until it lands, this document describes the target form and the implementations describe the current form.
+**Implementation note:** the Go reference implementation expands bare attribute predicates, rejects explicit element prefixes and the explicit `subgraph` wrapper, and validates but does not evaluate a `representation: set` predicate (Section 6.2). The TypeScript implementation is being brought to parity; until it lands, this document describes the target form and the TypeScript package describes the current form.
 
 The following architectural decisions are treated as settled for this draft:
 

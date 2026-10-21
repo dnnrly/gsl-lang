@@ -4,6 +4,6 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: not-a-json-schema-type

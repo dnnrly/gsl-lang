@@ -31,7 +31,7 @@ elements:
   Thing:
     representation: node
     match:
-      query: 'subgraph node.kind == "thing"'
+      query: 'kind == "thing"'
     attributes:
       type: object
       required: [owner]
@@ -60,7 +60,7 @@ elements:
   Thing:
     representation: node
     match:
-      query: 'subgraph node.kind == "thing"'
+      query: 'kind == "thing"'
     attributes:
       $ref: 'https://example.com/never-loaded.json'
 `),
@@ -78,7 +78,7 @@ elements:
     representation: node
     futureElementField: ignored
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
 `);
@@ -98,7 +98,7 @@ elements:
   HttpEdge:
     representation: edge
     match:
-      query: 'subgraph edge.protocol == "http"'
+      query: 'protocol == "http"'
     attributes:
       type: object
 `);
@@ -117,7 +117,7 @@ elements:
   Classification:
     representation: set
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
 `);
@@ -136,7 +136,7 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [kind]
@@ -146,7 +146,7 @@ elements:
   Replicas:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [replicas]
@@ -189,7 +189,7 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service" traverse out 1'
+      query: 'kind == "service" traverse out 1'
     attributes:
       type: object
 `),
@@ -207,7 +207,7 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service" | remove orphans'
+      query: 'kind == "service" | remove orphans'
     attributes:
       type: object
 `),
@@ -224,7 +224,7 @@ version: "1"
 elements:
   Service:
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
 `),
@@ -248,7 +248,7 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
 `);
@@ -258,4 +258,88 @@ elements:
     throw new Error("boom");
   };
   assert.throws(() => d.match(graph('node a [kind="service"]')), MatchingError);
+});
+
+test("match query is a bare predicate expanded with the representation", () => {
+  const d = dialect(`
+id: bare
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'kind == "service" AND active exists'
+    attributes:
+      type: object
+`);
+  assert.equal(d.elements[0]!.query, 'kind == "service" AND active exists');
+
+  const selected = d.match(
+    graph('node a [kind="service", active=true]\nnode b [kind="team", active=true]\nnode c [kind="service"]'),
+  );
+  assert.equal(selected.length, 1);
+  assert.equal(selected[0]!.element, "a");
+});
+
+test("explicit prefixes and the subgraph wrapper are rejected at load", () => {
+  const queries = [
+    'node.kind == "service"',
+    'edge.protocol == "http"',
+    'set.kind == "service"',
+    'subgraph node.kind == "service"',
+    'subgraph kind == "service"',
+  ];
+  for (const query of queries) {
+    assert.throws(
+      () =>
+        dialect(`
+id: x
+version: "1"
+elements:
+  T:
+    representation: node
+    match:
+      query: '${query}'
+    attributes:
+      type: object
+`),
+      LoadError,
+      `expected ${query} to be rejected`,
+    );
+  }
+});
+
+test("a set match query is validated but not evaluated", () => {
+  const d = dialect(`
+id: sets
+version: "1"
+elements:
+  Group:
+    representation: set
+    match:
+      query: 'kind == "service"'
+    attributes:
+      type: object
+`);
+  const selected = d.match(graph('set alpha\nset beta\nnode a [kind="service"] @alpha'));
+  assert.deepEqual(
+    selected.map((s) => s.element),
+    ["alpha", "beta"],
+  );
+
+  assert.throws(
+    () =>
+      dialect(`
+id: x
+version: "1"
+elements:
+  G:
+    representation: set
+    match:
+      query: 'kind =='
+    attributes:
+      type: object
+`),
+    LoadError,
+  );
 });

@@ -35,7 +35,7 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [name]

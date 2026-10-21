@@ -2,7 +2,7 @@
 name: gsl-dialect-guide
 type: authoring-guide
 language: GSL
-version: 0.2.0-draft
+version: 0.3.0-draft
 description: Authoring guide for GSL dialects - YAML documents that declare how a graph should be shaped and what its projected attributes must look like. Covers the dialect document structure, element definitions, the supported GQL match subset, GSL-to-JSON projection, writing JSON Schema against projected values, and the gsl-dialect command-line tool. Use when writing or reviewing a .dialect.yaml file, validating a model against conventions, or projecting graph attributes to JSON.
 keywords: [gsl, dialect, json-schema, validation, conventions, projection, gql]
 spec: DIALECTS_SPEC.md
@@ -69,7 +69,7 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [kind, name, replicas]
@@ -109,39 +109,46 @@ The three representations correspond to the three things a graph is made of:
 | `edge` | edges | the edge label, else `from->to` |
 | `set` | named sets | the set name |
 
-> **Known limitation.** The current GQL engine's `subgraph` copies every set
-> declaration unconditionally, so a `set` definition selects *all* sets in the
-> input graph. See
+> **Known limitation.** The GQL `subgraph` grammar has no `set.` element prefix
+> and copies every set declaration unconditionally, so a `set` definition
+> selects *all* sets in the input graph. Its `match.query` is still validated as
+> a well-formed predicate but is never used to filter sets. See
 > [`SUPPORTED_GQL_SUBSET.md`](../../../../spec/dialects/SUPPORTED_GQL_SUBSET.md).
 
 ## 4. Matching: the supported GQL subset
 
-`match.query` is a GQL query, but dialects support **only a single `subgraph`
-predicate**. That is enough to select nodes, edges and sets by their attributes:
+`match.query` is written as a **bare attribute predicate** — no `subgraph`
+keyword and no `node.`/`edge.` prefix. Both are supplied by the definition's
+`representation`. The predicate is expanded to a full `subgraph` query before
+evaluation, so `representation: node` with the query below means
+`subgraph node.kind == "service"`:
 
 ```yaml
 match:
-  query: 'subgraph node.kind == "service"'
+  query: 'kind == "service"'
 ```
 
 Typical selection queries:
 
 ```yaml
 match:
-  query: 'subgraph edge.protocol exists'          # every edge with a protocol
+  query: 'protocol exists'          # every edge with a protocol
 match:
-  query: 'subgraph node.replicas != 0'            # nodes whose replicas are not zero
+  query: 'replicas != 0'            # nodes whose replicas are not zero
 match:
-  query: 'subgraph node.tier == "frontend"'       # attribute equality
+  query: 'tier == "frontend"'       # attribute equality
 ```
+
+Writing an explicit `subgraph` wrapper or element prefix (`node.`, `edge.` or
+`set.`) is an invalid dialect — the prefix is already implied by
+`representation`, and stating it twice invites disagreement.
 
 Not supported in this subset: graph traversal, query pipelines, graph algebra,
 transformations, and range comparisons — the GQL grammar has no `>`, `>=`, `<`
-or `<=` operators, so `subgraph node.replicas > 1` is rejected at load. Select
-with equality, inequality, `exists`, set membership or depth instead. An
-unsupported or unevaluable query is a **matching
-error**, not a conformance violation — the graph must not be reported as
-conforming. The precise grammar is documented in
+or `<=` operators, so `replicas > 1` is rejected at load. Select with equality,
+inequality, `exists`, set membership or depth instead. An unsupported or
+unevaluable query is a **matching error**, not a conformance violation — the
+graph must not be reported as conforming. The precise grammar is documented in
 [`SUPPORTED_GQL_SUBSET.md`](../../../../spec/dialects/SUPPORTED_GQL_SUBSET.md); the full
 language is in the [Query Guide](../../../../guides/GQL_GUIDE.md).
 
@@ -312,7 +319,7 @@ end before authoring your own.
 1. Give the dialect a stable `id` and a `version`.
 2. Define one element definition per concept you want to enforce.
 3. Choose the `representation` that matches the concept's kind.
-4. Write the selection query using the supported `subgraph` subset.
+4. Write the selection query as a bare attribute predicate (the `representation` supplies the element prefix).
 5. Write the `attributes` schema against **projected JSON**, not GSL syntax.
 6. Use `gsl-dialect project` to inspect the projected instance while iterating.
 7. Validate the reference model, then add mutations to confirm your schemas

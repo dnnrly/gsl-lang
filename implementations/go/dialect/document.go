@@ -5,7 +5,6 @@ package dialect
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"net/url"
 	"sort"
@@ -158,7 +157,7 @@ func parseElement(name string, node *yaml.Node) (*ElementDefinition, error) {
 			"must be one of node, edge, set (got %q)", *raw.Representation)
 	}
 
-	expr, matchQuery, err := parseMatch(path, &raw.Match)
+	expr, matchQuery, err := parseMatch(path, rep, &raw.Match)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +178,7 @@ func parseElement(name string, node *yaml.Node) (*ElementDefinition, error) {
 	}, nil
 }
 
-func parseMatch(elementPath string, node *yaml.Node) (query.Expression, string, error) {
+func parseMatch(elementPath string, rep Representation, node *yaml.Node) (query.Expression, string, error) {
 	path := elementPath + ".match"
 
 	if node.Kind == 0 {
@@ -197,30 +196,47 @@ func parseMatch(elementPath string, node *yaml.Node) (query.Expression, string, 
 		return nil, "", loadError(path+".query", "required non-empty string")
 	}
 
-	expr, err := parseMatchQuery(*raw.Query)
+	expr, err := parseMatchQuery(path+".query", string(rep), *raw.Query)
 	if err != nil {
-		return nil, "", loadError(path+".query", "%v", err)
+		return nil, "", err
 	}
 	return expr, *raw.Query, nil
 }
 
-// parseMatchQuery parses a match query and enforces the supported GQL subset:
-// a single `subgraph` predicate with no traversal or scope and no pipeline,
-// transformation or graph-algebra stage.
-func parseMatchQuery(q string) (query.Expression, error) {
-	parsed, err := query.NewQueryParser(q).Parse()
+// parseMatchQuery expands a bare attribute predicate into a full subgraph
+// query using the definition's representation, then enforces the supported GQL
+// subset: a single `subgraph` predicate with no traversal or scope and no
+// pipeline, transformation or graph-algebra stage. The written form must not
+// itself carry an element prefix or the `subgraph` keyword.
+//
+// A `representation: set` definition has no `set.` element prefix in the GQL
+// grammar (Section 7.5), so its predicate is validated by expanding with the
+// `node` prefix but is never evaluated; set matching selects all sets. The
+// returned expression is therefore unused for sets.
+func parseMatchQuery(path, rep, q string) (query.Expression, error) {
+	prefix := rep
+	if rep == string(RepresentationSet) {
+		prefix = string(RepresentationNode)
+	}
+
+	expanded, err := query.ExpandMatchQuery(prefix, q)
 	if err != nil {
-		return nil, fmt.Errorf("invalid match query: %v", err)
+		return nil, loadError(path, "%v", err)
+	}
+
+	parsed, err := query.NewQueryParser(expanded).Parse()
+	if err != nil {
+		return nil, loadError(path, "invalid match query: %v", err)
 	}
 	if len(parsed.Expressions) != 1 {
-		return nil, errors.New("unsupported match query: only a single subgraph expression is supported")
+		return nil, loadError(path, "unsupported match query: only a single subgraph expression is supported")
 	}
 	sub, ok := parsed.Expressions[0].(*query.SubgraphExpr)
 	if !ok {
-		return nil, errors.New("unsupported match query: only the subgraph form is supported")
+		return nil, loadError(path, "unsupported match query: only the subgraph form is supported")
 	}
 	if sub.Traversal != nil {
-		return nil, errors.New("unsupported match query: traversal and scope are not supported")
+		return nil, loadError(path, "unsupported match query: traversal and scope are not supported")
 	}
 	return sub, nil
 }

@@ -6,7 +6,7 @@ import type { AnySchema, ValidateFunction } from "ajv";
 import { parseAllDocuments } from "yaml";
 
 import type { GslGraph } from "@gsl-lang/core";
-import { parseQuery, SubgraphExpr } from "@gsl-lang/gql";
+import { expandMatchQuery, parseQuery, SubgraphExpr } from "@gsl-lang/gql";
 
 import { selectElements, type SelectedElement } from "./match.js";
 import { projectAttributes } from "./project.js";
@@ -226,7 +226,7 @@ function parseElement(name: string, value: unknown): ElementDefinition {
     );
   }
 
-  const { expr, query } = parseMatch(path, el["match"]);
+  const { expr, query } = parseMatch(path, representation, el["match"]);
   const schema = compileSchema(path, el["attributes"]);
 
   return new ElementDefinition(
@@ -241,7 +241,11 @@ function parseElement(name: string, value: unknown): ElementDefinition {
 }
 
 /** Parse a match query, enforcing the supported GQL subset. */
-function parseMatch(path: string, match: unknown): { expr: SubgraphExpr; query: string } {
+function parseMatch(
+  path: string,
+  representation: Representation,
+  match: unknown,
+): { expr: SubgraphExpr; query: string } {
   const matchPath = `${path}.match`;
   if (match === undefined) {
     throw new LoadError(matchPath, "required mapping with a query field");
@@ -255,9 +259,20 @@ function parseMatch(path: string, match: unknown): { expr: SubgraphExpr; query: 
     throw new LoadError(queryPath, "required non-empty string");
   }
 
+  // A `representation: set` definition has no `set.` element prefix in the GQL
+  // grammar, so its predicate is validated by expanding with the `node` prefix
+  // but is never evaluated; set matching selects all sets.
+  const prefix = representation === "set" ? "node" : representation;
+  let expanded: string;
+  try {
+    expanded = expandMatchQuery(prefix, query);
+  } catch (err) {
+    throw new LoadError(queryPath, message(err));
+  }
+
   let parsed;
   try {
-    parsed = parseQuery(query);
+    parsed = parseQuery(expanded);
   } catch (err) {
     throw new LoadError(queryPath, `invalid match query: ${message(err)}`);
   }

@@ -4,6 +4,6 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service" traverse out 1'
+      query: 'kind == "service" traverse out 1'
     attributes:
       type: object

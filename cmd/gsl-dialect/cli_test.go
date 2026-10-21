@@ -20,7 +20,7 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [name]
@@ -116,7 +116,7 @@ elements:
   Link:
     representation: edge
     match:
-      query: 'subgraph edge.protocol exists'
+      query: 'protocol exists'
     attributes:
       type: object
 `

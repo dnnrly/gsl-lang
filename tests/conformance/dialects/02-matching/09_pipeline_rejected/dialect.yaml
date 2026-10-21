@@ -4,6 +4,6 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service" | remove orphans'
+      query: 'kind == "service" | remove orphans'
     attributes:
       type: object

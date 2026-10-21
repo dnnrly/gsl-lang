@@ -26,6 +26,17 @@ export function selectElements(
   expr: SubgraphExpr,
   graph: GslGraph,
 ): SelectedElement[] {
+  // A set definition's predicate is validated at load time but never
+  // evaluated: the GQL subgraph grammar has no `set.` prefix, and any subgraph
+  // carries every declared set. A set definition therefore selects all sets in
+  // the graph.
+  if (representation === "set") {
+    const sets = [...(graph.sets ?? [])].sort((a, b) =>
+      a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
+    );
+    return sets.map((s) => ({ ref: s.id, attributes: s.attributes }));
+  }
+
   const ctx: QueryContext = { inputGraph: graph, namedGraphs: new Map() };
   const matched = expr.apply(ctx, { graph }).graph;
 
@@ -37,11 +48,8 @@ export function selectElements(
     case "edge": {
       return matched.edges.map((e: GslEdge) => ({ ref: edgeRef(e), attributes: e.attributes }));
     }
-    case "set": {
-      const sets = [...(matched.sets ?? [])].sort((a, b) =>
-        a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
-      );
-      return sets.map((s) => ({ ref: s.id, attributes: s.attributes }));
+    default: {
+      return [];
     }
   }
 }

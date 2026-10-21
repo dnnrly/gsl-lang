@@ -24,7 +24,7 @@ Every convention becomes one element definition with three parts:
 | Part | Question | Example |
 |---|---|---|
 | `representation` | Is the convention about a node, an edge, or a set? | `node` |
-| `match.query` | How do you recognise the element? | `subgraph node.kind == "service"` |
+| `match.query` | How do you recognise the element? | `kind == "service"` |
 | `attributes` | What must its projected attributes look like? | required `name`, `replicas >= 1` |
 
 If a convention cannot answer all three, it is not yet a dialect rule. Say so
@@ -32,20 +32,22 @@ and ask rather than guessing the missing part.
 
 ## Step 2 — Choose the selection query
 
-Selection is a single `subgraph` predicate. Prefer a stable discriminator
-attribute over a name:
+Selection is a single **bare attribute predicate** — no `subgraph` keyword and
+no element prefix; the definition's `representation` supplies both. Prefer a
+stable discriminator attribute over a name:
 
-```gql
-subgraph node.kind == "service"
+```text
+kind == "service"
 ```
 
-```gql
-subgraph edge.protocol exists
+```text
+protocol exists
 ```
 
 `kind` (or another explicit type attribute) is usually the right selector; it
-does not change when a node is renamed. Do not try traversal or pipelines —
-they are outside the subset.
+does not change when a node is renamed. Do not write the `subgraph` wrapper or
+an explicit `node.`/`edge.` prefix — that is an invalid dialect. Do not try
+traversal or pipelines — they are outside the subset.
 
 ## Step 3 — Write the schema against projected values
 
@@ -96,7 +98,7 @@ elements:
   Service:
     representation: node
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required: [kind, name, owner, replicas]

@@ -156,10 +156,13 @@ All `01-document` fixtures except `11` and `12` expect `invalid-dialect`.
   there is no reachable `incomplete` outcome in this suite. An implementation
   that instead defers the failure to validation must still avoid reporting the
   graph as conforming (spec §10.4).
-- **`set` definitions select every declared set.** Because a GQL `subgraph`
-  carries all set declarations, the match predicate does not filter sets
-  (`06_representation_set`). This is a known limitation recorded in the
-  planning log, pending set-targeting predicates in GQL.
+- **`set` definitions select every declared set.** A `match.query` is a bare
+  attribute predicate expanded with the definition's `representation`. Because
+  the GQL `subgraph` grammar has no `set.` prefix and carries all set
+  declarations, a `set` definition's predicate is validated but never evaluated
+  (`06_representation_set`). This is recorded in
+  [`DIALECTS_SPEC.md`](../../spec/dialects/DIALECTS_SPEC.md) §6.2 and §7.5,
+  pending set-targeting predicates in GQL.
 - **Negative numbers cannot appear in a fixture graph.** GSL numbers MUST NOT
   include a sign (GSL spec §2.3.2), so projection fixtures use non-negative
   values only.

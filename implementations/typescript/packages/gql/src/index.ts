@@ -6,6 +6,7 @@
  */
 
 export { parseQuery, GqlParseError } from "./parser.js";
+export { expandMatchQuery, MatchExpandError } from "./expand.js";
 export {
   Query,
   SubgraphExpr,

@@ -3,6 +3,6 @@ version: "1"
 elements:
   Service:
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object

@@ -24,6 +24,25 @@ type selectedElement struct {
 // constraints; it does not establish that they are valid. Elements whose
 // attributes later fail validation remain selected.
 func (el *ElementDefinition) selectElements(g *gsl.Graph) ([]selectedElement, error) {
+	if el.Representation == RepresentationSet {
+		// A set definition's predicate is validated at load time but never
+		// evaluated: the GQL subgraph grammar has no `set.` prefix, and any
+		// subgraph carries every declared set. A set definition therefore
+		// selects all sets in the graph (Section 7.5).
+		sets := g.GetSets()
+		ids := make([]string, 0, len(sets))
+		for id := range sets {
+			ids = append(ids, id)
+		}
+		sort.Strings(ids)
+		out := make([]selectedElement, 0, len(ids))
+		for _, id := range ids {
+			s := sets[id]
+			out = append(out, selectedElement{ref: s.ID, attributes: s.Attributes})
+		}
+		return out, nil
+	}
+
 	ctx := &query.QueryContext{
 		InputGraph:  g,
 		NamedGraphs: map[string]*gsl.Graph{},
@@ -59,24 +78,6 @@ func (el *ElementDefinition) selectElements(g *gsl.Graph) ([]selectedElement, er
 		out := make([]selectedElement, 0, len(edges))
 		for _, e := range edges {
 			out = append(out, selectedElement{ref: edgeRef(e), attributes: e.Attributes})
-		}
-		return out, nil
-
-	case RepresentationSet:
-		// A subgraph result carries every set declared in the input graph, so a
-		// set definition validates all sets in the graph. This is a known
-		// limitation of the current GQL subgraph semantics (see the dialect
-		// specification and planning log).
-		sets := matched.GetSets()
-		ids := make([]string, 0, len(sets))
-		for id := range sets {
-			ids = append(ids, id)
-		}
-		sort.Strings(ids)
-		out := make([]selectedElement, 0, len(ids))
-		for _, id := range ids {
-			s := sets[id]
-			out = append(out, selectedElement{ref: s.ID, attributes: s.Attributes})
 		}
 		return out, nil
 	}

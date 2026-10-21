@@ -4,6 +4,6 @@ elements:
   HttpEdge:
     representation: edge
     match:
-      query: 'subgraph edge.protocol == "http"'
+      query: 'protocol == "http"'
     attributes:
       type: object

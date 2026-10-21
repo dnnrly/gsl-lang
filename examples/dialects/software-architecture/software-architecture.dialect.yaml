@@ -26,7 +26,7 @@ elements:
       Use a service node for a separately identifiable runtime or
       deployable component. Set `owner` to a node reference.
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required:
@@ -65,7 +65,7 @@ elements:
       Use an edge for a dependency that has its own attributes, such as the
       protocol used. Choose the protocol from the controlled vocabulary.
     match:
-      query: 'subgraph edge.protocol exists'
+      query: 'protocol exists'
     attributes:
       type: object
       required:
@@ -87,6 +87,6 @@ elements:
       current GQL engine selects every declared set for a set definition,
       so this schema is intentionally permissive.
     match:
-      query: 'subgraph node.kind exists'
+      query: 'kind exists'
     attributes:
       type: object

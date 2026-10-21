@@ -17,7 +17,7 @@ elements:
       Use a service node for a separately identifiable
       runtime or deployable component.
     match:
-      query: 'subgraph node.kind == "service"'
+      query: 'kind == "service"'
     attributes:
       type: object
       required:
