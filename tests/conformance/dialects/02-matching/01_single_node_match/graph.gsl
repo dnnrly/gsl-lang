@@ -1,0 +1,8 @@
+node platform_team [kind="team", active=true]
+
+node gateway [
+  kind="service",
+  name="Gateway",
+  owner=platform_team,
+  replicas=3
+]

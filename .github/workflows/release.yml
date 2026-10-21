@@ -120,7 +120,7 @@ jobs:
 
     - name: Publish packages
       run: |
-        for pkg in core gql; do
+        for pkg in core gql dialect; do
           name="@gsl-lang/$pkg"
           ver=$(node -p "require('./packages/$pkg/package.json').version")
           if npm view "$name@$ver" version >/dev/null 2>&1; then

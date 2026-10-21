@@ -1,0 +1,7 @@
+outcome: conforming
+projection:
+  Thing:
+    a:
+      kind: thing
+      code: "007"
+      text: "42"

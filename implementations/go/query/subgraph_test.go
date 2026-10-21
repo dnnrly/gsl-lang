@@ -603,3 +603,50 @@ func TestSubgraphNodeIsolation(t *testing.T) {
 		t.Fatalf("Expected 0 edges, got %d", len(gv.Graph.GetEdges()))
 	}
 }
+
+// TestSubgraphNumericLiteralTypeSensitive verifies that numeric literals retain
+// their numeric type (spec §3.3). `node.replicas == 3` matches numeric
+// attributes only and `node.replicas == "3"` matches string attributes only.
+func TestSubgraphNumericLiteralTypeSensitive(t *testing.T) {
+	graph := newTestGraph(testGraphInput{
+		Nodes: map[string]*gsl.Node{
+			"numeric": {ID: "numeric", Attributes: map[string]interface{}{"replicas": float64(3)}, Sets: map[string]struct{}{}},
+			"text":    {ID: "text", Attributes: map[string]interface{}{"replicas": "3"}, Sets: map[string]struct{}{}},
+		},
+		Edges: []*gsl.Edge{},
+		Sets:  map[string]*gsl.Set{},
+	})
+
+	ctx := &QueryContext{
+		InputGraph:  graph,
+		NamedGraphs: map[string]*gsl.Graph{},
+	}
+
+	tests := []struct {
+		query string
+		want  string
+	}{
+		{"subgraph node.replicas == 3", "numeric"},
+		{"subgraph node.replicas == \"3\"", "text"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.query, func(t *testing.T) {
+			query, err := NewQueryParser(tt.query).Parse()
+			if err != nil {
+				t.Fatalf("Failed to parse: %v", err)
+			}
+			result, err := query.Execute(ctx)
+			if err != nil {
+				t.Fatalf("Failed to execute: %v", err)
+			}
+			nodes := result.(GraphValue).Graph.GetNodes()
+			if len(nodes) != 1 {
+				t.Fatalf("Expected 1 node, got %d", len(nodes))
+			}
+			if _, ok := nodes[tt.want]; !ok {
+				t.Fatalf("Expected node %q to match, got %v", tt.want, nodes)
+			}
+		})
+	}
+}

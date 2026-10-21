@@ -1,0 +1,5 @@
+outcome: conforming
+projection:
+  Classification:
+    critical: {}
+    deprecated: {}

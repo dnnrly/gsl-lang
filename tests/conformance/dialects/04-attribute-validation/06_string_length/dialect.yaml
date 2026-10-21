@@ -1,0 +1,13 @@
+id: string-length
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'kind == "service"'
+    attributes:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3

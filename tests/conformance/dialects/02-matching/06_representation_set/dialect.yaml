@@ -1,0 +1,9 @@
+id: representation-set
+version: "1"
+elements:
+  Classification:
+    representation: set
+    match:
+      query: 'kind == "service"'
+    attributes:
+      type: object

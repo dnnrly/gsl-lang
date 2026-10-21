@@ -2,7 +2,7 @@ version: 2
 
 project_name: gsl-lang
 
-# Build both CLI tools
+# Build the CLI tools
 builds:
   - id: gsl-diagram
     main: ./cmd/gsl-diagram
@@ -25,6 +25,15 @@ builds:
   - id: gsl-lsp
     main: ./cmd/gsl-lsp
     binary: gsl-lsp
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64, 386]
+    ldflags:
+      - -X main.Version={{.Version}}
+      - -X main.Commit={{.Commit}}
+      - -X main.BuildDate={{.CommitDate}}
+  - id: gsl-dialect
+    main: ./cmd/gsl-dialect
+    binary: gsl-dialect
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64, 386]
     ldflags:

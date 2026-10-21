@@ -1,0 +1,12 @@
+id: enum
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'kind == "service"'
+    attributes:
+      type: object
+      properties:
+        env:
+          enum: [dev, staging, prod]

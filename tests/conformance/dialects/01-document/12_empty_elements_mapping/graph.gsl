@@ -1,0 +1,4 @@
+node a [kind="anything"]
+node b [kind="other"]
+
+a -> b [type="depends"]

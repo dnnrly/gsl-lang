@@ -18,12 +18,16 @@ tests/conformance/
     README.md # catalog, learning path and semantic notes
   gsl/        # GSL canonical-form fixtures (input.gsl + expected.gsl)
     README.md # catalog and fixture contract
+  dialects/   # dialect conformance fixtures (dialect.yaml + graph.gsl + expected.yaml)
+    README.md # contract, catalog and semantic notes
 ```
 
 The GQL suite checks query semantics; the GSL suite pins the **canonical serialized
 form** of a parsed graph (numeric formatting, node-reference quoting, nesting)
-by comparing against the literal bytes of `expected.gsl`. Together they let any
-implementation run the whole suite from this directory alone.
+by comparing against the literal bytes of `expected.gsl`; the dialects suite
+checks dialect loading, element matching, GSL-to-JSON projection and JSON Schema
+conformance outcomes. Together they let any implementation run the whole suite
+from this directory alone.
 
 ## Fixture contract (GQL)
 
@@ -55,15 +59,25 @@ An implementation in another language runs the suite by walking the group
 directories under `gql/`, applying each `query.gql` to its `graph.gsl`, and
 comparing canonical output with `result.gsl`.
 
+For the dialect suite, see
+[`dialects/README.md`](dialects/README.md) for the `expected.yaml` contract and
+how to run it; the Go reference runner is
+`go test -run TestConformanceFixtures ./implementations/go/dialect`, and the
+TypeScript runner is `npm test -w @gsl-lang/dialect` (or
+`make test-typescript`).
+
 ## Adding or changing fixtures
 
 See [`gql/README.md`](gql/README.md) for the catalog, the numbered learning
 path, per-group semantic notes, and the maintenance checklist. See
 [`gsl/README.md`](gsl/README.md) for the canonical-form corpus and how to add
-to it. Keep the relevant `README.md` catalog in sync whenever fixtures are
-added or changed.
+to it, and [`dialects/README.md`](dialects/README.md) for the dialect corpus.
+Keep the relevant `README.md` catalog in sync whenever fixtures are added or
+changed.
 
 ## Normative references
 
 - [`../../spec/gsl/SPEC.md`](../../spec/gsl/SPEC.md) — GSL language.
 - [`../../spec/gql/QUERY_SPEC.md`](../../spec/gql/QUERY_SPEC.md) — GQL language.
+- [`../../spec/dialects/DIALECTS_SPEC.md`](../../spec/dialects/DIALECTS_SPEC.md) — dialects.
+- [`../../spec/dialects/SUPPORTED_GQL_SUBSET.md`](../../spec/dialects/SUPPORTED_GQL_SUBSET.md) — dialect match-query subset.

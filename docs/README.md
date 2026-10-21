@@ -26,7 +26,7 @@ This index is the route from *first contact* to *competent use*. Each tier state
 | **[Cookbook](cookbook/README.md)** | Short recipes: problem → GSL → answer → diagram | Concepts + basic queries | Language Guide / Query Guide |
 | **[Language Guide](../guides/GSL_GUIDE.md)** | The language, systematically, in one document | Concepts + Cookbook | Reference |
 | **[Query Guide](../guides/GQL_GUIDE.md)** · **[Query tutorial](../guides/QUERY_TUTORIAL.md)** | GQL, the query/transformation language, as reference + a step-by-step learning path | Concepts + Tutorials | Reference / Specification |
-| **[Reference](../spec/gsl/GRAMMAR.md)** · **[Query grammar](../spec/gql/QUERY_GRAMMAR.md)** · **[Go reference](../guides/GO_REFERENCE.md)** · **[Sequence guide](../guides/SEQUENCE_GUIDE.md)** | Precise syntax and behavioural detail, including the Go API and the sequence-diagram dialect | When you need precision | Specification |
+| **[Reference](../spec/gsl/GRAMMAR.md)** · **[Query grammar](../spec/gql/QUERY_GRAMMAR.md)** · **[Go reference](../guides/GO_REFERENCE.md)** · **[Sequence guide](../guides/SEQUENCE_GUIDE.md)** · **[Dialect guide](../guides/DIALECT_GUIDE.md)** | Precise syntax and behavioural detail, including the Go API, the sequence-diagram dialect and dialect authoring | When you need precision | Specification |
 | **[Specification](../spec/gsl/SPEC.md)** · **[Query spec](../spec/gql/QUERY_SPEC.md)** | The normative, RFC 2119-style definition of the language — implementation-facing, never diluted | When you must be exact | — |
 | **[Ecosystem](../README.md#implementations)** | `gsl-query`, `gsl-diagram`, `gsl-lsp` and the VS Code extension | Whenever | — |
 
@@ -70,7 +70,7 @@ See the [tutorials index](tutorials/README.md) for how the paths fit together.
 
 ### Cookbook
 
-Recipes for specific jobs — *"retire a service — who breaks?"*, *"what's in `@critical`?"*, *"regenerate the diagrams in CI"* — each showing the problem, the model, the query, the exact answer, and the diagram command. Recipes 1–4 use only the core language, so they are reachable straight after Getting Started. See the [cookbook index](cookbook/README.md).
+Recipes for specific jobs — *"retire a service — who breaks?"*, *"what's in `@critical`?"*, *"regenerate the diagrams in CI"*, *"hold the model to our team's conventions"* — each showing the problem, the model, the query, the exact answer, and the diagram command. Recipes 1–4 use only the core language, so they are reachable straight after Getting Started. See the [cookbook index](cookbook/README.md).
 
 ### Language Guide, Query Guide, Reference, Specification
 
@@ -78,13 +78,13 @@ These tiers live in dedicated top-level directories — [`guides/`](../guides/) 
 
 - **Language Guide** → [GSL_GUIDE.md](../guides/GSL_GUIDE.md)
 - **Query Guide** → [GQL_GUIDE.md](../guides/GQL_GUIDE.md) and the [query tutorial](../guides/QUERY_TUTORIAL.md)
-- **Reference** → [GRAMMAR.md](../spec/gsl/GRAMMAR.md), [QUERY_GRAMMAR.md](../spec/gql/QUERY_GRAMMAR.md), [GO_REFERENCE.md](../guides/GO_REFERENCE.md), [SEQUENCE_GUIDE.md](../guides/SEQUENCE_GUIDE.md)
+- **Reference** → [GRAMMAR.md](../spec/gsl/GRAMMAR.md), [QUERY_GRAMMAR.md](../spec/gql/QUERY_GRAMMAR.md), [GO_REFERENCE.md](../guides/GO_REFERENCE.md), [SEQUENCE_GUIDE.md](../guides/SEQUENCE_GUIDE.md), [DIALECT_GUIDE.md](../guides/DIALECT_GUIDE.md)
 - **Specification** → [SPEC.md](../spec/gsl/SPEC.md), [QUERY_SPEC.md](../spec/gql/QUERY_SPEC.md)
 
 ### Ecosystem
 
-The tools that consume and emit GSL — [implementations](../README.md#implementations) in the README, the [gsl-query](../cmd/gsl-query/README.md) and [gsl-diagram](../cmd/gsl-diagram/README.md) command references, the [LSP server](../lsp/), and the [VS Code extension](../editors/vscode/).
+The tools that consume and emit GSL — [implementations](../README.md#implementations) in the README, the [gsl-query](../cmd/gsl-query/README.md), [gsl-diagram](../cmd/gsl-diagram/README.md) and [gsl-dialect](../cmd/gsl-dialect/README.md) command references, the [LSP server](../lsp/), and the [VS Code extension](../editors/vscode/).
 
 ### For AI agents and LLMs
 
-The agent-oriented index sits at the repository root, and the embedded guides live in [`guides/`](../guides/): start at [llms.txt](../llms.txt), then [GSL_GUIDE](../guides/GSL_GUIDE.md), [GQL_GUIDE](../guides/GQL_GUIDE.md) and [GO_REFERENCE](../guides/GO_REFERENCE.md). The [LLM-assisted modelling flagship](../examples/flagships/05-llm-assisted-modelling/README.md) is the worked experiment. The [architecture archaeology study](../examples/advanced/architecture-archaeology/README.md) shows how that approach scales from one system to many repositories. The [gsl-modelling skill](../.agents/skills/gsl-modelling/SKILL.md) packages faithful-modelling behaviour for agents (opencode/Cursor/Codex discover it natively at `.agents/skills/`). The human learning path above does not require any LLM mental model.
+The agent-oriented index sits at the repository root, and the embedded guides live in [`guides/`](../guides/): start at [llms.txt](../llms.txt), then [GSL_GUIDE](../guides/GSL_GUIDE.md), [GQL_GUIDE](../guides/GQL_GUIDE.md) and [GO_REFERENCE](../guides/GO_REFERENCE.md). The [LLM-assisted modelling flagship](../examples/flagships/05-llm-assisted-modelling/README.md) is the worked experiment. The [architecture archaeology study](../examples/advanced/architecture-archaeology/README.md) shows how that approach scales from one system to many repositories. The [gsl-modelling skill](../.agents/skills/gsl-modelling/SKILL.md) packages faithful-modelling behaviour for agents, and the [gsl-dialect-authoring skill](../.agents/skills/gsl-dialect-authoring/SKILL.md) packages dialect authoring (opencode/Cursor/Codex discover them natively at `.agents/skills/`). The human learning path above does not require any LLM mental model.

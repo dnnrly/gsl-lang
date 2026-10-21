@@ -26,6 +26,13 @@ README), the specification is authoritative.
 | [`gql/QUERY_SPEC.md`](gql/QUERY_SPEC.md) | Normative specification: subgraph extraction, predicates, traversal, `make`/`remove`/`collapse`, named graphs, graph algebra, pipeline composition, result semantics. |
 | [`gql/QUERY_GRAMMAR.md`](gql/QUERY_GRAMMAR.md) | Formal EBNF grammar for GQL. |
 
+## Dialects — domain conventions on top of GSL
+
+| Document | Contents |
+|----------|----------|
+| [`dialects/DIALECTS_SPEC.md`](dialects/DIALECTS_SPEC.md) | Draft specification: dialect documents (YAML), element definitions, GQL-subset matching, GSL-to-JSON projection, JSON Schema attribute validation, conformance outcomes and diagnostics. |
+| [`dialects/SUPPORTED_GQL_SUBSET.md`](dialects/SUPPORTED_GQL_SUBSET.md) | Companion profile: the exact GQL query subset permitted in a dialect `match.query`, and the forms that MUST be rejected. |
+
 ## Normative vs explanatory
 
 The specifications above are **normative**: they define what an implementation

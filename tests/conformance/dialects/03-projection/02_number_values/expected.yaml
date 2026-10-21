@@ -1,0 +1,8 @@
+outcome: conforming
+projection:
+  Thing:
+    a:
+      kind: thing
+      count: 3
+      ratio: 1.5
+      big: 1000

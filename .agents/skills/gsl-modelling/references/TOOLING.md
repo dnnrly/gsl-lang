@@ -24,6 +24,7 @@ check.
 |---|---|---|
 | `gsl-query` | Runs GQL over GSL. With an empty query it canonicalises and validates structure. | Before delivering a model; to answer review questions. |
 | `gsl-diagram` | Renders GSL to Mermaid or PlantUML (component / graph / sequence). | When the user wants a visual view. Output is illustrative, not a contract. |
+| `gsl-dialect` | Validates a graph against a dialect (conventions + JSON Schema over projected attributes). | When the user has stated conventions and wants the model checked against them. |
 | `gsl-lsp` | Language-server diagnostics, completion, hover. | During interactive editing in a supporting editor. |
 | `gsl-query ai gsl` / `gsl-query ai query` | Prints the authoritative, embedded language guides. | When tooling is present and you need the exact guide text. |
 
@@ -44,6 +45,16 @@ gsl-query "" < model.gsl
 `scripts/validate.sh` wraps exactly this gate and distinguishes "tool
 missing" (`127`) from "checked clean", so nobody can mistake "no tool" for
 "validated".
+
+## Dialects
+
+A **dialect** is a convention layer over a model: a YAML document that selects
+elements with a GQL query and validates their projected attributes with JSON
+Schema. When the user wants to *enforce* conventions — required attributes,
+allowed vocabularies, cardinalities — that is a dialect, not a stricter model.
+The modelling skill still produces the model; authoring and checking the dialect
+is the [`gsl-dialect-authoring`](../../gsl-dialect-authoring/SKILL.md) skill's
+job. Never invent conventions to make a dialect pass.
 
 ## Honesty rules (non-negotiable)
 

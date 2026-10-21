@@ -78,21 +78,22 @@ fuzz-all: ## run all fuzz tests sequentially (set FUZZTIME for per-test duration
 
 .PHONY: test-integration
 test-integration: build ## run integration tests (skip if tools missing)
-	go test -tags integration -v ./cmd/gsl-diagram/... ./cmd/gsl-query/...
+	go test -tags integration -v ./cmd/gsl-diagram/... ./cmd/gsl-query/... ./cmd/gsl-dialect/...
 
 .PHONY: test-integration-strict
 test-integration-strict: build ## run integration tests (fail if tools missing)
-	INTEGRATION_STRICT=1 go test -tags integration -v ./cmd/gsl-diagram/... ./cmd/gsl-query/...
+	INTEGRATION_STRICT=1 go test -tags integration -v ./cmd/gsl-diagram/... ./cmd/gsl-query/... ./cmd/gsl-dialect/...
 
 .PHONY: test-acceptance
 test-acceptance: build ## run acceptance tests (BDD/godog feature tests)
 	go test -v -tags acceptance ./test/...
 
 .PHONY: build
-build: ## build CLI tools (gsl-diagram, gsl-query, gsl-lsp)
+build: ## build CLI tools (gsl-diagram, gsl-query, gsl-dialect, gsl-lsp)
 	mkdir -p $(TMP_DIR)
 	go build -o $(TMP_DIR)/gsl-diagram ./cmd/gsl-diagram
 	go build -o $(TMP_DIR)/gsl-query ./cmd/gsl-query
+	go build -o $(TMP_DIR)/gsl-dialect ./cmd/gsl-dialect
 	go build -o $(TMP_DIR)/gsl-lsp ./cmd/gsl-lsp
 
 

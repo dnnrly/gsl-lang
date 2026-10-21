@@ -1,0 +1,6 @@
+outcome: conforming
+projection:
+  Thing:
+    a:
+      kind: thing
+      present: 1

@@ -109,7 +109,7 @@ export interface TraversalConfig {
 export class SubgraphExpr implements Expression {
   constructor(
     private readonly pred: Predicate,
-    private readonly traversal: TraversalConfig | null,
+    readonly traversal: TraversalConfig | null,
   ) {}
 
   apply(_ctx: QueryContext, input: Value): Value {

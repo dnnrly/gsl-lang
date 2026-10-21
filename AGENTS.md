@@ -26,7 +26,7 @@ make test-integration-strict    # Run integration tests (fail if tools missing)
 make test-acceptance            # Run acceptance tests (BDD/godog feature tests)
 make lint                       # Run linting
 make fuzz                       # Run fuzz tests
-make build                      # Build CLI tools (gsl-diagram, gsl-query, gsl-lsp)
+make build                      # Build CLI tools (gsl-diagram, gsl-query, gsl-dialect, gsl-lsp)
 make diagrams                   # Re-render README diagram SVGs from .mmd sources (needs mmdc + python3)
 make clean                      # Clean build artifacts
 go test -v -run TestName        # Run specific test
@@ -39,7 +39,7 @@ The repository is organised so that language definitions, implementations and
 shared test material are independent:
 
 - `spec/` — language-neutral normative specifications (`spec/gsl/` for GSL,
-  `spec/gql/` for GQL).
+  `spec/gql/` for GQL, `spec/dialects/` for dialect documents).
 - `implementations/` — one directory per implementation (`implementations/go/`
   is the canonical reference; `implementations/typescript/` is an npm workspace
   with GSL and GQL packages — see below).
@@ -58,14 +58,17 @@ shared test material are independent:
 - `query/` - the GQL library (package `query`)
 
 **TypeScript Workspace (`implementations/typescript/`):**
-- An npm workspace with two packages: `@gsl-lang/core` (GSL parser, graph
-  build, canonical serializer) and `@gsl-lang/gql` (GQL parser and query
-  engine). `private: true`, unpublished. Build/typecheck/test via
-  `npm install`, `npm run typecheck`, `npm test`. No CLI or LSP.
+- An npm workspace with three packages: `@gsl-lang/core` (GSL parser, graph
+  build, canonical serializer), `@gsl-lang/gql` (GQL parser and query engine)
+  and `@gsl-lang/dialect` (dialect loading, matching, projection and JSON
+  Schema validation, using `ajv` and `yaml`). `private: true`, unpublished.
+  Build/typecheck/test via `npm install`, `npm run typecheck`, `npm test`. No
+  CLI or LSP.
 - Tests mirror the shared corpora: the GQL conformance fixtures
-  (`tests/conformance/gql`), the `examples/` round-trip corpus, the
+  (`tests/conformance/gql`), the dialect conformance fixtures
+  (`tests/conformance/dialects`), the `examples/` round-trip corpus, the
   flagship/advanced model+query fixtures, and the markdown `gsl`/`gql` blocks
-  (`packages/gql/test/*`).
+  (`packages/{gql,dialect}/test/*`).
 
 **Tests:**
 - `implementations/go/*_test.go` - Unit and fuzz tests for the Go library
@@ -79,6 +82,7 @@ shared test material are independent:
 **CLI Tools:**
 - `cmd/gsl-diagram/` - Converts GSL graphs to diagram formats (Mermaid, PlantUML)
 - `cmd/gsl-query/` - Runs GSL queries from the command line
+- `cmd/gsl-dialect/` - Validates GSL graphs against dialect documents and projects attributes to JSON (exit 0 conforming, 1 non-conforming, 2 incomplete)
 - `cmd/gsl-lsp/` - LSP server binary entry point
 
 **LSP Server:**
@@ -105,14 +109,16 @@ shared test material are independent:
 - `spec/gsl/SPEC.md` - Normative spec (source of truth for language rules)
 - `spec/gsl/GRAMMAR.md` - Formal grammar
 - `spec/gql/QUERY_SPEC.md`, `spec/gql/QUERY_GRAMMAR.md` - GQL specification and grammar
-- `guides/` - explanatory guides embedded by the CLI `ai` command (`GSL_GUIDE.md`, `GQL_GUIDE.md`, `GO_REFERENCE.md`, `QUERY_TUTORIAL.md`, `SEQUENCE_GUIDE.md`)
+- `spec/dialects/DIALECTS_SPEC.md`, `spec/dialects/SUPPORTED_GQL_SUBSET.md` - Dialect specification and the GQL subset available in dialect match queries
+- `guides/` - explanatory guides embedded by the CLI `ai` command (`GSL_GUIDE.md`, `GQL_GUIDE.md`, `GO_REFERENCE.md`, `QUERY_TUTORIAL.md`, `SEQUENCE_GUIDE.md`, `DIALECT_GUIDE.md`)
 - `README.md` - User-facing examples and storefront
-- `docs/` - Human learning journey (the IA index is `docs/README.md`): `getting-started/`, `concepts/` (nine one-concept pages: graph-model, edges, attributes, sets, structure-and-nesting, edge-dependencies, queries-and-views, parsing-and-merging, canonical-form), `tutorials/` (modelling-with-gsl + path index), `cookbook/` (six recipes). The specs and guides live in `spec/` and `guides/`; docs/ tiers reference them rather than duplicate them.
+- `docs/` - Human learning journey (the IA index is `docs/README.md`): `getting-started/`, `concepts/` (nine one-concept pages: graph-model, edges, attributes, sets, structure-and-nesting, edge-dependencies, queries-and-views, parsing-and-merging, canonical-form), `tutorials/` (modelling-with-gsl + path index), `cookbook/` (seven recipes). The specs and guides live in `spec/` and `guides/`; docs/ tiers reference them rather than duplicate them.
 - `tests/markdown_test.go` - Validates all code blocks in root `*.md` and every `docs/**/*.md`, `guides/**/*.md`, `spec/**/*.md`, `implementations/**/*.md` recursively (via `findMarkdownFiles`; note that `filepath.Glob` does not support `**`)
 
 **Agent Skills:**
 - `.agents/skills/gsl-modelling/` - the `gsl-modelling` agent skill: source-faithful GSL modelling for agents (opencode/Cursor/Codex discover it natively; Claude Code needs a `.claude/skills` pointer). `SKILL.md` is the entry point; `references/` mixes authored method docs (`MODELLING.md`, `TOOLING.md`, `EXAMPLES.md`) with plain copies of the authoritative guides (`GSL_GUIDE.md`, `GQL_GUIDE.md`, `GRAMMAR.md`, `QUERY_GRAMMAR.md`, `modelling-with-gsl.md`) - copies are maintained upstream and refreshed from there (never symlinks: they do not survive packaging). `scripts/validate.sh` is an optional structural gate (`gsl-query ""`).
-- `tests/agent_skill_test.go` - Validates skill structure/frontmatter, reference mirror drift against the authoritative docs, reference link resolution, authored markdown code blocks, script syntax, and the behaviour oracle. Note: dot-directories are NOT scanned by `markdown_test.go`; the reference mirrors re-validate the same `gsl`/`gql` blocks as upstream. Refresh mirrors with `go test -run TestAgentSkillMirrorDrift -update ./tests`.
+- `.agents/skills/gsl-dialect-authoring/` - the `gsl-dialect-authoring` agent skill: authoring/reviewing GSL dialect documents and checking models against them. `SKILL.md` is the entry point; `references/` mixes an authored method doc (`WORKFLOW.md`) with plain copies of `DIALECT_GUIDE.md`, `DIALECTS_SPEC.md` and `SUPPORTED_GQL_SUBSET.md` (refreshed the same way). `scripts/validate.sh` is an optional structural gate (`gsl-dialect validate`).
+- `tests/agent_skill_test.go` - Validates every discovered skill (structure/frontmatter, reference mirror drift, reference link resolution, authored markdown code blocks, script syntax) plus the behaviour oracle. Skills and mirror maps are registered in the test; new skills are discovered automatically. Note: dot-directories are NOT scanned by `markdown_test.go`; the reference mirrors re-validate the same `gsl`/`gql` blocks as upstream. Refresh mirrors with `go test ./tests -run TestAgentSkillMirrorDrift -update`.
 - `examples/skill-behaviour/` - Behavioural fixtures for the skill: a deliberately misleading source + an expected-fidelity oracle for the (human-reviewed) smoke exercise.
 
 ## Before Submitting Changes
@@ -146,15 +152,18 @@ make lint
 | Language rules | spec/gsl/SPEC.md, spec/gsl/GRAMMAR.md, tests/markdown_test.go |
 | CLI diagram tool | cmd/gsl-diagram/*, cli_integration_test.go |
 | CLI query tool | cmd/gsl-query/* |
+| CLI dialect tool | cmd/gsl-dialect/*, implementations/go/dialect/* |
 | LSP server | lsp/*, cmd/gsl-lsp/main.go |
 | VS Code extension | editors/vscode/* |
-| TypeScript workspace | implementations/typescript/{package,tsconfig}.json, implementations/typescript/src/*, implementations/typescript/test/* |
+| TypeScript workspace | implementations/typescript/{package,tsconfig}.json, implementations/typescript/packages/{core,gql,dialect}/* |
 | Documentation examples | README.md, spec/gsl/SPEC.md, guides/GSL_GUIDE.md |
 | Flagship/advanced examples | examples/flagship_test.go, examples/advanced_test.go, examples/flagships/*, examples/advanced/* |
 | Documentation learning journey | docs/README.md (IA index), docs/getting-started/, docs/concepts/, docs/tutorials/ (+ modelling-with-gsl.md), docs/cookbook/ |
 | Query language tests | tests/conformance/gql/*, tests/conformance/gql/README.md |
+| Dialect validation | spec/dialects/*, implementations/go/dialect/*, cmd/gsl-dialect/*, tests/conformance/dialects/*, examples/dialects/*, guides/DIALECT_GUIDE.md |
+| Dialect conformance tests | tests/conformance/dialects/* (runner: implementations/go/dialect/fixtures_test.go) |
 | Acceptance tests | test/features/*.feature, test/*_test.go |
-| Agent skill | .agents/skills/gsl-modelling/* (authored: SKILL.md, references/{MODELLING,TOOLING,EXAMPLES}.md and mirrored guides, scripts/validate.sh), tests/agent_skill_test.go (mirror drift: TestAgentSkillMirrorDrift), examples/skill-behaviour/* |
+| Agent skill | .agents/skills/gsl-modelling/* (authored: SKILL.md, references/{MODELLING,TOOLING,EXAMPLES}.md and mirrored guides, scripts/validate.sh), .agents/skills/gsl-dialect-authoring/* (authored: SKILL.md, references/WORKFLOW.md and mirrored guides, scripts/validate.sh), tests/agent_skill_test.go (mirror drift: TestAgentSkillMirrorDrift), examples/skill-behaviour/* |
 
 ## Planning & Progress Tracking
 

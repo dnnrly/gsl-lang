@@ -1,0 +1,9 @@
+id: representation-edge
+version: "1"
+elements:
+  HttpEdge:
+    representation: edge
+    match:
+      query: 'protocol == "http"'
+    attributes:
+      type: object

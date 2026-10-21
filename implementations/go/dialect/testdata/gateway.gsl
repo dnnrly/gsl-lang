@@ -1,0 +1,14 @@
+node platform_team [kind="team", active=true]
+
+node gateway [
+  kind="service",
+  name="Gateway",
+  owner=platform_team,
+  replicas=3,
+  enabled,
+  description="Public entry point"
+]
+
+node db [kind="database", name="Primary"]
+
+gateway -> db [protocol="tcp"]

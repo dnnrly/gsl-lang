@@ -1,0 +1,9 @@
+id: invalid-json-schema
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'kind == "service"'
+    attributes:
+      type: not-a-json-schema-type

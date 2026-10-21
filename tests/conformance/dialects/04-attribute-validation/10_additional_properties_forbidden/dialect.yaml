@@ -1,0 +1,13 @@
+id: additional-properties-forbidden
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'kind == "service"'
+    attributes:
+      type: object
+      properties:
+        kind:
+          type: string
+      additionalProperties: false

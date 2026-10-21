@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { parse, serialize } from "@gsl-lang/core";
-import { runQuery } from "../src/index.js";
+import { GqlParseError, runQuery } from "../src/index.js";
 
 const SOURCE = [
   'node api [team="platform"]',
@@ -77,6 +77,24 @@ test("edge.depth accepts == and = interchangeably", () => {
   const expected = "node a\nnode b\n\nE1: a->b";
   assert.equal(serialize(runQuery(deps, "subgraph edge.depth == 0")), expected);
   assert.equal(serialize(runQuery(deps, "subgraph edge.depth = 0")), expected);
+});
+
+test("edge.depth rejects non-integer depth values", () => {
+  const deps = parse(DEPS).graph;
+  // Numeric and string depth values must be integers, matching the Go
+  // implementation, so both accept the same dialect match queries.
+  for (const q of [
+    "subgraph edge.depth == 1.5",
+    "subgraph edge.depth != 1.5",
+    "subgraph edge.depth = 1.5",
+    'subgraph edge.depth == "1.5"',
+    'subgraph edge.depth == "one"',
+    "subgraph edge.depth == true",
+  ]) {
+    assert.throws(() => runQuery(deps, q), GqlParseError, q);
+  }
+  runQuery(deps, "subgraph edge.depth == 2");
+  runQuery(deps, 'subgraph edge.depth == "0"');
 });
 
 test("executing a query against an unbound named graph fails", () => {

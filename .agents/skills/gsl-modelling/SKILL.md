@@ -129,6 +129,7 @@ not present draft, unsupported, or uncertain syntax as established behaviour.
 | Write correct GSL | `references/GSL_GUIDE.md`, `references/GRAMMAR.md` |
 | Formulate / check GQL | `references/GQL_GUIDE.md`, `references/QUERY_GRAMMAR.md` |
 | Validate, run, render (tools) | `references/TOOLING.md` |
+| Enforce stated conventions as a dialect | [`gsl-dialect-authoring`](../gsl-dialect-authoring/SKILL.md) skill |
 | Behaviour anchors | `references/EXAMPLES.md` |
 
 Five `references/*.md` files are plain copies of the repository's

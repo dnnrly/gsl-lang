@@ -1,0 +1,92 @@
+# SPDX-License-Identifier: CC-BY-4.0
+# Copyright (c) 2026 Pascal Dennerly.
+#
+# Reference dialect: conventions for describing software architecture in GSL.
+# See spec/dialects/DIALECTS_SPEC.md (worked example, section 13).
+
+id: software-architecture
+version: 0.1.0-draft
+title: Software Architecture
+description: |
+  Conventions for describing software architecture: independently
+  identifiable services, the directed dependencies between them, and
+  orthogonal classifications.
+guidance: |
+  Represent independently identifiable software services as nodes. Use
+  directed edges for runtime dependencies and sets for orthogonal
+  classifications. Attribute schemas validate the projected JSON
+  representation of each element's attributes, not the GSL source syntax.
+
+elements:
+  Service:
+    representation: node
+    description: |
+      An independently identifiable software service.
+    guidance: |
+      Use a service node for a separately identifiable runtime or
+      deployable component. Set `owner` to a node reference.
+    match:
+      query: 'kind == "service"'
+    attributes:
+      type: object
+      required:
+        - kind
+        - name
+        - owner
+        - replicas
+      properties:
+        kind:
+          const: service
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        owner:
+          type: object
+          properties:
+            "$gslRef":
+              type: string
+          required:
+            - "$gslRef"
+          additionalProperties: false
+        replicas:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        description:
+          type: string
+      additionalProperties: true
+
+  Dependency:
+    representation: edge
+    description: |
+      A directed runtime dependency between two services.
+    guidance: |
+      Use an edge for a dependency that has its own attributes, such as the
+      protocol used. Choose the protocol from the controlled vocabulary.
+    match:
+      query: 'protocol exists'
+    attributes:
+      type: object
+      required:
+        - protocol
+      properties:
+        protocol:
+          enum:
+            - http
+            - grpc
+            - tcp
+      additionalProperties: true
+
+  Classification:
+    representation: set
+    description: |
+      An orthogonal classification such as "critical" or "deprecated".
+    guidance: |
+      Use sets to tag elements without creating new relationships. The
+      current GQL engine selects every declared set for a set definition,
+      so this schema is intentionally permissive.
+    match:
+      query: 'kind exists'
+    attributes:
+      type: object

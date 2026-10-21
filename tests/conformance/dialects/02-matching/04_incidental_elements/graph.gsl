@@ -1,0 +1,6 @@
+node api [kind="service", name="API"]
+node db [kind="service", name="DB"]
+node cache [kind="cache", name="Cache"]
+
+api -> db [protocol="http"]
+api -> cache [protocol="http"]

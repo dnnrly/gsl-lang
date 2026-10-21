@@ -1,0 +1,9 @@
+outcome: conforming
+projection:
+  Service:
+    api:
+      kind: service
+      name: API
+    db:
+      kind: service
+      name: DB

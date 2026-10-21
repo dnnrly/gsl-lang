@@ -22,6 +22,14 @@ Copyright (c) 2026 Pascal Dennerly.
 - [guides/QUERY_TUTORIAL.md](guides/QUERY_TUTORIAL.md): Step-by-step GQL learning guide
 - [tests/conformance/gql/README.md](tests/conformance/gql/README.md): GQL test fixture catalog (organized learning path)
 
+## Dialects
+
+- [spec/dialects/DIALECTS_SPEC.md](spec/dialects/DIALECTS_SPEC.md): Normative specification for dialects — YAML documents that declare conventions and validate projected attributes with JSON Schema
+- [spec/dialects/SUPPORTED_GQL_SUBSET.md](spec/dialects/SUPPORTED_GQL_SUBSET.md): The GQL subset available inside dialect match queries
+- [guides/DIALECT_GUIDE.md](guides/DIALECT_GUIDE.md): Dialect authoring guide — document structure, representations, matching, GSL-to-JSON projection, and JSON Schema authoring patterns
+- [examples/dialects/software-architecture/](examples/dialects/software-architecture/): End-to-end reference dialect (node, edge and set definitions) with a conforming model
+- [tests/conformance/dialects/README.md](tests/conformance/dialects/README.md): Dialect conformance fixture catalog (document, matching, projection, attribute validation, outcomes)
+
 ## Getting Started
 
 - [README.md](README.md): User-facing overview, quick start, and usage examples
@@ -33,10 +41,11 @@ Copyright (c) 2026 Pascal Dennerly.
 - [docs/cookbook/README.md](docs/cookbook/README.md): Short recipes — retire a service, team views, CI rendering, release gates
 - [AGENTS.md](AGENTS.md): Development guide for AI agents contributing to this repo
 - [Agent skill: gsl-modelling](.agents/skills/gsl-modelling/SKILL.md): Source-faithful GSL modelling skill for agents — turns prose/reports/tickets into a faithful graph with no invented facts, edges, or conventions; carries plain copies of the repository's authoritative guides (GSL_GUIDE, GQL_GUIDE, GRAMMAR, QUERY_GRAMMAR, modelling-with-gsl), refreshed from upstream via `go test -run TestAgentSkillMirrorDrift -update ./tests`. Discovered natively by opencode, Cursor and Codex via `.agents/skills/`; Claude Code needs a `.claude/skills` pointer. Verification: `go test -v -run 'TestAgentSkill|TestSkillBehaviour' ./tests`. Behavioural fixtures: `examples/skill-behaviour/` (misleading-source smoke exercise).
+- [Agent skill: gsl-dialect-authoring](.agents/skills/gsl-dialect-authoring/SKILL.md): Dialect authoring/review skill for agents — turns stated conventions into a dialect document and checks a model with `gsl-dialect`; carries plain copies of DIALECT_GUIDE, DIALECTS_SPEC and SUPPORTED_GQL_SUBSET (refreshed the same way).
 
 ## Implementation
 
 - [Go reference implementation](implementations/go/): Core parser, lexer, AST, graph model, serializer, and the GQL library (`query/`)
-- [CLI tools](cmd/): gsl-diagram (Mermaid/PlantUML), gsl-query (query runner)
+- [CLI tools](cmd/): gsl-diagram (Mermaid/PlantUML), gsl-query (query runner), gsl-dialect (dialect validation)
 - [LSP server](lsp/): Language server protocol implementation
 - [VS Code extension](editors/vscode/): Syntax highlighting and IDE support

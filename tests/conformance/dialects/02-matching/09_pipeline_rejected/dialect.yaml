@@ -1,0 +1,9 @@
+id: pipeline-rejected
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'kind == "service" | remove orphans'
+    attributes:
+      type: object

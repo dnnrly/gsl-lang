@@ -333,7 +333,7 @@ func TestMakeNumericValue(t *testing.T) {
 	expr := &MakeExpr{
 		Target: "node",
 		Attr:   "priority",
-		Value:  "42", // parseValue treats numbers as strings
+		Value:  42, // numeric make values retain their numeric type
 		Pred:   &ExistsPredicate{},
 	}
 
@@ -343,16 +343,16 @@ func TestMakeNumericValue(t *testing.T) {
 	}
 
 	gv := result.(GraphValue)
-	if val := gv.Graph.GetNodes()["A"].Attributes["priority"]; val != "42" {
-		t.Errorf("Expected '42', got %v", val)
+	if val := gv.Graph.GetNodes()["A"].Attributes["priority"]; val != 42 {
+		t.Errorf("Expected 42, got %v", val)
 	}
 }
 
 // TestMakeExprParser tests parsing of make expressions
 func TestMakeExprParser(t *testing.T) {
 	tests := []struct {
-		input   string
-		wantErr bool
+		input    string
+		wantErr  bool
 		exprType string
 	}{
 		{"make node.team = \"payments\" where exists", false, "Make"},
@@ -367,12 +367,12 @@ func TestMakeExprParser(t *testing.T) {
 	for _, tt := range tests {
 		p := newExpressionParser(tt.input)
 		expr, err := p.parse()
-		
+
 		if (err != nil) != tt.wantErr {
 			t.Errorf("parse(%q): wantErr=%v, got=%v", tt.input, tt.wantErr, err)
 			continue
 		}
-		
+
 		if err == nil {
 			if _, ok := expr.(*MakeExpr); !ok {
 				t.Errorf("parse(%q): expected MakeExpr, got %T", tt.input, expr)
@@ -614,8 +614,8 @@ func TestMakeParserNumericValues(t *testing.T) {
 	}
 
 	expr := query.Expressions[0].(*MakeExpr)
-	if expr.Value != "42" {
-		t.Errorf("Expected '42', got %v", expr.Value)
+	if expr.Value != float64(42) {
+		t.Errorf("Expected 42 (float64), got %v", expr.Value)
 	}
 }
 

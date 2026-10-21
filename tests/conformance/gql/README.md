@@ -83,9 +83,12 @@ Attribute existence, inequality, type-sensitive equality, and set membership.
 | `14_node_in_missing_set` | `in @missing_set` is false; `not in @missing_set` is true |
 | `15_node_in_set_bare` | bare `in set` (no `@`) set membership |
 | `16_node_not_in_set_bare` | bare `not in set` set non-membership |
+| `17_predicate_numeric_literal_types` | `node.replicas == 3` matches numeric attributes only |
+| `18_predicate_string_literal_types` | `node.replicas == "3"` matches string attributes only |
 
 **Key Semantic Notes:**
 - Predicates are type-sensitive: `"42" != 42`
+- Numeric literals retain their numeric type (unquoted `3` matches `replicas=3`, not `replicas="3"`)
 - Missing attributes: `!= value` returns false (per spec 7.2)
 - `exists` requires attribute presence
 - `in @missing_set` → false, `not in @missing_set` → true

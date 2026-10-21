@@ -1,0 +1,9 @@
+id: projection-strings
+version: "1"
+elements:
+  Thing:
+    representation: node
+    match:
+      query: 'kind == "thing"'
+    attributes:
+      type: object

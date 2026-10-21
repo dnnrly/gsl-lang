@@ -1,0 +1,9 @@
+outcome: conforming
+projection:
+  Service:
+    gateway:
+      kind: service
+      name: Gateway
+      owner:
+        $gslRef: platform_team
+      replicas: 3

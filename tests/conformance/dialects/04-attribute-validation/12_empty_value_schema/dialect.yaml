@@ -1,0 +1,17 @@
+id: empty-value-schema
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'kind == "service"'
+    attributes:
+      type: object
+      properties:
+        note:
+          type: object
+          properties:
+            "$gslEmpty":
+              const: true
+          required: ["$gslEmpty"]
+          additionalProperties: false

@@ -1,0 +1,12 @@
+id: const
+version: "1"
+elements:
+  Service:
+    representation: node
+    match:
+      query: 'kind exists'
+    attributes:
+      type: object
+      properties:
+        kind:
+          const: service

@@ -4,6 +4,7 @@ package query
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/dnnrly/gsl-lang/implementations/go"
@@ -695,8 +696,10 @@ func parseValue(s string) interface{} {
 
 	// Try number (simple check)
 	if isNumericString(s) {
-		// Keep as string for now (type-sensitive equality per spec)
-		// Could parse to int/float but spec says string != number
+		// Numeric literals retain their numeric type (spec §3.3: 42 != "42").
+		if f, err := strconv.ParseFloat(s, 64); err == nil {
+			return f
+		}
 		return s
 	}
 
