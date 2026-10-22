@@ -1,9 +1,0 @@
-id: invalid-representation
-version: "1"
-elements:
-  Widget:
-    representation: widget
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object

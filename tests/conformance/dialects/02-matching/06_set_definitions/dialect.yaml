@@ -1,0 +1,6 @@
+id: set-definitions
+version: "1"
+sets:
+  definitions:
+    critical: {}
+    deprecated: {}

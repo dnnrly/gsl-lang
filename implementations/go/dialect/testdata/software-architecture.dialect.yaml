@@ -1,5 +1,5 @@
 id: software-architecture
-version: 0.1.0-draft
+version: 0.4.0-draft
 title: Software Architecture
 description: |
   Conventions for describing software architecture.
@@ -8,40 +8,39 @@ guidance: |
   as nodes. Use directed edges for relationships and sets
   for orthogonal classifications.
 
-elements:
-  Service:
-    representation: node
-    description: |
-      An independently identifiable software service.
-    guidance: |
-      Use a service node for a separately identifiable
-      runtime or deployable component.
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      required:
-        - kind
-        - name
-        - owner
-        - replicas
-      properties:
-        kind:
-          const: service
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        owner:
-          type: object
-          properties:
-            "$gslRef":
-              type: string
-          required:
-            - "$gslRef"
-          additionalProperties: false
-        replicas:
-          type: integer
-          minimum: 1
-          maximum: 1000
-      additionalProperties: true
+nodes:
+  rules:
+    - name: Service
+      description: |
+        An independently identifiable software service.
+      guidance: |
+        Use a service node for a separately identifiable
+        runtime or deployable component.
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        required:
+          - kind
+          - name
+          - owner
+          - replicas
+        properties:
+          kind:
+            const: service
+          name:
+            type: string
+            minLength: 1
+            maxLength: 120
+          owner:
+            type: object
+            properties:
+              "$gslRef":
+                type: string
+            required:
+              - "$gslRef"
+            additionalProperties: false
+          replicas:
+            type: integer
+            minimum: 1
+            maximum: 1000
+        additionalProperties: true

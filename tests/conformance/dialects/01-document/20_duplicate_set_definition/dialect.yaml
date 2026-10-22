@@ -1,0 +1,6 @@
+id: duplicate-set-definition
+version: "1"
+sets:
+  definitions:
+    critical: {}
+    critical: {}

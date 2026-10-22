@@ -85,9 +85,12 @@ func TestDialectExampleProjection(t *testing.T) {
 		t.Errorf("gateway->payments protocol = %v, want grpc", dep.(map[string]any)["protocol"])
 	}
 
-	// The set definition selects every declared set.
-	if got := byDef["Classification"]; len(got) != 2 {
-		t.Errorf("expected both sets selected by Classification, got %v", got)
+	// Defined, present sets are selected by their GSL set name.
+	if got := byDef["critical"]; len(got) != 1 {
+		t.Errorf("expected the critical set to be selected, got %v", got)
+	}
+	if got := byDef["deprecated"]; len(got) != 1 {
+		t.Errorf("expected the deprecated set to be selected, got %v", got)
 	}
 }
 
@@ -101,29 +104,37 @@ func TestDialectExampleMutations(t *testing.T) {
 	}{
 		{
 			name: "missing_required_name",
-			model: `node platform_team [kind="team"]
-node gateway [kind="service", owner=platform_team, replicas=1]
+			model: `set critical
+set deprecated
+node platform_team [kind="team"] @deprecated
+node gateway [kind="service", owner=platform_team, replicas=1] @critical
 `,
 			violations: []string{"Service\x00gateway\x00"},
 		},
 		{
 			name: "replicas_below_minimum",
-			model: `node platform_team [kind="team"]
-node gateway [kind="service", name="Gateway", owner=platform_team, replicas=0]
+			model: `set critical
+set deprecated
+node platform_team [kind="team"] @deprecated
+node gateway [kind="service", name="Gateway", owner=platform_team, replicas=0] @critical
 `,
 			violations: []string{"Service\x00gateway\x00/replicas"},
 		},
 		{
 			name: "owner_is_a_string_not_a_reference",
-			model: `node platform_team [kind="team"]
-node gateway [kind="service", name="Gateway", owner="platform_team", replicas=1]
+			model: `set critical
+set deprecated
+node platform_team [kind="team"] @deprecated
+node gateway [kind="service", name="Gateway", owner="platform_team", replicas=1] @critical
 `,
 			violations: []string{"Service\x00gateway\x00/owner"},
 		},
 		{
 			name: "protocol_outside_vocabulary",
-			model: `node platform_team [kind="team"]
-node gateway [kind="service", name="Gateway", owner=platform_team, replicas=1]
+			model: `set critical
+set deprecated
+node platform_team [kind="team"] @deprecated
+node gateway [kind="service", name="Gateway", owner=platform_team, replicas=1] @critical
 
 gateway -> platform_team [protocol="amqp"]
 `,

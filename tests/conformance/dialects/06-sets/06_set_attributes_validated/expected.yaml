@@ -1,0 +1,8 @@
+outcome: non-conforming
+projection:
+  critical:
+    critical: {}
+violations:
+  - definition: critical
+    element: critical
+    location: ""

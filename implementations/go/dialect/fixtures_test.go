@@ -117,9 +117,8 @@ func runConformanceFixture(t *testing.T, dir string) {
 	if perr != nil && perr.HasError() {
 		t.Fatalf("failed to parse graph.gsl: %v", perr)
 	}
-	if perr != nil && perr.HasWarnings() {
-		t.Fatalf("graph.gsl parsed with warnings: %v", perr)
-	}
+	// Warnings are non-fatal in GSL. The implicit-set fixtures intentionally
+	// rely on implicit set creation, which is reported as a warning.
 
 	if exp.Projection != nil {
 		assertProjection(t, d, graph, exp.Projection)

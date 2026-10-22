@@ -1,9 +1,8 @@
 id: unsupported-traversal
-version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service" traverse out 1'
+version: '1'
+nodes:
+  rules:
+  - name: Service
+    match: kind == "service" traverse out 1
     attributes:
       type: object

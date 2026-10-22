@@ -1,13 +1,14 @@
 id: required-present
-version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service"'
+version: '1'
+nodes:
+  rules:
+  - name: Service
+    match: kind == "service"
     attributes:
       type: object
-      required: [kind, name]
+      required:
+      - kind
+      - name
       properties:
         kind:
           const: service

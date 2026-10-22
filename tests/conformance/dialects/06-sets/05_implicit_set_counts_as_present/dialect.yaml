@@ -1,0 +1,8 @@
+id: implicit-present
+version: "1"
+sets:
+  policy:
+    require_all: true
+    allow_empty: false
+  definitions:
+    implicit: {}

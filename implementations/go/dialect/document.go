@@ -24,21 +24,44 @@ type rawDialect struct {
 	Title       string    `yaml:"title"`
 	Description string    `yaml:"description"`
 	Guidance    string    `yaml:"guidance"`
-	Elements    yaml.Node `yaml:"elements"`
+	Nodes       yaml.Node `yaml:"nodes"`
+	Edges       yaml.Node `yaml:"edges"`
+	Sets        yaml.Node `yaml:"sets"`
 }
 
-// rawElement mirrors the supported fields of an element definition.
-type rawElement struct {
-	Representation *string   `yaml:"representation"`
-	Match          yaml.Node `yaml:"match"`
-	Attributes     yaml.Node `yaml:"attributes"`
-	Description    string    `yaml:"description"`
-	Guidance       string    `yaml:"guidance"`
+// rawSection mirrors the supported fields of a nodes or edges section.
+type rawSection struct {
+	Rules yaml.Node `yaml:"rules"`
 }
 
-// rawMatch mirrors the `match` mapping.
-type rawMatch struct {
-	Query *string `yaml:"query"`
+// rawRule mirrors the supported fields of a node or edge rule.
+type rawRule struct {
+	Name        yaml.Node `yaml:"name"`
+	Match       yaml.Node `yaml:"match"`
+	Attributes  yaml.Node `yaml:"attributes"`
+	Description string    `yaml:"description"`
+	Guidance    string    `yaml:"guidance"`
+}
+
+// rawSets mirrors the supported fields of the sets section.
+type rawSets struct {
+	Policy      yaml.Node `yaml:"policy"`
+	Definitions yaml.Node `yaml:"definitions"`
+}
+
+// rawSetPolicy mirrors the supported policy keys. yaml.Node preserves the
+// written YAML kind so non-boolean values are rejected rather than coerced.
+type rawSetPolicy struct {
+	AllowUndefined yaml.Node `yaml:"allow_undefined"`
+	RequireAll     yaml.Node `yaml:"require_all"`
+	AllowEmpty     yaml.Node `yaml:"allow_empty"`
+}
+
+// rawSetDefinition mirrors the supported fields of a set definition.
+type rawSetDefinition struct {
+	Description string    `yaml:"description"`
+	Guidance    string    `yaml:"guidance"`
+	Attributes  yaml.Node `yaml:"attributes"`
 }
 
 func load(r io.Reader) (*Dialect, error) {
@@ -69,12 +92,6 @@ func load(r io.Reader) (*Dialect, error) {
 	if err != nil {
 		return nil, err
 	}
-	if raw.Elements.Kind == 0 {
-		return nil, loadError("elements", "required mapping (may be empty)")
-	}
-	if raw.Elements.Kind != yaml.MappingNode {
-		return nil, loadError("elements", "must be a mapping")
-	}
 
 	d := &Dialect{
 		ID:          id,
@@ -82,32 +99,30 @@ func load(r io.Reader) (*Dialect, error) {
 		Title:       raw.Title,
 		Description: raw.Description,
 		Guidance:    raw.Guidance,
+		setPolicy:   DefaultSetPolicy(),
 	}
 
-	content := raw.Elements.Content
-	for i := 0; i+1 < len(content); i += 2 {
-		name := content[i].Value
-		el, err := parseElement(name, content[i+1])
-		if err != nil {
-			return nil, err
-		}
-		d.elements = append(d.elements, el)
+	d.nodes, err = parseRules("nodes", RepresentationNode, &raw.Nodes)
+	if err != nil {
+		return nil, err
 	}
-
-	sort.Slice(d.elements, func(i, j int) bool {
-		return d.elements[i].Name < d.elements[j].Name
-	})
+	d.edges, err = parseRules("edges", RepresentationEdge, &raw.Edges)
+	if err != nil {
+		return nil, err
+	}
+	if err := parseSets(d, &raw.Sets); err != nil {
+		return nil, err
+	}
 
 	return d, nil
 }
 
-// requiredString validates a required scalar string field such as `id` or
-// `version`.
+// requiredString validates a required scalar string field such as `id`,
+// `version`, `match` or a rule name.
 //
 // The YAML tag is inspected rather than the value: a plain scalar like
 // `version: 1` resolves to !!int and is rejected instead of being silently
-// coerced to "1". Spec §5.1/§5.2 require both fields to be strings, and the
-// TypeScript loader applies the same rule, so the two implementations agree.
+// coerced to "1".
 func requiredString(node *yaml.Node, path string) (string, error) {
 	if node.Kind == 0 {
 		return "", loadError(path, "required non-empty string")
@@ -136,90 +151,91 @@ func nodeTag(node *yaml.Node) string {
 	return "!!null"
 }
 
-func parseElement(name string, node *yaml.Node) (*ElementDefinition, error) {
-	path := "elements[" + name + "]"
+func parseRules(section string, rep Representation, node *yaml.Node) ([]*Rule, error) {
+	if node.Kind == 0 {
+		return nil, nil
+	}
+	if node.Kind != yaml.MappingNode {
+		return nil, loadError(section, "must be a mapping")
+	}
+
+	var raw rawSection
+	if err := node.Decode(&raw); err != nil {
+		return nil, loadError(section, "invalid section: %v", err)
+	}
+	if raw.Rules.Kind == 0 {
+		return nil, nil
+	}
+	if raw.Rules.Kind != yaml.SequenceNode {
+		return nil, loadError(section+".rules", "must be a sequence")
+	}
+
+	out := make([]*Rule, 0, len(raw.Rules.Content))
+	for i, item := range raw.Rules.Content {
+		rule, err := parseRule(section, rep, i, item)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, rule)
+	}
+	return out, nil
+}
+
+func parseRule(section string, rep Representation, index int, node *yaml.Node) (*Rule, error) {
+	path := section + ".rules[" + itoa(index) + "]"
 
 	if node.Kind != yaml.MappingNode {
 		return nil, loadError(path, "must be a mapping")
 	}
 
-	var raw rawElement
+	var raw rawRule
 	if err := node.Decode(&raw); err != nil {
-		return nil, loadError(path, "invalid element definition: %v", err)
+		return nil, loadError(path, "invalid rule: %v", err)
 	}
 
-	if raw.Representation == nil {
-		return nil, loadError(path+".representation", "required")
-	}
-	rep := Representation(*raw.Representation)
-	if !rep.valid() {
-		return nil, loadError(path+".representation",
-			"must be one of node, edge, set (got %q)", *raw.Representation)
+	name := ""
+	if raw.Name.Kind != 0 {
+		var err error
+		name, err = requiredString(&raw.Name, path+".name")
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	expr, matchQuery, err := parseMatch(path, rep, &raw.Match)
+	q, err := requiredString(&raw.Match, path+".match")
 	if err != nil {
 		return nil, err
 	}
 
-	schema, err := compileSchema(name, path, &raw.Attributes)
+	expr, err := parseMatchQuery(path+".match", string(rep), q)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ElementDefinition{
+	schema, err := compileSchema(path+".attributes", section+"-"+itoa(index), &raw.Attributes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Rule{
 		Name:           name,
 		Representation: rep,
+		Index:          index,
 		Description:    raw.Description,
 		Guidance:       raw.Guidance,
-		Query:          matchQuery,
+		Query:          q,
 		expr:           expr,
 		schema:         schema,
 	}, nil
 }
 
-func parseMatch(elementPath string, rep Representation, node *yaml.Node) (query.Expression, string, error) {
-	path := elementPath + ".match"
-
-	if node.Kind == 0 {
-		return nil, "", loadError(path, "required mapping with a query field")
-	}
-	if node.Kind != yaml.MappingNode {
-		return nil, "", loadError(path, "must be a mapping")
-	}
-
-	var raw rawMatch
-	if err := node.Decode(&raw); err != nil {
-		return nil, "", loadError(path, "invalid match: %v", err)
-	}
-	if raw.Query == nil || strings.TrimSpace(*raw.Query) == "" {
-		return nil, "", loadError(path+".query", "required non-empty string")
-	}
-
-	expr, err := parseMatchQuery(path+".query", string(rep), *raw.Query)
-	if err != nil {
-		return nil, "", err
-	}
-	return expr, *raw.Query, nil
-}
-
 // parseMatchQuery expands a bare attribute predicate into a full subgraph
-// query using the definition's representation, then enforces the supported GQL
-// subset: a single `subgraph` predicate with no traversal or scope and no
-// pipeline, transformation or graph-algebra stage. The written form must not
-// itself carry an element prefix or the `subgraph` keyword.
-//
-// A `representation: set` definition has no `set.` element prefix in the GQL
-// grammar (Section 7.5), so its predicate is validated by expanding with the
-// `node` prefix but is never evaluated; set matching selects all sets. The
-// returned expression is therefore unused for sets.
+// query using the enclosing section's element prefix, then enforces the
+// supported GQL subset: a single `subgraph` predicate with no traversal or
+// scope and no pipeline, transformation or graph-algebra stage. The written
+// form must not itself carry an element prefix or the `subgraph` keyword.
 func parseMatchQuery(path, rep, q string) (query.Expression, error) {
-	prefix := rep
-	if rep == string(RepresentationSet) {
-		prefix = string(RepresentationNode)
-	}
-
-	expanded, err := query.ExpandMatchQuery(prefix, q)
+	expanded, err := query.ExpandMatchQuery(rep, q)
 	if err != nil {
 		return nil, loadError(path, "%v", err)
 	}
@@ -241,9 +257,157 @@ func parseMatchQuery(path, rep, q string) (query.Expression, error) {
 	return sub, nil
 }
 
-func compileSchema(name, elementPath string, node *yaml.Node) (*jsonschema.Schema, error) {
-	path := elementPath + ".attributes"
+func parseSets(d *Dialect, node *yaml.Node) error {
+	if node.Kind == 0 {
+		return nil
+	}
+	if node.Kind != yaml.MappingNode {
+		return loadError("sets", "must be a mapping")
+	}
 
+	var raw rawSets
+	if err := node.Decode(&raw); err != nil {
+		return loadError("sets", "invalid section: %v", err)
+	}
+
+	policy, err := parseSetPolicy(&raw.Policy)
+	if err != nil {
+		return err
+	}
+	d.setPolicy = policy
+
+	definitions, err := parseSetDefinitions(&raw.Definitions)
+	if err != nil {
+		return err
+	}
+	d.setDefinitions = definitions
+	return nil
+}
+
+func parseSetPolicy(node *yaml.Node) (SetPolicy, error) {
+	policy := DefaultSetPolicy()
+	if node.Kind == 0 {
+		return policy, nil
+	}
+	if node.Kind != yaml.MappingNode {
+		return policy, loadError("sets.policy", "must be a mapping")
+	}
+
+	var raw rawSetPolicy
+	if err := node.Decode(&raw); err != nil {
+		return policy, loadError("sets.policy", "invalid policy: %v", err)
+	}
+
+	var err error
+	policy.AllowUndefined, err = optionalBool(&raw.AllowUndefined, "sets.policy.allow_undefined", policy.AllowUndefined)
+	if err != nil {
+		return policy, err
+	}
+	policy.RequireAll, err = optionalBool(&raw.RequireAll, "sets.policy.require_all", policy.RequireAll)
+	if err != nil {
+		return policy, err
+	}
+	policy.AllowEmpty, err = optionalBool(&raw.AllowEmpty, "sets.policy.allow_empty", policy.AllowEmpty)
+	if err != nil {
+		return policy, err
+	}
+	return policy, nil
+}
+
+func optionalBool(node *yaml.Node, path string, def bool) (bool, error) {
+	if node.Kind == 0 {
+		return def, nil
+	}
+	if node.Kind != yaml.ScalarNode || node.Tag != "!!bool" {
+		return def, loadError(path, "must be a boolean (got %s)", nodeTag(node))
+	}
+	var value bool
+	if err := node.Decode(&value); err != nil {
+		return def, loadError(path, "must be a boolean: %v", err)
+	}
+	return value, nil
+}
+
+func parseSetDefinitions(node *yaml.Node) ([]*SetDefinition, error) {
+	if node.Kind == 0 {
+		return nil, nil
+	}
+	if node.Kind != yaml.MappingNode {
+		return nil, loadError("sets.definitions", "must be a mapping")
+	}
+
+	content := node.Content
+	out := make([]*SetDefinition, 0, len(content)/2)
+	seen := make(map[string]bool, len(content)/2)
+	for i := 0; i+1 < len(content); i += 2 {
+		key := content[i]
+		if key.Kind != yaml.ScalarNode || key.Tag != "!!str" || !validSetName(key.Value) {
+			return nil, loadError("sets.definitions", "definition key %q must be a GSL set identifier", key.Value)
+		}
+		if seen[key.Value] {
+			return nil, loadError("sets.definitions["+key.Value+"]", "duplicate set definition")
+		}
+		seen[key.Value] = true
+
+		def, err := parseSetDefinition(key.Value, content[i+1])
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, def)
+	}
+
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Name < out[j].Name
+	})
+	return out, nil
+}
+
+func parseSetDefinition(name string, node *yaml.Node) (*SetDefinition, error) {
+	path := "sets.definitions[" + name + "]"
+
+	if node.Kind != yaml.MappingNode {
+		return nil, loadError(path, "must be a mapping")
+	}
+
+	var raw rawSetDefinition
+	if err := node.Decode(&raw); err != nil {
+		return nil, loadError(path, "invalid set definition: %v", err)
+	}
+
+	def := &SetDefinition{
+		Name:        name,
+		Description: raw.Description,
+		Guidance:    raw.Guidance,
+	}
+
+	if raw.Attributes.Kind != 0 {
+		schema, err := compileSchema(path+".attributes", "sets-"+name, &raw.Attributes)
+		if err != nil {
+			return nil, err
+		}
+		def.schema = schema
+	}
+
+	return def, nil
+}
+
+func validSetName(name string) bool {
+	if name == "" {
+		return false
+	}
+	for i, r := range name {
+		if r == '_' || (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+			continue
+		}
+		if i > 0 && r >= '0' && r <= '9' {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+func compileSchema(path, locID string, node *yaml.Node) (*jsonschema.Schema, error) {
 	if node.Kind == 0 {
 		return nil, loadError(path, "required JSON Schema")
 	}
@@ -255,11 +419,11 @@ func compileSchema(name, elementPath string, node *yaml.Node) (*jsonschema.Schem
 
 	c := jsonschema.NewCompiler()
 	c.DefaultDraft(jsonschema.Draft2020)
-	// No external resource loading: a dialect's attribute schema may reference
-	// its own $defs, but must not escape to the network or the filesystem.
+	// No external resource loading: an attributes schema may reference its own
+	// $defs, but must not escape to the network or the filesystem.
 	c.UseLoader(jsonschema.SchemeURLLoader{})
 
-	loc := "dialect://" + url.PathEscape(name) + "/attributes.json"
+	loc := "dialect://" + url.PathEscape(locID) + "/attributes.json"
 	if err := c.AddResource(loc, doc); err != nil {
 		return nil, loadError(path, "invalid JSON Schema: %v", err)
 	}

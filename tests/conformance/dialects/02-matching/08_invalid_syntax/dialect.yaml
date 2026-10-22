@@ -1,9 +1,8 @@
 id: invalid-syntax
-version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind =='
+version: '1'
+nodes:
+  rules:
+  - name: Service
+    match: kind ==
     attributes:
       type: object

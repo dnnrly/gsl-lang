@@ -1,0 +1,7 @@
+id: explicit-subgraph-rejected
+version: "1"
+nodes:
+  rules:
+    - match: 'subgraph kind == "service"'
+      attributes:
+        type: object

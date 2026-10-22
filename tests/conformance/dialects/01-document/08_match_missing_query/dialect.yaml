@@ -1,8 +1,0 @@
-id: match-missing-query
-version: "1"
-elements:
-  Service:
-    representation: node
-    match: {}
-    attributes:
-      type: object

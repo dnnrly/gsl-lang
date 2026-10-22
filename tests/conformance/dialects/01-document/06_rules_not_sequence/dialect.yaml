@@ -1,0 +1,8 @@
+id: rules-not-sequence
+version: "1"
+nodes:
+  rules:
+    Service:
+      match: 'kind == "service"'
+      attributes:
+        type: object

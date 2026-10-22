@@ -1,9 +1,8 @@
 id: representation-edge
-version: "1"
-elements:
-  HttpEdge:
-    representation: edge
-    match:
-      query: 'protocol == "http"'
+version: '1'
+edges:
+  rules:
+  - name: HttpEdge
+    match: protocol == "http"
     attributes:
       type: object

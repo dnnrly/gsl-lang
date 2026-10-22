@@ -40,37 +40,47 @@ func readFile(t *testing.T, path string) string {
 	return string(b)
 }
 
+func nodeRuleDoc(match, attributes string) string {
+	return "id: x\nversion: \"1\"\nnodes:\n  rules:\n    - match: '" + strings.ReplaceAll(match, "'", "''") + "'\n      attributes:\n" + attributes
+}
+
 func TestLoadWorkedExample(t *testing.T) {
 	d := mustLoad(t, readFile(t, "testdata/software-architecture.dialect.yaml"))
 
 	if d.ID != "software-architecture" {
 		t.Errorf("ID = %q", d.ID)
 	}
-	if d.Version != "0.1.0-draft" {
+	if d.Version != "0.4.0-draft" {
 		t.Errorf("Version = %q", d.Version)
 	}
 	if d.Title != "Software Architecture" {
 		t.Errorf("Title = %q", d.Title)
 	}
 
-	els := d.Elements()
-	if len(els) != 1 {
-		t.Fatalf("expected 1 element definition, got %d", len(els))
+	rules := d.NodeRules()
+	if len(rules) != 1 {
+		t.Fatalf("expected 1 node rule, got %d", len(rules))
 	}
-	el := els[0]
-	if el.Name != "Service" {
-		t.Errorf("Name = %q", el.Name)
+	rule := rules[0]
+	if rule.Name != "Service" || rule.Label() != "Service" {
+		t.Errorf("Name/Label = %q/%q", rule.Name, rule.Label())
 	}
-	if el.Representation != RepresentationNode {
-		t.Errorf("Representation = %q", el.Representation)
+	if rule.Representation != RepresentationNode {
+		t.Errorf("Representation = %q", rule.Representation)
 	}
-	if el.Query != `kind == "service"` {
-		t.Errorf("Query = %q", el.Query)
+	if rule.Query != `kind == "service"` {
+		t.Errorf("Query = %q", rule.Query)
+	}
+	if len(d.EdgeRules()) != 0 {
+		t.Errorf("expected no edge rules, got %d", len(d.EdgeRules()))
+	}
+	if got := d.SetPolicy(); got != DefaultSetPolicy() {
+		t.Errorf("SetPolicy = %+v, want defaults", got)
 	}
 }
 
-// TestProjectionWorkedExample checks the §8.4 projection example exactly:
-// node references, Empty values, numbers, booleans and strings are all
+// TestProjectionWorkedExample checks the projection example exactly: node
+// references, Empty values, numbers, booleans and strings are all
 // distinguishable after projection.
 func TestProjectionWorkedExample(t *testing.T) {
 	g := mustGraph(t, readFile(t, "testdata/gateway.gsl"))
@@ -103,16 +113,15 @@ func TestMatchIsIndependentOfValidation(t *testing.T) {
 	d := mustLoad(t, `
 id: m
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      properties:
-        name:
-          type: string
+nodes:
+  rules:
+    - name: Service
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        properties:
+          name:
+            type: string
 `)
 	g := mustGraph(t, `
 node platform_team [kind="team"]
@@ -246,18 +255,23 @@ a -> b
 	}
 }
 
-func TestValidateEmptyElementsConforming(t *testing.T) {
-	d := mustLoad(t, `
-id: empty
-version: "1"
-elements: {}
-`)
-	report, err := d.Validate(mustGraph(t, "node a [x=1]"))
-	if err != nil {
-		t.Fatalf("Validate: %v", err)
+func TestValidateEmptySectionsConforming(t *testing.T) {
+	tests := map[string]string{
+		"omitted":  "id: empty\nversion: \"1\"\n",
+		"empty":    "id: empty\nversion: \"1\"\nnodes: {}\nedges: {}\nsets: {}\n",
+		"no rules": "id: empty\nversion: \"1\"\nnodes:\n  rules: []\nedges:\n  rules: []\n",
 	}
-	if !report.Conforms() {
-		t.Fatalf("dialect with no elements must conform, got %v", report.Violations)
+	for name, doc := range tests {
+		t.Run(name, func(t *testing.T) {
+			d := mustLoad(t, doc)
+			report, err := d.Validate(mustGraph(t, "node a [x=1]"))
+			if err != nil {
+				t.Fatalf("Validate: %v", err)
+			}
+			if !report.Conforms() {
+				t.Fatalf("dialect with no rules must conform, got %v", report.Violations)
+			}
+		})
 	}
 }
 
@@ -266,17 +280,24 @@ func TestUnknownFieldsIgnored(t *testing.T) {
 id: tolerant
 version: "1"
 something_extra: true
-elements:
-  Thing:
-    representation: node
-    future_field: whatever
-    match:
-      query: 'kind == "thing"'
-    attributes:
-      type: object
+nodes:
+  future_section: whatever
+  rules:
+    - future_field: whatever
+      match: 'kind == "thing"'
+      attributes:
+        type: object
+sets:
+  future_policy: whatever
+  definitions:
+    thing:
+      future_field: whatever
 `)
-	if len(d.Elements()) != 1 {
-		t.Fatalf("expected 1 element, got %d", len(d.Elements()))
+	if len(d.NodeRules()) != 1 {
+		t.Fatalf("expected 1 rule, got %d", len(d.NodeRules()))
+	}
+	if len(d.SetDefinitions()) != 1 {
+		t.Fatalf("expected 1 set definition, got %d", len(d.SetDefinitions()))
 	}
 }
 
@@ -288,123 +309,110 @@ func TestInvalidDialectRejected(t *testing.T) {
 	}{
 		{
 			name:     "missing id",
-			yaml:     "version: \"1\"\nelements: {}\n",
+			yaml:     "version: \"1\"\n",
 			wantPath: "id",
 		},
 		{
 			name:     "empty id",
-			yaml:     "id: \"\"\nversion: \"1\"\nelements: {}\n",
+			yaml:     "id: \"\"\nversion: \"1\"\n",
 			wantPath: "id",
 		},
 		{
 			name:     "missing version",
-			yaml:     "id: x\nelements: {}\n",
+			yaml:     "id: x\n",
 			wantPath: "version",
 		},
 		{
 			// A plain `version: 1` resolves to !!int; it must be rejected
-			// rather than coerced, so Go and TypeScript agree (spec §5.2).
+			// rather than coerced, so Go and TypeScript agree.
 			name:     "version not a string",
-			yaml:     "id: x\nversion: 1\nelements: {}\n",
+			yaml:     "id: x\nversion: 1\n",
 			wantPath: "version",
 		},
 		{
 			name:     "id not a string",
-			yaml:     "id: 123\nversion: \"1\"\nelements: {}\n",
+			yaml:     "id: 123\nversion: \"1\"\n",
 			wantPath: "id",
 		},
 		{
 			name:     "id is a mapping",
-			yaml:     "id: {a: 1}\nversion: \"1\"\nelements: {}\n",
+			yaml:     "id: {a: 1}\nversion: \"1\"\n",
 			wantPath: "id",
 		},
 		{
-			name:     "missing elements",
-			yaml:     "id: x\nversion: \"1\"\n",
-			wantPath: "elements",
+			name:     "nodes not a mapping",
+			yaml:     "id: x\nversion: \"1\"\nnodes:\n  - a\n",
+			wantPath: "nodes",
 		},
 		{
-			name:     "elements not a mapping",
-			yaml:     "id: x\nversion: \"1\"\nelements:\n  - a\n",
-			wantPath: "elements",
+			name:     "rules not a sequence",
+			yaml:     "id: x\nversion: \"1\"\nnodes:\n  rules: {}\n",
+			wantPath: "nodes.rules",
 		},
 		{
-			name: "missing representation",
-			yaml: `id: x
-version: "1"
-elements:
-  T:
-    match:
-      query: 'kind exists'
-    attributes:
-      type: object
-`,
-			wantPath: "elements[T].representation",
+			name:     "rule not a mapping",
+			yaml:     "id: x\nversion: \"1\"\nnodes:\n  rules:\n    - a\n",
+			wantPath: "nodes.rules[0]",
 		},
 		{
-			name: "invalid representation",
-			yaml: `id: x
-version: "1"
-elements:
-  T:
-    representation: vertex
-    match:
-      query: 'kind exists'
-    attributes:
-      type: object
-`,
-			wantPath: "elements[T].representation",
+			name:     "missing match",
+			yaml:     "id: x\nversion: \"1\"\nnodes:\n  rules:\n    - attributes:\n        type: object\n",
+			wantPath: "nodes.rules[0].match",
 		},
 		{
-			name: "missing match",
-			yaml: `id: x
-version: "1"
-elements:
-  T:
-    representation: node
-    attributes:
-      type: object
-`,
-			wantPath: "elements[T].match",
+			name:     "match not a string",
+			yaml:     "id: x\nversion: \"1\"\nnodes:\n  rules:\n    - match: 7\n      attributes:\n        type: object\n",
+			wantPath: "nodes.rules[0].match",
 		},
 		{
-			name: "missing query",
-			yaml: `id: x
-version: "1"
-elements:
-  T:
-    representation: node
-    match: {}
-    attributes:
-      type: object
-`,
-			wantPath: "elements[T].match.query",
+			name:     "empty name",
+			yaml:     "id: x\nversion: \"1\"\nedges:\n  rules:\n    - name: \"\"\n      match: 'protocol exists'\n      attributes:\n        type: object\n",
+			wantPath: "edges.rules[0].name",
 		},
 		{
-			name: "missing attributes",
-			yaml: `id: x
-version: "1"
-elements:
-  T:
-    representation: node
-    match:
-      query: 'kind exists'
-`,
-			wantPath: "elements[T].attributes",
+			name:     "missing attributes",
+			yaml:     "id: x\nversion: \"1\"\nnodes:\n  rules:\n    - match: 'kind exists'\n",
+			wantPath: "nodes.rules[0].attributes",
 		},
 		{
-			name: "invalid json schema",
-			yaml: `id: x
-version: "1"
-elements:
-  T:
-    representation: node
-    match:
-      query: 'kind exists'
-    attributes:
-      type: 7
-`,
-			wantPath: "elements[T].attributes",
+			name:     "invalid json schema",
+			yaml:     "id: x\nversion: \"1\"\nnodes:\n  rules:\n    - match: 'kind exists'\n      attributes:\n        type: 7\n",
+			wantPath: "nodes.rules[0].attributes",
+		},
+		{
+			name:     "sets not a mapping",
+			yaml:     "id: x\nversion: \"1\"\nsets:\n  - a\n",
+			wantPath: "sets",
+		},
+		{
+			name:     "policy not a mapping",
+			yaml:     "id: x\nversion: \"1\"\nsets:\n  policy: true\n",
+			wantPath: "sets.policy",
+		},
+		{
+			name:     "policy value not a boolean",
+			yaml:     "id: x\nversion: \"1\"\nsets:\n  policy:\n    allow_undefined: \"false\"\n",
+			wantPath: "sets.policy.allow_undefined",
+		},
+		{
+			name:     "definitions not a mapping",
+			yaml:     "id: x\nversion: \"1\"\nsets:\n  definitions:\n    - a\n",
+			wantPath: "sets.definitions",
+		},
+		{
+			name:     "invalid set name",
+			yaml:     "id: x\nversion: \"1\"\nsets:\n  definitions:\n    critical-group: {}\n",
+			wantPath: "sets.definitions",
+		},
+		{
+			name:     "definition not a mapping",
+			yaml:     "id: x\nversion: \"1\"\nsets:\n  definitions:\n    critical: true\n",
+			wantPath: "sets.definitions[critical]",
+		},
+		{
+			name:     "invalid set attributes",
+			yaml:     "id: x\nversion: \"1\"\nsets:\n  definitions:\n    critical:\n      attributes:\n        type: 7\n",
+			wantPath: "sets.definitions[critical].attributes",
 		},
 		{
 			name:     "not a mapping",
@@ -431,19 +439,20 @@ elements:
 }
 
 // TestUnsupportedQueriesRejected verifies that query forms outside the
-// supported subset are rejected at dialect-load time (spec §7.1).
+// supported subset are rejected at dialect-load time.
 func TestUnsupportedQueriesRejected(t *testing.T) {
 	queries := []string{
 		`kind == "service" traverse out 1`,
 		`kind == "service" scope`,
-		`kind == "service" | remove edge where edge.x == "y"`,
+		`kind == "service" | remove edge where x == "y"`,
 		`from API`,
-		`kind == "service" | make node.x = 1 where exists`,
+		`kind == "service" | make x = 1 where exists`,
 		`subgraph`,
+		`kind ==`,
 	}
 	for _, q := range queries {
 		t.Run(q, func(t *testing.T) {
-			doc := "id: x\nversion: \"1\"\nelements:\n  T:\n    representation: node\n    match:\n      query: '" + strings.ReplaceAll(q, "'", "''") + "'\n    attributes:\n      type: object\n"
+			doc := nodeRuleDoc(q, "        type: object\n")
 			_, err := Load(strings.NewReader(doc))
 			if err == nil {
 				t.Fatalf("expected unsupported query %q to be rejected", q)
@@ -456,21 +465,20 @@ func TestUnsupportedQueriesRejected(t *testing.T) {
 	}
 }
 
-func TestEdgeRepresentation(t *testing.T) {
+func TestEdgeRules(t *testing.T) {
 	d := mustLoad(t, `
 id: edges
 version: "1"
-elements:
-  HttpEdge:
-    representation: edge
-    match:
-      query: 'protocol == "http"'
-    attributes:
-      type: object
-      required: [protocol]
-      properties:
-        protocol:
-          const: http
+edges:
+  rules:
+    - name: HttpEdge
+      match: 'protocol == "http"'
+      attributes:
+        type: object
+        required: [protocol]
+        properties:
+          protocol:
+            const: http
 `)
 	g := mustGraph(t, `
 a -> b [protocol="http"]
@@ -490,16 +498,14 @@ b -> c [protocol="tcp"]
 	d2 := mustLoad(t, `
 id: edges
 version: "1"
-elements:
-  HttpEdge:
-    representation: edge
-    match:
-      query: 'protocol == "https"'
-    attributes:
-      type: object
-      properties:
-        protocol:
-          const: http
+edges:
+  rules:
+    - match: 'protocol == "https"'
+      attributes:
+        type: object
+        properties:
+          protocol:
+            const: http
 `)
 	report2, err := d2.Validate(g2)
 	if err != nil {
@@ -508,26 +514,24 @@ elements:
 	if report2.Outcome != OutcomeNonConforming {
 		t.Fatalf("expected non-conforming, got %s", report2.Outcome)
 	}
+	if report2.Violations[0].Definition != "edges.rules[0]" {
+		t.Errorf("unnamed rule label = %q", report2.Violations[0].Definition)
+	}
 }
 
-// TestSetRepresentationSelectsAllSets documents the known GQL limitation: a
-// subgraph result carries every set in the graph, so a set definition validates
-// all sets regardless of the match query.
-func TestSetRepresentationSelectsAllSets(t *testing.T) {
+func TestSetDefinitionsValidatePresentDefinedSets(t *testing.T) {
 	d := mustLoad(t, `
 id: sets
 version: "1"
-elements:
-  Group:
-    representation: set
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      required: [label]
-      properties:
-        label:
-          type: string
+sets:
+  definitions:
+    alpha:
+      attributes:
+        type: object
+        required: [label]
+        properties:
+          label:
+            type: string
 `)
 	g := mustGraph(t, `
 set alpha [label="Alpha"]
@@ -539,41 +543,189 @@ node a [kind="service"] @alpha
 	if err != nil {
 		t.Fatalf("Validate: %v", err)
 	}
-	if report.Outcome != OutcomeNonConforming {
-		t.Fatalf("expected non-conforming (beta lacks label), got %s", report.Outcome)
+	if !report.Conforms() {
+		t.Fatalf("undefined beta is allowed by default, got %v", report.Violations)
 	}
-	var betaSeen bool
-	for _, v := range report.Violations {
-		if v.Element == "beta" {
-			betaSeen = true
-		}
+
+	bad := mustGraph(t, `
+set alpha
+node a @alpha
+`)
+	report2, err := d.Validate(bad)
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
 	}
-	if !betaSeen {
-		t.Errorf("expected a violation for set beta selected by the definition, got %v", report.Violations)
+	if report2.Outcome != OutcomeNonConforming {
+		t.Fatalf("expected non-conforming, got %s", report2.Outcome)
+	}
+	if len(report2.Violations) != 1 || report2.Violations[0].Definition != "alpha" || report2.Violations[0].Element != "alpha" {
+		t.Errorf("unexpected violations: %+v", report2.Violations)
 	}
 }
 
-func TestMultipleDefinitionsIndependent(t *testing.T) {
+func TestOptionalSetAttributes(t *testing.T) {
+	d := mustLoad(t, `
+id: sets
+version: "1"
+sets:
+  definitions:
+    critical:
+      description: Important elements.
+`)
+	g := mustGraph(t, "set critical\nnode a @critical\n")
+	selected, err := d.Match(g)
+	if err != nil {
+		t.Fatalf("Match: %v", err)
+	}
+	if len(selected) != 1 || selected[0].Definition != "critical" || selected[0].Representation != RepresentationSet {
+		t.Fatalf("unexpected selected sets: %+v", selected)
+	}
+	report, err := d.Validate(g)
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if !report.Conforms() {
+		t.Fatalf("definition without attributes must not fail validation: %v", report.Violations)
+	}
+}
+
+func TestSetPolicyDefaultsPermitAnything(t *testing.T) {
+	d := mustLoad(t, `
+id: policy
+version: "1"
+sets:
+  definitions:
+    unused: {}
+`)
+	g := mustGraph(t, "set empty\nnode a @implicit\n")
+	report, err := d.Validate(g)
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if !report.Conforms() {
+		t.Fatalf("default permissive policy must conform, got %v", report.Violations)
+	}
+}
+
+func TestSetPolicyAllowUndefined(t *testing.T) {
+	d := mustLoad(t, `
+id: policy
+version: "1"
+sets:
+  policy:
+    allow_undefined: false
+  definitions:
+    alpha: {}
+`)
+	g := mustGraph(t, "set alpha\nset beta\nnode a @implicit\n")
+
+	report, err := d.Validate(g)
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if report.Outcome != OutcomeNonConforming {
+		t.Fatalf("expected non-conforming, got %s", report.Outcome)
+	}
+	got := map[string]bool{}
+	for _, v := range report.Violations {
+		got[v.Element] = true
+		if v.Definition != "" {
+			t.Errorf("undefined set violation should have no definition: %+v", v)
+		}
+	}
+	if !got["beta"] || !got["implicit"] {
+		t.Errorf("expected beta and implicit violations, got %v", report.Violations)
+	}
+}
+
+func TestSetPolicyRequireAll(t *testing.T) {
+	d := mustLoad(t, `
+id: policy
+version: "1"
+sets:
+  policy:
+    require_all: true
+  definitions:
+    alpha: {}
+    beta: {}
+`)
+	report, err := d.Validate(mustGraph(t, "set alpha\n"))
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if report.Outcome != OutcomeNonConforming {
+		t.Fatalf("expected non-conforming, got %s", report.Outcome)
+	}
+	if len(report.Violations) != 1 {
+		t.Fatalf("expected 1 violation, got %v", report.Violations)
+	}
+	v := report.Violations[0]
+	if v.Definition != "beta" || v.Element != "beta" {
+		t.Errorf("unexpected violation: %+v", v)
+	}
+}
+
+func TestSetPolicyAllowEmpty(t *testing.T) {
+	d := mustLoad(t, `
+id: policy
+version: "1"
+sets:
+  policy:
+    allow_empty: false
+  definitions:
+    alpha: {}
+    implicit: {}
+`)
+	report, err := d.Validate(mustGraph(t, "set alpha\nnode a @implicit\n"))
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if report.Outcome != OutcomeNonConforming {
+		t.Fatalf("expected non-conforming, got %s", report.Outcome)
+	}
+	if len(report.Violations) != 1 || report.Violations[0].Element != "alpha" {
+		t.Fatalf("expected only empty alpha to violate, got %v", report.Violations)
+	}
+}
+
+func TestImplicitSetCountsAsPresent(t *testing.T) {
+	d := mustLoad(t, `
+id: policy
+version: "1"
+sets:
+  policy:
+    require_all: true
+    allow_empty: false
+  definitions:
+    implicit: {}
+`)
+	report, err := d.Validate(mustGraph(t, "node a @implicit\n"))
+	if err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	if !report.Conforms() {
+		t.Fatalf("implicit set is present and non-empty, got %v", report.Violations)
+	}
+}
+
+func TestMultipleRulesIndependent(t *testing.T) {
 	d := mustLoad(t, `
 id: multi
 version: "1"
-elements:
-  WithName:
-    representation: node
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      required: [name]
-  Replicas:
-    representation: node
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      required: [replicas]
+nodes:
+  rules:
+    - name: WithName
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        required: [name]
+    - name: Replicas
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        required: [replicas]
 `)
-	// Missing both name and replicas: each definition must report independently.
+	// Missing both name and replicas: each rule must report independently.
 	g := mustGraph(t, `node a [kind="service"]`)
 
 	report, err := d.Validate(g)
@@ -581,14 +733,14 @@ elements:
 		t.Fatalf("Validate: %v", err)
 	}
 	if len(report.Violations) != 2 {
-		t.Fatalf("expected 2 violations (one per definition), got %d: %v", len(report.Violations), report.Violations)
+		t.Fatalf("expected 2 violations (one per rule), got %d: %v", len(report.Violations), report.Violations)
 	}
 	defs := map[string]bool{}
 	for _, v := range report.Violations {
 		defs[v.Definition] = true
 	}
 	if !defs["WithName"] || !defs["Replicas"] {
-		t.Errorf("expected violations from both definitions, got %v", defs)
+		t.Errorf("expected violations from both rules, got %v", defs)
 	}
 }
 
@@ -598,24 +750,22 @@ func TestInternalRefAllowed(t *testing.T) {
 	d := mustLoad(t, `
 id: refs
 version: "1"
-elements:
-  Thing:
-    representation: node
-    match:
-      query: 'kind == "thing"'
-    attributes:
-      type: object
-      required: [owner]
-      properties:
-        owner:
-          $ref: '#/$defs/ref'
-      $defs:
-        ref:
-          type: object
-          properties:
-            "$gslRef":
-              type: string
-          required: ["$gslRef"]
+nodes:
+  rules:
+    - match: 'kind == "thing"'
+      attributes:
+        type: object
+        required: [owner]
+        properties:
+          owner:
+            $ref: '#/$defs/ref'
+        $defs:
+          ref:
+            type: object
+            properties:
+              "$gslRef":
+                type: string
+            required: ["$gslRef"]
 `)
 	g := mustGraph(t, `
 node team
@@ -630,19 +780,43 @@ node a [kind="thing", owner=team]
 	}
 }
 
+// TestRefIsScopedToContainingSchema verifies that each rule's schema has its
+// own resource: an internal $ref cannot resolve in another rule.
+func TestRefIsScopedToContainingSchema(t *testing.T) {
+	_, err := Load(strings.NewReader(`
+id: refs
+version: "1"
+nodes:
+  rules:
+    - match: 'kind == "a"'
+      attributes:
+        type: object
+        properties:
+          owner:
+            $ref: '#/$defs/ref'
+    - match: 'kind == "b"'
+      attributes:
+        type: object
+        $defs:
+          ref:
+            type: string
+`))
+	if err == nil {
+		t.Fatal("expected a cross-schema internal $ref to be rejected")
+	}
+}
+
 // TestExternalRefRejected verifies that attribute schemas cannot resolve
-// external resources (spec §6.3: no silent network resolution).
+// external resources (no silent network resolution).
 func TestExternalRefRejected(t *testing.T) {
 	_, err := Load(strings.NewReader(`
 id: refs
 version: "1"
-elements:
-  Thing:
-    representation: node
-    match:
-      query: 'kind == "thing"'
-    attributes:
-      $ref: 'https://example.com/never-loaded.json'
+nodes:
+  rules:
+    - match: 'kind == "thing"'
+      attributes:
+        $ref: 'https://example.com/never-loaded.json'
 `))
 	if err == nil {
 		t.Fatal("expected external $ref to be rejected at dialect load")
@@ -682,27 +856,24 @@ func TestProjectValueKinds(t *testing.T) {
 }
 
 // TestMatchQueryIsBarePredicate checks that a match query is written as a bare
-// attribute predicate and expanded with the definition's representation
-// (spec §6.2).
+// attribute predicate and expanded with the section's element prefix.
 func TestMatchQueryIsBarePredicate(t *testing.T) {
 	d := mustLoad(t, `
 id: bare
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service" AND active exists'
-    attributes:
-      type: object
-      properties:
-        kind:
-          const: service
+nodes:
+  rules:
+    - match: 'kind == "service" AND active exists'
+      attributes:
+        type: object
+        properties:
+          kind:
+            const: service
 `)
 
 	// The stored Query is the author's bare text, not the expanded form.
-	els := d.Elements()
-	if got := els[0].Query; got != `kind == "service" AND active exists` {
+	rules := d.NodeRules()
+	if got := rules[0].Query; got != `kind == "service" AND active exists` {
 		t.Errorf("Query = %q, want the bare authored text", got)
 	}
 
@@ -721,7 +892,7 @@ node c [kind="service"]
 }
 
 // TestMatchQueryRejectsExpandedForms checks that writing the element prefix or
-// the subgraph wrapper is an invalid dialect (spec §6.2).
+// the subgraph wrapper is an invalid dialect.
 func TestMatchQueryRejectsExpandedForms(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -735,49 +906,59 @@ func TestMatchQueryRejectsExpandedForms(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			doc := "id: x\nversion: \"1\"\nelements:\n  T:\n    representation: node\n    match:\n      query: '" + tt.query + "'\n    attributes:\n      type: object\n"
+			doc := nodeRuleDoc(tt.query, "        type: object\n")
 			_, err := Load(strings.NewReader(doc))
 			if err == nil {
 				t.Fatalf("expected %q to be rejected", tt.query)
 			}
-			if !strings.Contains(err.Error(), "match.query") {
-				t.Errorf("error should reference match.query, got %v", err)
+			if !strings.Contains(err.Error(), "nodes.rules[0].match") {
+				t.Errorf("error should reference nodes.rules[0].match, got %v", err)
 			}
 		})
 	}
 }
 
-// TestSetMatchQueryIsValidatedNotEvaluated checks that a set definition's bare
-// predicate must be well-formed but never filters sets (spec §6.2, §7.5).
-func TestSetMatchQueryIsValidatedNotEvaluated(t *testing.T) {
-	// Well-formed: selects all sets even though no set has kind "service".
+func TestRuleOrderAndLabels(t *testing.T) {
 	d := mustLoad(t, `
-id: sets
+id: order
 version: "1"
-elements:
-  Group:
-    representation: set
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
+nodes:
+  rules:
+    - name: First
+      match: 'kind exists'
+      attributes:
+        type: object
+    - match: 'kind exists'
+      attributes:
+        type: object
+edges:
+  rules:
+    - name: Relation
+      match: 'protocol exists'
+      attributes:
+        type: object
+    - match: 'protocol exists'
+      attributes:
+        type: object
+sets:
+  definitions:
+    zeta: {}
+    alpha: {}
 `)
-	g := mustGraph(t, `
-set alpha
-set beta
-node a [kind="service"] @alpha
-`)
-	selected, err := d.Match(g)
-	if err != nil {
-		t.Fatalf("Match: %v", err)
+	if got := d.NodeRules()[0].Label(); got != "First" {
+		t.Errorf("named node rule label = %q", got)
 	}
-	if len(selected) != 2 {
-		t.Fatalf("expected both sets selected, got %+v", selected)
+	if got := d.NodeRules()[1].Label(); got != "nodes.rules[1]" {
+		t.Errorf("unnamed node rule label = %q", got)
 	}
-
-	// Ill-formed: still an invalid dialect.
-	bad := "id: x\nversion: \"1\"\nelements:\n  G:\n    representation: set\n    match:\n      query: 'kind =='\n    attributes:\n      type: object\n"
-	if _, err := Load(strings.NewReader(bad)); err == nil {
-		t.Fatal("expected an ill-formed set predicate to be rejected")
+	if got := d.EdgeRules()[0].Label(); got != "Relation" {
+		t.Errorf("named edge rule label = %q", got)
+	}
+	if got := d.EdgeRules()[1].Label(); got != "edges.rules[1]" {
+		t.Errorf("unnamed edge rule label = %q", got)
+	}
+	defs := d.SetDefinitions()
+	if len(defs) != 2 || defs[0].Name != "alpha" || defs[1].Name != "zeta" {
+		t.Errorf("set definitions not name-sorted: %+v", defs)
 	}
 }

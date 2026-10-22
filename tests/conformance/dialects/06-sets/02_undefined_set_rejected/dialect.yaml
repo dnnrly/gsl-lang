@@ -1,0 +1,7 @@
+id: undefined-rejected
+version: "1"
+sets:
+  policy:
+    allow_undefined: false
+  definitions:
+    alpha: {}

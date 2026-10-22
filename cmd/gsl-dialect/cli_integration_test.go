@@ -31,17 +31,16 @@ func getBinaryPath(t *testing.T) string {
 const integrationDialect = `
 id: integration
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      required: [name]
-      properties:
-        name:
-          type: string
+nodes:
+  rules:
+    - name: Service
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        required: [name]
+        properties:
+          name:
+            type: string
 `
 
 func writeFile(t *testing.T, dir, name, content string) string {

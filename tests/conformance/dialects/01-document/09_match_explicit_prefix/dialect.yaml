@@ -1,0 +1,7 @@
+id: match-explicit-prefix
+version: "1"
+nodes:
+  rules:
+    - match: 'node.kind == "service"'
+      attributes:
+        type: object

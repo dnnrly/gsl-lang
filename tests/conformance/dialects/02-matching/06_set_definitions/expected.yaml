@@ -1,0 +1,6 @@
+outcome: conforming
+projection:
+  critical:
+    critical: {}
+  deprecated:
+    deprecated: {}

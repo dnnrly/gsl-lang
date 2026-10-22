@@ -1,0 +1,7 @@
+id: allow-empty-false
+version: "1"
+sets:
+  policy:
+    allow_empty: false
+  definitions:
+    alpha: {}

@@ -1,0 +1,6 @@
+id: optional-set-attributes
+version: "1"
+sets:
+  definitions:
+    critical:
+      description: Important elements.

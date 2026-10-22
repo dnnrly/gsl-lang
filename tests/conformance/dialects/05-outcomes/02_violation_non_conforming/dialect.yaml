@@ -1,13 +1,13 @@
 id: violation-non-conforming
-version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service"'
+version: '1'
+nodes:
+  rules:
+  - name: Service
+    match: kind == "service"
     attributes:
       type: object
-      required: [name]
+      required:
+      - name
       properties:
         name:
           type: string

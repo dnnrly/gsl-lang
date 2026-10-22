@@ -1,0 +1,7 @@
+id: rule-match-not-string
+version: "1"
+nodes:
+  rules:
+    - match: 7
+      attributes:
+        type: object

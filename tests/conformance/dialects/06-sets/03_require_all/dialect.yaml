@@ -1,0 +1,8 @@
+id: require-all
+version: "1"
+sets:
+  policy:
+    require_all: true
+  definitions:
+    alpha: {}
+    beta: {}
