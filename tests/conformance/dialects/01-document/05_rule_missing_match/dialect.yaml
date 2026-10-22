@@ -1,0 +1,7 @@
+id: rule-missing-match
+version: "1"
+nodes:
+  rules:
+    - name: Service
+      attributes:
+        type: object

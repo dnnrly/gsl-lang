@@ -1,0 +1,5 @@
+id: invalid-set-name
+version: "1"
+sets:
+  definitions:
+    critical-group: {}

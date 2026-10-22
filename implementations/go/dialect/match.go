@@ -17,38 +17,19 @@ type selectedElement struct {
 	attributes gsl.AttributeMap
 }
 
-// selectElements evaluates the definition's match query against g and returns
-// the eligible elements for its representation.
+// selectElements evaluates the rule's match query against g and returns the
+// eligible elements for its representation.
 //
-// Matching determines which elements are subject to the definition's
-// constraints; it does not establish that they are valid. Elements whose
-// attributes later fail validation remain selected.
-func (el *ElementDefinition) selectElements(g *gsl.Graph) ([]selectedElement, error) {
-	if el.Representation == RepresentationSet {
-		// A set definition's predicate is validated at load time but never
-		// evaluated: the GQL subgraph grammar has no `set.` prefix, and any
-		// subgraph carries every declared set. A set definition therefore
-		// selects all sets in the graph (Section 7.5).
-		sets := g.GetSets()
-		ids := make([]string, 0, len(sets))
-		for id := range sets {
-			ids = append(ids, id)
-		}
-		sort.Strings(ids)
-		out := make([]selectedElement, 0, len(ids))
-		for _, id := range ids {
-			s := sets[id]
-			out = append(out, selectedElement{ref: s.ID, attributes: s.Attributes})
-		}
-		return out, nil
-	}
-
+// Matching determines which elements are subject to the rule's constraints; it
+// does not establish that they are valid. Elements whose attributes later fail
+// validation remain selected.
+func (r *Rule) selectElements(g *gsl.Graph) ([]selectedElement, error) {
 	ctx := &query.QueryContext{
 		InputGraph:  g,
 		NamedGraphs: map[string]*gsl.Graph{},
 	}
 
-	result, err := el.expr.Apply(ctx, query.GraphValue{Graph: g})
+	result, err := r.expr.Apply(ctx, query.GraphValue{Graph: g})
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +39,7 @@ func (el *ElementDefinition) selectElements(g *gsl.Graph) ([]selectedElement, er
 	}
 	matched := gv.Graph
 
-	switch el.Representation {
+	switch r.Representation {
 	case RepresentationNode:
 		nodes := matched.GetNodes()
 		ids := make([]string, 0, len(nodes))
@@ -82,7 +63,7 @@ func (el *ElementDefinition) selectElements(g *gsl.Graph) ([]selectedElement, er
 		return out, nil
 	}
 
-	return nil, fmt.Errorf("unsupported representation %q", el.Representation)
+	return nil, fmt.Errorf("unsupported representation %q", r.Representation)
 }
 
 func edgeRef(e *gsl.Edge) string {

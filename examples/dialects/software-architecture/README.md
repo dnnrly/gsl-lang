@@ -13,20 +13,24 @@ attributes must look like. It is the worked example from
 
 | File | Purpose |
 |------|---------|
-| `software-architecture.dialect.yaml` | The dialect: three element definitions (Service, Dependency, Classification). |
+| `software-architecture.dialect.yaml` | The dialect: two node rules, one edge rule and two set definitions. |
 | `model.gsl` | A small architecture model that conforms to the dialect. |
 
 ## The dialect
 
 `software-architecture.dialect.yaml` declares:
 
-- **Service** (`node`) — nodes with `kind = "service"`. Required attributes
+- `nodes.rules[Service]` — nodes with `kind = "service"`. Required attributes
   `kind`, `name`, `owner` (a node reference) and `replicas` (`1..1000`).
-- **Dependency** (`edge`) — edges carrying a `protocol`, drawn from the
+- `edges.rules[Dependency]` — edges carrying a `protocol`, drawn from the
   controlled vocabulary `http`, `grpc`, `tcp`.
-- **Classification** (`set`) — orthogonal tags such as `critical` and
-  `deprecated`. Set selection is permissive; see
-  [`SUPPORTED_GQL_SUBSET.md`](../../../spec/dialects/SUPPORTED_GQL_SUBSET.md).
+- `sets.definitions` — named definitions for the `critical` and `deprecated`
+  classifications. Sets are selected by name, not by a query.
+
+The `sets.policy` makes declaration strict: undefined sets are rejected, every
+defined set must be present, and a set must have at least one member. Set
+definitions here carry descriptions and guidance but no attribute schema;
+attributes are optional.
 
 A dialect never changes the GSL source syntax. It validates the **projected**
 attributes of each matched element.
@@ -57,6 +61,6 @@ incomplete validation) exits with code `2`. See
 
 - the committed model parses without warnings and validates as conforming;
 - the projected `gateway` service, the `gateway->payments` dependency and both
-  classifications are asserted;
+  set definitions are asserted;
 - in-memory mutations (a missing name, `replicas: 0`, a string owner, an
   unknown protocol) each produce the expected single violation.

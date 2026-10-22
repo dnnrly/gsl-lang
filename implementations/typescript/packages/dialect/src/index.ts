@@ -6,12 +6,12 @@
  * loading and validating dialect documents, matching graph elements with a
  * restricted GQL subset, projecting GSL attribute values into JSON, and
  * checking the conformance of a graph against JSON Schema attribute
- * constraints.
+ * constraints and set declaration policy.
  *
  * The normative behaviour is defined by `spec/dialects/DIALECTS_SPEC.md`.
  */
 
-export { load, Dialect, ElementDefinition, type Selection } from "./document.js";
+export { load, Dialect, Rule, SetDefinition, type Selection } from "./document.js";
 export { projectAttributes } from "./project.js";
 export { selectElements, type SelectedElement } from "./match.js";
 export {
@@ -20,5 +20,6 @@ export {
   LoadError,
   MatchingError,
   ProjectionError,
+  defaultSetPolicy,
 } from "./result.js";
-export type { Outcome, Representation, Violation } from "./result.js";
+export type { Outcome, Representation, SetPolicy, Violation } from "./result.js";

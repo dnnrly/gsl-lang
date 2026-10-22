@@ -33,29 +33,33 @@ projection:                 # optional
   <Definition>:
     <element>: <projected attribute object>
 violations:                 # optional
-  - definition: <definition name>
+  - definition: <rule label or set name>
     element: <element reference>
     location: <JSON Pointer into the projected attributes>
 ```
 
 - **`outcome`** is the result of loading the dialect and, when it loads,
   validating the graph. `invalid-dialect` means the dialect is rejected
-  before graph validation begins (spec §10.1). This suite has no
+  before graph validation begins (spec §11.1). This suite has no
   `incomplete` outcome because the supported profile rejects unsupported
   match queries at load time; matching errors therefore surface as
-  `invalid-dialect` (see "Known limitations").
+  `invalid-dialect`.
 - **`projection`** pins the deterministic result of matching and projecting
-  (spec §7.2, §8), keyed by definition then by element reference. It is
+  (spec §8), keyed by rule label or set name, then by element reference. It is
   checked **independently of JSON Schema validation**, so a projection failure
-  is attributable to projection and not to a schema (spec §14.3).
-- **`violations`** pins the set of attribute constraint violations, as
-  `(definition, element, location)` triples. `location` is the JSON Pointer
-  into the projected attribute map (`""` for a violation at the root, such as
-  a missing `required` property). The order is not significant.
+  is attributable to projection and not to a schema (spec §10.3).
+- **`violations`** pins the set of violations, as
+  `(definition, element, location)` triples. `location` is the JSON Pointer into
+  the projected attribute map (`""` for a violation at the root, such as a
+  missing `required` property, and for every set policy violation). The order is
+  not significant.
 - Element references: a node is its id, a set is its name, and an edge is its
   label if present, otherwise `from->to` (for example `api->payments`).
+- Rule labels: a named rule uses its `name`; an unnamed rule uses its section
+  position, for example `nodes.rules[0]` or `edges.rules[1]`. Set definitions
+  use the GSL set name.
 
-Projection values follow the normative mapping in spec §8.3: numbers are JSON
+Projection values follow the normative mapping in spec §9: numbers are JSON
 numbers, strings are JSON strings (never coerced to numbers), Empty values are
 `{"$gslEmpty": true}` and node references are `{"$gslRef": "<node-id>"}`.
 
@@ -64,51 +68,58 @@ numbers, strings are JSON strings (never coerced to numbers), Empty values are
 ```
 tests/conformance/dialects/
   01-document/              → dialect document structure and rejection
-  02-matching/              → match queries, representations and selection
+  02-matching/              → node and edge matching and selection
   03-projection/            → GSL-to-JSON value projection
   04-attribute-validation/  → JSON Schema constraints on projected values
   05-outcomes/              → conforming / non-conforming semantics
+  06-sets/                  → set definitions and declaration policy
 ```
 
 ## Fixtures
 
-### 01-document — dialect document (spec §14.1)
+### 01-document — dialect document (spec §5, §11)
 
 | Fixture | Tests |
 |---------|-------|
 | `01_missing_id` | Missing required root field `id` |
 | `02_missing_version` | Missing required root field `version` |
-| `03_missing_elements` | Missing required root field `elements` |
-| `04_elements_not_mapping` | `elements` is a sequence, not a mapping |
-| `05_element_missing_representation` | Missing element field `representation` |
-| `06_invalid_representation` | `representation` is not `node`/`edge`/`set` |
-| `07_element_missing_match` | Missing element field `match` |
-| `08_match_missing_query` | `match` present but has no `query` |
-| `09_element_missing_attributes` | Missing element field `attributes` |
+| `03_sections_optional` | Omitted `nodes`, `edges` and `sets` sections are valid |
+| `04_nodes_not_mapping` | `nodes` is a sequence, not a mapping |
+| `05_rule_missing_match` | Missing rule field `match` |
+| `06_rules_not_sequence` | `rules` is a mapping, not a sequence |
+| `07_rule_missing_attributes` | Missing rule field `attributes` |
+| `08_rule_match_not_string` | `match` given as a non-string scalar is rejected |
+| `09_match_explicit_prefix` | An explicit element prefix is rejected |
 | `10_invalid_json_schema` | `attributes` is not a valid JSON Schema |
-| `11_unknown_fields_ignored` | Unknown root and element fields are ignored |
-| `12_empty_elements_mapping` | Empty `elements` mapping loads and conforms |
+| `11_unknown_fields_ignored` | Unknown root, section and rule fields are ignored |
+| `12_empty_sections` | Empty sections load and conform |
 | `13_not_a_mapping` | The document is not a YAML mapping |
 | `14_id_not_a_string` | `id` given as a non-string scalar (`!!int`) is rejected, not coerced |
 | `15_version_not_a_string` | `version` given as a non-string scalar (`!!int`) is rejected, not coerced |
+| `16_sets_not_mapping` | `sets` is a sequence, not a mapping |
+| `17_policy_not_boolean` | A policy value is a string, not a boolean |
+| `18_definitions_not_mapping` | `sets.definitions` is a sequence, not a mapping |
+| `19_invalid_set_name` | A definition key is not a GSL set identifier |
+| `20_duplicate_set_definition` | The same set is defined twice |
 
-All `01-document` fixtures except `11` and `12` expect `invalid-dialect`.
+All `01-document` fixtures except `03`, `11` and `12` expect `invalid-dialect`.
 
-### 02-matching — element matching (spec §14.2)
+### 02-matching — node and edge matching (spec §8)
 
 | Fixture | Tests |
 |---------|-------|
-| `01_single_node_match` | A `node` definition selecting one node |
+| `01_single_node_match` | A node rule selecting one node |
 | `02_no_match_conforming` | A valid query that selects nothing |
-| `03_multiple_matches` | A query selecting several elements |
-| `04_incidental_elements` | Edges in a node-query result are ignored by a node definition |
-| `05_representation_edge` | An `edge` definition, keyed by `from->to` |
-| `06_representation_set` | A `set` definition selects all declared sets |
+| `03_multiple_matches` | A query selecting several nodes |
+| `04_incidental_elements` | Edges in a node-query result are ignored by a node rule |
+| `05_representation_edge` | An edge rule, keyed by `from->to` |
+| `06_set_definitions` | Defined, present sets are selected by name |
 | `07_unsupported_traversal` | Traversal is rejected at load |
 | `08_invalid_syntax` | A malformed query is rejected at load |
 | `09_pipeline_rejected` | A pipeline is rejected at load |
+| `10_explicit_subgraph_rejected` | The `subgraph` wrapper is rejected at load |
 
-### 03-projection — GSL-to-JSON projection (spec §14.3)
+### 03-projection — GSL-to-JSON projection (spec §9)
 
 | Fixture | Tests |
 |---------|-------|
@@ -120,7 +131,7 @@ All `01-document` fixtures except `11` and `12` expect `invalid-dialect`.
 | `06_missing_omitted` | Absent attributes are omitted |
 | `07_distinctions_preserved` | String `"true"`, boolean `true`, Empty and a reference stay distinct |
 
-### 04-attribute-validation — JSON Schema constraints (spec §14.4)
+### 04-attribute-validation — JSON Schema constraints (spec §10)
 
 | Fixture | Tests |
 |---------|-------|
@@ -137,16 +148,28 @@ All `01-document` fixtures except `11` and `12` expect `invalid-dialect`.
 | `11_additional_properties_allowed` | `additionalProperties: true` |
 | `12_empty_value_schema` | A schema constraining the Empty representation |
 | `13_node_reference_schema` | A schema constraining the reference representation |
-| `14_multiple_definitions_same_element` | Two definitions validate one element independently |
+| `14_multiple_definitions_same_element` | Two rules validate one element independently |
 
-### 05-outcomes — outcome semantics (spec §14.5)
+### 05-outcomes — outcome semantics (spec §10, §11)
 
 | Fixture | Tests |
 |---------|-------|
 | `01_empty_match_no_violations` | An empty match is not a violation |
 | `02_violation_non_conforming` | An attribute violation → non-conforming |
 | `03_conforming_does_not_imply_completeness` | Unmatched elements are not validated |
-| `04_matching_error_rejected` | A matching error prevents a conforming result (here: load-time rejection) |
+| `04_matching_error_rejected` | An unsupported match prevents a conforming result (here: load-time rejection) |
+
+### 06-sets — set definitions and policy (spec §7)
+
+| Fixture | Tests |
+|---------|-------|
+| `01_defaults_permit_undefined_and_empty` | Defaults allow undefined and empty sets |
+| `02_undefined_set_rejected` | `allow_undefined: false` rejects undeclared sets |
+| `03_require_all` | `require_all: true` requires every definition to be present |
+| `04_allow_empty_false` | `allow_empty: false` rejects a present set with no members |
+| `05_implicit_set_counts_as_present` | An implicitly created, non-empty set satisfies strict policy |
+| `06_set_attributes_validated` | A set definition's `attributes` schema is validated |
+| `07_optional_attributes` | A set definition without `attributes` still documents the set |
 
 ## Known limitations
 
@@ -155,17 +178,13 @@ All `01-document` fixtures except `11` and `12` expect `invalid-dialect`.
   ([`SUPPORTED_GQL_SUBSET.md`](../../spec/dialects/SUPPORTED_GQL_SUBSET.md)), so
   there is no reachable `incomplete` outcome in this suite. An implementation
   that instead defers the failure to validation must still avoid reporting the
-  graph as conforming (spec §10.4).
-- **`set` definitions select every declared set.** A `match.query` is a bare
-  attribute predicate expanded with the definition's `representation`. Because
-  the GQL `subgraph` grammar has no `set.` prefix and carries all set
-  declarations, a `set` definition's predicate is validated but never evaluated
-  (`06_representation_set`). This is recorded in
-  [`DIALECTS_SPEC.md`](../../spec/dialects/DIALECTS_SPEC.md) §6.2 and §7.5,
-  pending set-targeting predicates in GQL.
+  graph as conforming (spec §11.4).
 - **Negative numbers cannot appear in a fixture graph.** GSL numbers MUST NOT
   include a sign (GSL spec §2.3.2), so projection fixtures use non-negative
   values only.
+- **Implicit-set fixtures produce a GSL warning.** Implicit set creation is a
+  warning in GSL, not an error; fixture runners MUST ignore warnings when
+  parsing `graph.gsl`.
 
 ## Running the suite
 

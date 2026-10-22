@@ -1,0 +1,6 @@
+id: rule-missing-attributes
+version: "1"
+nodes:
+  rules:
+    - name: Service
+      match: 'kind == "service"'

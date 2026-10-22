@@ -25,17 +25,16 @@ import { load } from "@gsl-lang/dialect";
 const dialect = load(`
 id: software-architecture
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'subgraph node.kind == "service"'
-    attributes:
-      type: object
-      required: [kind]
-      properties:
-        kind:
-          const: service
+nodes:
+  rules:
+    - name: Service
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        required: [kind]
+        properties:
+          kind:
+            const: service
 `);
 
 const { graph } = parse('node api [kind="service"]');
@@ -48,7 +47,7 @@ report.conforms; // true
 ```
 packages/dialect/
   src/document.ts     # load: YAML document parsing and schema compilation
-  src/match.ts        # element matching via the supported GQL subset
+  src/match.ts        # node and edge matching via the supported GQL subset
   src/project.ts      # GSL-to-JSON attribute projection
   src/result.ts       # outcomes, violations and error types
   test/conformance.test.ts  # runs the shared fixtures

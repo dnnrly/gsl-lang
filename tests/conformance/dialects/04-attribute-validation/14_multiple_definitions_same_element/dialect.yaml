@@ -1,23 +1,22 @@
 id: multiple-definitions
-version: "1"
-elements:
-  ServiceName:
-    representation: node
-    match:
-      query: 'kind == "service"'
+version: '1'
+nodes:
+  rules:
+  - name: ServiceName
+    match: kind == "service"
     attributes:
       type: object
-      required: [name]
+      required:
+      - name
       properties:
         name:
           type: string
-  ServiceReplicas:
-    representation: node
-    match:
-      query: 'kind == "service"'
+  - name: ServiceReplicas
+    match: kind == "service"
     attributes:
       type: object
-      required: [replicas]
+      required:
+      - replicas
       properties:
         replicas:
           type: integer

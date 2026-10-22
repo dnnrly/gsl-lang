@@ -1,0 +1,5 @@
+id: policy-not-boolean
+version: "1"
+sets:
+  policy:
+    allow_undefined: "false"

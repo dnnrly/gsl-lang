@@ -1,10 +1,9 @@
 id: additional-properties-allowed
-version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service"'
+version: '1'
+nodes:
+  rules:
+  - name: Service
+    match: kind == "service"
     attributes:
       type: object
       properties:

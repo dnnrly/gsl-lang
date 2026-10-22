@@ -2,7 +2,7 @@
 name: gsl-dialect-authoring-workflow
 type: skill-reference
 audience: agent
-description: The authoring method for GSL dialects — turning stated conventions into selection queries, representations, and projected-value JSON Schemas, then checking a model and proving the schemas reject what they should.
+description: The authoring method for GSL dialects — turning stated conventions into node/edge rules, set definitions and policies, and projected-value JSON Schemas, then checking a model and proving the schemas reject what they should.
 ---
 
 <!--
@@ -17,24 +17,30 @@ This is the method the skill follows. It assumes the normative rules in
 [`DIALECT_GUIDE.md`](DIALECT_GUIDE.md) and the query limits in
 [`SUPPORTED_GQL_SUBSET.md`](SUPPORTED_GQL_SUBSET.md).
 
-## Step 1 — Turn each convention into a triple
+## Step 1 — Turn each convention into a rule or set definition
 
-Every convention becomes one element definition with three parts:
+A convention about nodes or edges becomes one entry in `nodes.rules` or
+`edges.rules` with three parts:
 
 | Part | Question | Example |
 |---|---|---|
-| `representation` | Is the convention about a node, an edge, or a set? | `node` |
-| `match.query` | How do you recognise the element? | `kind == "service"` |
+| section | Is the convention about a node or an edge? | `nodes` |
+| `match` | How do you recognise the element? | `kind == "service"` |
 | `attributes` | What must its projected attributes look like? | required `name`, `replicas >= 1` |
 
-If a convention cannot answer all three, it is not yet a dialect rule. Say so
-and ask rather than guessing the missing part.
+A convention about sets becomes a key under `sets.definitions` (the key is the
+GSL set name) with optional `description`, `guidance` and `attributes`. A
+declaration convention such as "every set must be declared" or "every declared
+set must be used" belongs in `sets.policy`.
+
+If a convention cannot answer the relevant parts, it is not yet a dialect rule.
+Say so and ask rather than guessing the missing part.
 
 ## Step 2 — Choose the selection query
 
 Selection is a single **bare attribute predicate** — no `subgraph` keyword and
-no element prefix; the definition's `representation` supplies both. Prefer a
-stable discriminator attribute over a name:
+no element prefix; the enclosing section supplies both. Prefer a stable
+discriminator attribute over a name:
 
 ```text
 kind == "service"
@@ -61,7 +67,7 @@ mappings that cause almost every authoring bug:
   so require it as an object with a `$gslEmpty` constant if it matters.
 
 Full patterns (scalars, references, optional flags, `oneOf`, enums) are in
-[`DIALECT_GUIDE.md`](DIALECT_GUIDE.md), section 6.
+[`DIALECT_GUIDE.md`](DIALECT_GUIDE.md), section 7.
 
 ## Step 4 — Check a model, then break it
 
@@ -94,29 +100,28 @@ and a dialect that requires a service name and at least one replica:
 ```yaml
 id: software-architecture
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      required: [kind, name, owner, replicas]
-      properties:
-        kind:
-          const: service
-        name:
-          type: string
-          minLength: 1
-        owner:
-          type: object
-          required: ["$gslRef"]
-          properties:
-            "$gslRef":
-              type: string
-        replicas:
-          type: integer
-          minimum: 1
+nodes:
+  rules:
+    - name: Service
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        required: [kind, name, owner, replicas]
+        properties:
+          kind:
+            const: service
+          name:
+            type: string
+            minLength: 1
+          owner:
+            type: object
+            required: ["$gslRef"]
+            properties:
+              "$gslRef":
+                type: string
+          replicas:
+            type: integer
+            minimum: 1
 ```
 
 the check reports conformance, and setting `replicas=0` produces:
@@ -141,9 +146,11 @@ Non-conforming: 1 violation(s) in model.gsl
 ## Checklist
 
 1. Stable `id` and `version` on the dialect.
-2. One element definition per convention; `representation` matches its kind.
-3. Selection query is a single `subgraph` predicate.
+2. One rule per node/edge convention in the correct section; one keyed
+   definition per set convention.
+3. `match` is a bare attribute predicate with no prefix and no `subgraph`.
 4. Schema is written against projected values (references and Empty are
-   objects).
-5. The reference model validates, and each rule is shown to reject a mutation.
-6. Reported results are exactly what the tool printed.
+   objects); set `attributes` is optional.
+5. Set policy is used only when the source states a declaration convention.
+6. The reference model validates, and each rule is shown to reject a mutation.
+7. Reported results are exactly what the tool printed.

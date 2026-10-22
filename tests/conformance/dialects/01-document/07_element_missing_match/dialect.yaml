@@ -1,7 +1,0 @@
-id: element-missing-match
-version: "1"
-elements:
-  Service:
-    representation: node
-    attributes:
-      type: object

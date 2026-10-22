@@ -1,0 +1,2 @@
+set critical
+set ok [label="OK"]

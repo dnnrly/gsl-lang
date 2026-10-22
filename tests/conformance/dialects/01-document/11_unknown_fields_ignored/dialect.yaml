@@ -1,15 +1,14 @@
 id: unknown-fields
-version: "1"
+version: '1'
 futureRootField: ignored
-elements:
-  Service:
-    representation: node
-    futureElementField: ignored
-    match:
-      query: 'kind == "service"'
+nodes:
+  rules:
+  - name: Service
+    match: kind == "service"
     attributes:
       type: object
-      required: [kind]
+      required:
+      - kind
       properties:
         kind:
           const: service

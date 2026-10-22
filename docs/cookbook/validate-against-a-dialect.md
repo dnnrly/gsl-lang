@@ -11,7 +11,7 @@ to hold you to them, without changing how you write GSL.
 
 **At scale:** the reference example
 [`examples/dialects/software-architecture/`](../../examples/dialects/software-architecture/)
-does the same thing with node, edge and set definitions together.
+does the same thing with node rules, an edge rule and named set definitions together.
 
 ## The model
 
@@ -36,30 +36,29 @@ attributes with JSON Schema:
 
 ```yaml
 id: software-architecture
-version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      required: [kind, name, owner, replicas]
-      properties:
-        kind:
-          const: service
-        name:
-          type: string
-          minLength: 1
-        owner:
-          type: object
-          required: ["$gslRef"]
-          properties:
-            "$gslRef":
-              type: string
-        replicas:
-          type: integer
-          minimum: 1
+version: 0.4.0-draft
+nodes:
+  rules:
+    - name: Service
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        required: [kind, name, owner, replicas]
+        properties:
+          kind:
+            const: service
+          name:
+            type: string
+            minLength: 1
+          owner:
+            type: object
+            required: ["$gslRef"]
+            properties:
+              "$gslRef":
+                type: string
+          replicas:
+            type: integer
+            minimum: 1
 ```
 
 Note the authoring rule that trips people up: `owner=platform_team` is a **node
@@ -74,7 +73,7 @@ gsl-dialect validate -d software-architecture.dialect.yaml -i model.gsl
 ## The answer
 
 ```text
-Conforming: dialect "software-architecture" version "1" (model.gsl)
+Conforming: dialect "software-architecture" version "0.4.0-draft" (model.gsl)
 ```
 
 Exit code `0`. Now break a convention — set `replicas=0` — and rerun:
@@ -88,7 +87,7 @@ Non-conforming: 1 violation(s) in model.gsl
   node gateway /replicas: minimum: got 0, want 1
 ```
 
-Exit code `1`. The diagnostic names the definition (`Service`), the element
+Exit code `1`. The diagnostic names the rule (`Service`), the element
 (`gateway`) and a JSON Pointer into the projected attributes (`/replicas`).
 Because `replicas=0` still *matches*, it is selected and then rejected — a
 malformed element is never silently skipped.
@@ -123,6 +122,6 @@ endpoints — from collapsing: every selected element appears exactly once.
 ## Next
 
 - The full authoring guide: [Dialect Guide](../../guides/DIALECT_GUIDE.md).
-- The reference dialect with node, edge and set definitions:
+- The reference dialect with node rules, an edge rule and named set definitions:
   [examples/dialects/software-architecture](../../examples/dialects/software-architecture/).
 - The command reference: [gsl-dialect](../../cmd/gsl-dialect/README.md).

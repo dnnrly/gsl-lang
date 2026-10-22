@@ -1,0 +1,8 @@
+outcome: non-conforming
+violations:
+  - definition: ""
+    element: beta
+    location: ""
+  - definition: ""
+    element: implicit
+    location: ""

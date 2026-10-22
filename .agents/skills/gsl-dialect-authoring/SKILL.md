@@ -10,7 +10,7 @@ description: >-
 license: CC-BY-4.0
 compatibility: host-agnostic; optional step-up tool gsl-dialect
 metadata:
-  version: 1.0.0
+  version: 2.0.0
 ---
 
 <!--
@@ -21,8 +21,9 @@ Copyright (c) 2026 Pascal Dennerly.
 # GSL Dialect Authoring Skill
 
 Turn a set of stated conventions into a **dialect** — a YAML document that
-selects graph elements with a GQL query and validates their projected
-attributes with JSON Schema — and use it to check a GSL model. GSL is the
+selects nodes and edges with GQL match rules, validates their projected
+attributes with JSON Schema, and checks named set declarations against a
+policy — and use it to check a GSL model. GSL is the
 graph specification language of the gsl-lang project; GQL is its query
 language; a dialect is a convention layer over both.
 
@@ -42,7 +43,7 @@ selects and checks, and never rewrites or rejects the source.
 3. **No example-specific copying.** Never lift `id`, `version`, attribute
    names, or vocabularies from any example file unless the user supplies them.
 4. **Schemas target projection, not syntax.** Write JSON Schema against the
-   projected JSON value (`references/DIALECT_GUIDE.md`, section 6) — the most
+   projected JSON value (`references/DIALECT_GUIDE.md`, section 7) — the most
    common authoring error is describing GSL text instead of the projected value.
 5. **Respect the supported subset.** Match queries use a single `subgraph`
    predicate only (`references/SUPPORTED_GQL_SUBSET.md`). Never approximate an
@@ -58,8 +59,11 @@ user-visible.
 1. **Scope (user-visible).** Establish the conventions, the graph they apply
    to, and which element kinds (node / edge / set) they cover. If a convention
    is ambiguous or consequential, pause and ask.
-2. **Inventory (internal).** For each convention decide: selection query,
-   representation, and the attribute schema. Method: `references/WORKFLOW.md`.
+2. **Inventory (internal).** For each convention decide the section (`nodes`
+   or `edges`), the bare selection query, and the attribute schema. Set
+   conventions become keys under `sets.definitions`, with `sets.policy` only
+   where declaration-level enforcement is stated. Method:
+   `references/WORKFLOW.md`.
 3. **Draft (internal).** Write the dialect against
    `references/DIALECT_GUIDE.md`; validate the document against
    `references/DIALECTS_SPEC.md`.
@@ -106,8 +110,13 @@ authored `WORKFLOW.md` holds the method.
 ## Output conventions to remember
 
 - A dialect needs a stable `id` and a `version`; both are strings.
-- `representation` is one of `node`, `edge`, `set`.
-- Match queries are a single `subgraph` predicate.
+- Node rules live under `nodes.rules`; edge rules under `edges.rules`; the
+  section supplies the `node.`/`edge.` prefix and the element kind.
+- `match` is a bare attribute predicate with no `subgraph` keyword and no
+  element prefix.
+- Sets are keyed by GSL set name under `sets.definitions`; they are never
+  selected by a query. Use `sets.policy` for `allow_undefined`, `require_all`
+  and `allow_empty` only when the source states the convention.
 - Write schemas against projected values: a node reference is
   `{"$gslRef": "..."}`; an explicit Empty is `{"$gslEmpty": true}`.
 - Exit codes: `0` conforming, `1` non-conforming, `2` incomplete.
@@ -115,5 +124,6 @@ authored `WORKFLOW.md` holds the method.
 ## Worked material
 
 The reference dialect lives in
-`examples/dialects/software-architecture/` in the repository (node, edge and
-set definitions together). Read it before authoring a new dialect.
+`examples/dialects/software-architecture/` in the repository (node rules, an
+edge rule, and named set definitions under a strict policy). Read it before
+authoring a new dialect.

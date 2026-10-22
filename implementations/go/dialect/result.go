@@ -55,9 +55,11 @@ func (r *Report) Conforms() bool {
 	return r.Outcome == OutcomeConforming
 }
 
-// Violation describes a single attribute constraint violation.
+// Violation describes a single conformance violation: either an attribute
+// constraint failure or a set policy failure.
 type Violation struct {
-	// Definition is the name of the element definition that was violated.
+	// Definition is the rule label or set name that selected the element. It is
+	// empty for a policy violation concerning a set that has no definition.
 	Definition string
 
 	// Representation is the kind of the offending element.
@@ -86,7 +88,8 @@ func (v Violation) String() string {
 // LoadError describes a dialect document that is invalid and was rejected
 // before graph validation began.
 type LoadError struct {
-	// Path locates the offending field, for example "elements[Service].match".
+	// Path locates the offending field, for example "nodes.rules[0].match" or
+	// "sets.definitions[critical].attributes".
 	Path string
 
 	// Message explains the problem.
@@ -134,7 +137,7 @@ func (e *ProjectionError) Unwrap() error { return e.Err }
 
 // violationsFromJSON flattens a JSON Schema validation error into dialect
 // violations, one per leaf cause.
-func violationsFromJSON(verr *jsonschema.ValidationError, el *ElementDefinition, element string) []Violation {
+func violationsFromJSON(verr *jsonschema.ValidationError, selected Selected) []Violation {
 	var out []Violation
 	var collect func(e *jsonschema.ValidationError, location []string)
 	collect = func(e *jsonschema.ValidationError, location []string) {
@@ -144,9 +147,9 @@ func violationsFromJSON(verr *jsonschema.ValidationError, el *ElementDefinition,
 		}
 		if len(e.Causes) == 0 {
 			out = append(out, Violation{
-				Definition:       el.Name,
-				Representation:   el.Representation,
-				Element:          element,
+				Definition:       selected.Definition,
+				Representation:   selected.Representation,
+				Element:          selected.Element,
 				InstanceLocation: jsonPointer(loc),
 				Message:          e.Error(),
 			})

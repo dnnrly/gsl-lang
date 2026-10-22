@@ -34,7 +34,7 @@ against the dialect's JSON Schemas, and reports the outcome.
 Text output on success:
 
 ```
-Conforming: dialect "software-architecture" version "1" (model.gsl)
+Conforming: dialect "software-architecture" version "0.4.0-draft" (model.gsl)
 ```
 
 Text output on violations:
@@ -49,7 +49,7 @@ contract (see `spec/dialects/DIALECTS_SPEC.md` §16.4):
 
 ```json
 {
-  "dialect": { "id": "software-architecture", "version": "1" },
+  "dialect": { "id": "software-architecture", "version": "0.4.0-draft" },
   "graph": "model.gsl",
   "outcome": "non-conforming",
   "violations": [

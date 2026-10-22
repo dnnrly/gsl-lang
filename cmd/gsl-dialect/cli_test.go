@@ -16,17 +16,16 @@ import (
 const validDialect = `
 id: test-dialect
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      required: [name]
-      properties:
-        name:
-          type: string
+nodes:
+  rules:
+    - name: Service
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        required: [name]
+        properties:
+          name:
+            type: string
 `
 
 func writeTemp(t *testing.T, name, content string) string {
@@ -112,13 +111,12 @@ func TestProjectDuplicateEdgesCollapse(t *testing.T) {
 	const edgeDialect = `
 id: edge-dialect
 version: "1"
-elements:
-  Link:
-    representation: edge
-    match:
-      query: 'protocol exists'
-    attributes:
-      type: object
+edges:
+  rules:
+    - name: Link
+      match: 'protocol exists'
+      attributes:
+        type: object
 `
 
 	var out bytes.Buffer

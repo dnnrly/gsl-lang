@@ -26,9 +26,9 @@ Copyright (c) 2026 Pascal Dennerly.
 
 - [spec/dialects/DIALECTS_SPEC.md](spec/dialects/DIALECTS_SPEC.md): Normative specification for dialects — YAML documents that declare conventions and validate projected attributes with JSON Schema
 - [spec/dialects/SUPPORTED_GQL_SUBSET.md](spec/dialects/SUPPORTED_GQL_SUBSET.md): The GQL subset available inside dialect match queries
-- [guides/DIALECT_GUIDE.md](guides/DIALECT_GUIDE.md): Dialect authoring guide — document structure, representations, matching, GSL-to-JSON projection, and JSON Schema authoring patterns
-- [examples/dialects/software-architecture/](examples/dialects/software-architecture/): End-to-end reference dialect (node, edge and set definitions) with a conforming model
-- [tests/conformance/dialects/README.md](tests/conformance/dialects/README.md): Dialect conformance fixture catalog (document, matching, projection, attribute validation, outcomes)
+- [guides/DIALECT_GUIDE.md](guides/DIALECT_GUIDE.md): Dialect authoring guide — document structure, node and edge rules, set definitions and policy, matching, GSL-to-JSON projection, and JSON Schema authoring patterns
+- [examples/dialects/software-architecture/](examples/dialects/software-architecture/): End-to-end reference dialect (node rules, an edge rule, and named set definitions) with a conforming model
+- [tests/conformance/dialects/README.md](tests/conformance/dialects/README.md): Dialect conformance fixture catalog (document, matching, projection, attribute validation, outcomes, sets)
 
 ## Getting Started
 

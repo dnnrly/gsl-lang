@@ -1,0 +1,2 @@
+node a [kind="anything"]
+a -> a [protocol="loop"]

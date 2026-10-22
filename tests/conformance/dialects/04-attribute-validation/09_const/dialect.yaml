@@ -1,10 +1,9 @@
 id: const
-version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind exists'
+version: '1'
+nodes:
+  rules:
+  - name: Service
+    match: kind exists
     attributes:
       type: object
       properties:

@@ -1,8 +1,0 @@
-id: element-missing-representation
-version: "1"
-elements:
-  Service:
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object

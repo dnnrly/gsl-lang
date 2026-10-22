@@ -1,0 +1,5 @@
+id: definitions-not-mapping
+version: "1"
+sets:
+  definitions:
+    - critical

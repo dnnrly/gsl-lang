@@ -27,24 +27,22 @@ test("internal $ref is allowed", () => {
   const d = dialect(`
 id: refs
 version: "1"
-elements:
-  Thing:
-    representation: node
-    match:
-      query: 'kind == "thing"'
-    attributes:
-      type: object
-      required: [owner]
-      properties:
-        owner:
-          $ref: '#/$defs/ref'
-      $defs:
-        ref:
-          type: object
-          properties:
-            "$gslRef":
-              type: string
-          required: ["$gslRef"]
+nodes:
+  rules:
+    - match: 'kind == "thing"'
+      attributes:
+        type: object
+        required: [owner]
+        properties:
+          owner:
+            $ref: '#/$defs/ref'
+        $defs:
+          ref:
+            type: object
+            properties:
+              "$gslRef":
+                type: string
+            required: ["$gslRef"]
 `);
   const report = d.validate(graph('node team\nnode a [kind="thing", owner=team]'));
   assert.equal(report.outcome, "conforming", JSON.stringify(report.violations));
@@ -56,103 +54,130 @@ test("external $ref is rejected at load", () => {
       dialect(`
 id: refs
 version: "1"
-elements:
-  Thing:
-    representation: node
-    match:
-      query: 'kind == "thing"'
-    attributes:
-      $ref: 'https://example.com/never-loaded.json'
+nodes:
+  rules:
+    - match: 'kind == "thing"'
+      attributes:
+        $ref: 'https://example.com/never-loaded.json'
 `),
     LoadError,
   );
 });
 
-test("unknown root and element fields are ignored", () => {
+test("unknown root and section fields are ignored", () => {
   const d = dialect(`
 id: unknown-fields
 version: "1"
 futureRootField: ignored
-elements:
-  Service:
-    representation: node
-    futureElementField: ignored
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
+nodes:
+  futureSectionField: ignored
+  rules:
+    - futureRuleField: ignored
+      match: 'kind == "service"'
+      attributes:
+        type: object
+sets:
+  futurePolicyField: ignored
+  definitions:
+    critical:
+      futureDefinitionField: ignored
 `);
   assert.equal(d.validate(graph('node a [kind="service"]')).outcome, "conforming");
+  assert.equal(d.setDefinitions.length, 1);
 });
 
-test("empty elements mapping conforms", () => {
-  const d = dialect('id: empty\nversion: "1"\nelements: {}');
-  assert.equal(d.validate(graph('node a [kind="service"]')).outcome, "conforming");
+test("omitted and empty sections conform", () => {
+  for (const source of [
+    'id: empty\nversion: "1"',
+    'id: empty\nversion: "1"\nnodes: {}\nedges: {}\nsets: {}',
+    'id: empty\nversion: "1"\nnodes:\n  rules: []\nedges:\n  rules: []',
+  ]) {
+    const d = dialect(source);
+    assert.equal(d.validate(graph('node a [kind="service"]')).outcome, "conforming");
+  }
 });
 
-test("edge representation selects matching edges", () => {
+test("edge rules select matching edges", () => {
   const d = dialect(`
 id: edges
 version: "1"
-elements:
-  HttpEdge:
-    representation: edge
-    match:
-      query: 'protocol == "http"'
-    attributes:
-      type: object
+edges:
+  rules:
+    - name: HttpEdge
+      match: 'protocol == "http"'
+      attributes:
+        type: object
 `);
-  const selection = d.match(graph('node a\nnode b\na -> b [protocol="http"]'));
+  const selection = d.match(graph('node a\nnode b\na -> b [protocol="http"]\nb -> a [protocol="tcp"]'));
   assert.deepEqual(
     selection.map((s) => s.element),
     ["a->b"],
   );
+  assert.equal(selection[0]!.definition, "HttpEdge");
 });
 
-test("set representation selects all sets", () => {
+test("unnamed rules use their section position as the label", () => {
+  const d = dialect(`
+id: labels
+version: "1"
+nodes:
+  rules:
+    - name: Named
+      match: 'kind exists'
+      attributes:
+        type: object
+    - match: 'kind exists'
+      attributes:
+        type: object
+edges:
+  rules:
+    - match: 'protocol exists'
+      attributes:
+        type: object
+`);
+  assert.equal(d.nodeRules[0]!.label, "Named");
+  assert.equal(d.nodeRules[1]!.label, "nodes.rules[1]");
+  assert.equal(d.edgeRules[0]!.label, "edges.rules[0]");
+});
+
+test("set definitions select only present defined sets", () => {
   const d = dialect(`
 id: sets
 version: "1"
-elements:
-  Classification:
-    representation: set
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
+sets:
+  definitions:
+    alpha: {}
+    missing: {}
 `);
-  const selection = d.match(graph('set alpha\nset beta\nnode a [kind="service"] @alpha'));
+  const selected = d.match(graph('set alpha\nset beta\nnode a @alpha'));
   assert.deepEqual(
-    selection.map((s) => s.element),
-    ["alpha", "beta"],
+    selected.map((s) => s.element),
+    ["alpha"],
   );
 });
 
-test("multiple definitions validate independently", () => {
+test("multiple rules validate independently", () => {
   const d = dialect(`
 id: multi
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      required: [kind]
-      properties:
-        kind:
-          const: service
-  Replicas:
-    representation: node
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
-      required: [replicas]
-      properties:
-        replicas:
-          type: integer
+nodes:
+  rules:
+    - name: Service
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        required: [kind]
+        properties:
+          kind:
+            const: service
+    - name: Replicas
+      match: 'kind == "service"'
+      attributes:
+        type: object
+        required: [replicas]
+        properties:
+          replicas:
+            type: integer
 `);
   const report = d.validate(graph('node a [kind="service"]'));
   assert.equal(report.outcome, "non-conforming");
@@ -185,13 +210,11 @@ test("traversal match query is rejected at load", () => {
       dialect(`
 id: traversal
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service" traverse out 1'
-    attributes:
-      type: object
+nodes:
+  rules:
+    - match: 'kind == "service" traverse out 1'
+      attributes:
+        type: object
 `),
     LoadError,
   );
@@ -203,30 +226,40 @@ test("pipeline match query is rejected at load", () => {
       dialect(`
 id: pipeline
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service" | remove orphans'
-    attributes:
-      type: object
+nodes:
+  rules:
+    - match: 'kind == "service" | remove orphans'
+      attributes:
+        type: object
 `),
     LoadError,
   );
 });
 
-test("missing representation is rejected at load", () => {
+test("missing match is rejected at load", () => {
   assert.throws(
     () =>
       dialect(`
-id: missing-representation
+id: missing-match
 version: "1"
-elements:
-  Service:
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
+nodes:
+  rules:
+    - attributes:
+        type: object
+`),
+    LoadError,
+  );
+});
+
+test("missing attributes is rejected at load", () => {
+  assert.throws(
+    () =>
+      dialect(`
+id: missing-attributes
+version: "1"
+nodes:
+  rules:
+    - match: 'kind == "service"'
 `),
     LoadError,
   );
@@ -244,35 +277,30 @@ test("a matching error surfaces as a MatchingError", () => {
   const d = dialect(`
 id: matching
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
+nodes:
+  rules:
+    - match: 'kind == "service"'
+      attributes:
+        type: object
 `);
-  // Corrupt the compiled expression to force an evaluation failure.
-  const expr = (d.elements[0] as unknown as { expr: { apply: () => never } }).expr;
+  const expr = (d.nodeRules[0] as unknown as { expr: { apply: () => never } }).expr;
   expr.apply = () => {
     throw new Error("boom");
   };
   assert.throws(() => d.match(graph('node a [kind="service"]')), MatchingError);
 });
 
-test("match query is a bare predicate expanded with the representation", () => {
+test("match query is a bare predicate expanded with the section prefix", () => {
   const d = dialect(`
 id: bare
 version: "1"
-elements:
-  Service:
-    representation: node
-    match:
-      query: 'kind == "service" AND active exists'
-    attributes:
-      type: object
+nodes:
+  rules:
+    - match: 'kind == "service" AND active exists'
+      attributes:
+        type: object
 `);
-  assert.equal(d.elements[0]!.query, 'kind == "service" AND active exists');
+  assert.equal(d.nodeRules[0]!.query, 'kind == "service" AND active exists');
 
   const selected = d.match(
     graph('node a [kind="service", active=true]\nnode b [kind="team", active=true]\nnode c [kind="service"]'),
@@ -295,13 +323,11 @@ test("explicit prefixes and the subgraph wrapper are rejected at load", () => {
         dialect(`
 id: x
 version: "1"
-elements:
-  T:
-    representation: node
-    match:
-      query: '${query}'
-    attributes:
-      type: object
+nodes:
+  rules:
+    - match: '${query}'
+      attributes:
+        type: object
 `),
       LoadError,
       `expected ${query} to be rejected`,
@@ -309,36 +335,148 @@ elements:
   }
 });
 
-test("a set match query is validated but not evaluated", () => {
+test("set attributes are validated when defined", () => {
   const d = dialect(`
 id: sets
 version: "1"
-elements:
-  Group:
-    representation: set
-    match:
-      query: 'kind == "service"'
-    attributes:
-      type: object
+sets:
+  definitions:
+    critical:
+      attributes:
+        type: object
+        required: [label]
+        properties:
+          label:
+            type: string
 `);
-  const selected = d.match(graph('set alpha\nset beta\nnode a [kind="service"] @alpha'));
+  const report = d.validate(graph('set critical\nset ok [label="OK"]'));
+  assert.equal(report.outcome, "non-conforming");
   assert.deepEqual(
-    selected.map((s) => s.element),
-    ["alpha", "beta"],
+    report.violations.map((v) => [v.definition, v.element, v.instanceLocation]),
+    [["critical", "critical", ""]],
   );
+});
 
+test("set definitions without attributes impose no constraint", () => {
+  const d = dialect(`
+id: sets
+version: "1"
+sets:
+  definitions:
+    critical:
+      description: Important elements.
+`);
+  assert.equal(d.validate(graph("set critical\n")).outcome, "conforming");
+});
+
+test("default set policy is permissive", () => {
+  const d = dialect(`
+id: policy
+version: "1"
+sets:
+  definitions:
+    unused: {}
+`);
+  assert.deepEqual(d.setPolicy, {
+    allowUndefined: true,
+    requireAll: false,
+    allowEmpty: true,
+  });
+  assert.equal(d.validate(graph("set empty\nnode a @implicit\n")).outcome, "conforming");
+});
+
+test("undefined sets are rejected when disallowed", () => {
+  const d = dialect(`
+id: policy
+version: "1"
+sets:
+  policy:
+    allow_undefined: false
+  definitions:
+    alpha: {}
+`);
+  const report = d.validate(graph("set alpha\nset beta\nnode a @implicit\n"));
+  assert.equal(report.outcome, "non-conforming");
+  assert.deepEqual(
+    report.violations.map((v) => [v.definition, v.element]),
+    [
+      ["", "beta"],
+      ["", "implicit"],
+    ],
+  );
+});
+
+test("required sets must be present", () => {
+  const d = dialect(`
+id: policy
+version: "1"
+sets:
+  policy:
+    require_all: true
+  definitions:
+    alpha: {}
+    beta: {}
+`);
+  const report = d.validate(graph("set alpha\n"));
+  assert.equal(report.outcome, "non-conforming");
+  assert.deepEqual(
+    report.violations.map((v) => [v.definition, v.element]),
+    [["beta", "beta"]],
+  );
+});
+
+test("empty sets are rejected when disallowed", () => {
+  const d = dialect(`
+id: policy
+version: "1"
+sets:
+  policy:
+    allow_empty: false
+  definitions:
+    alpha: {}
+`);
+  const report = d.validate(graph("set alpha\n"));
+  assert.equal(report.outcome, "non-conforming");
+  assert.deepEqual(
+    report.violations.map((v) => [v.definition, v.element]),
+    [["alpha", "alpha"]],
+  );
+});
+
+test("implicit sets count as present and non-empty", () => {
+  const d = dialect(`
+id: policy
+version: "1"
+sets:
+  policy:
+    require_all: true
+    allow_empty: false
+  definitions:
+    implicit: {}
+`);
+  assert.equal(d.validate(graph("node a @implicit\n")).outcome, "conforming");
+});
+
+test("cross-schema internal $ref is rejected", () => {
   assert.throws(
     () =>
       dialect(`
-id: x
+id: refs
 version: "1"
-elements:
-  G:
-    representation: set
-    match:
-      query: 'kind =='
-    attributes:
-      type: object
+nodes:
+  rules:
+    - match: 'kind == "a"'
+      attributes:
+        type: object
+        properties:
+          owner:
+            $ref: '#/$defs/ref'
+    - match: 'kind == "b"'
+      attributes:
+        type: object
+        $defs:
+          ref:
+            type: string
 `),
     LoadError,
   );

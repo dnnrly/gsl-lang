@@ -7,15 +7,38 @@
  * The normative behaviour is defined by `spec/dialects/DIALECTS_SPEC.md`.
  */
 
-/** The kind of GSL element an element definition applies to. */
+/** The kind of GSL element a rule or set definition applies to. */
 export type Representation = "node" | "edge" | "set";
 
 /** The overall conformance outcome of a validation. */
 export type Outcome = "conforming" | "non-conforming";
 
-/** A single attribute constraint violation. */
+/** Declaration-level policy for sets. */
+export interface SetPolicy {
+  /** Permit sets present in the graph that have no dialect definition. */
+  readonly allowUndefined: boolean;
+  /** Require every dialect-defined set to be present in the graph. */
+  readonly requireAll: boolean;
+  /** Permit a present set to have no members. */
+  readonly allowEmpty: boolean;
+}
+
+/** The specification's permissive defaults for set policy. */
+export const defaultSetPolicy: SetPolicy = {
+  allowUndefined: true,
+  requireAll: false,
+  allowEmpty: true,
+};
+
+/**
+ * A single conformance violation: either an attribute constraint failure or a
+ * set policy failure.
+ */
 export interface Violation {
-  /** The name of the element definition that was violated. */
+  /**
+   * The rule label or set name that selected the element. Empty for a policy
+   * violation concerning a set that has no definition.
+   */
   readonly definition: string;
 
   /** The kind of the offending element. */
@@ -59,8 +82,8 @@ export class DialectError extends Error {}
 
 /**
  * A dialect document that is invalid and was rejected before graph validation
- * began. `path` locates the offending field, for example
- * `elements[Service].match`.
+ * began. `path` locates the offending field, for example `nodes.rules[0].match`
+ * or `sets.definitions[critical].attributes`.
  */
 export class LoadError extends DialectError {
   constructor(
